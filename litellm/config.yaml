@@ -1,0 +1,250 @@
+# Local AI - LiteLLM Proxy Configuration
+#
+# Load-balancing proxy for GPU inference servers.
+# Uses PostgreSQL-backed API key management (native LiteLLM).
+#
+# GPU Servers (ASH - 192.168.0.145):
+#   SFW:  ports 8080-8083 (4 GPUs)
+#   NSFW: ports 8084-8087 (4 GPUs)
+#   Embed: ports 8090-8097 (8 GPUs)
+
+model_list:
+  # =============================================================================
+  # SFW MODELS - 8x GPU load balancing
+  # Public API names: local-ai-default, local-ai-sfw
+  # Internal name: local-ai-chat-sfw
+  #
+  # LOCAL TESTING: Points directly to ASH GPU server (192.168.0.145)
+  # CLOUD DEPLOYMENT: Change api_base to http://localhost:808X with SSH tunnels
+  # =============================================================================
+
+  - model_name: "local-ai-chat-sfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8080/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu1"
+      mode: "chat"
+
+  - model_name: "local-ai-chat-sfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8081/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu2"
+      mode: "chat"
+
+  - model_name: "local-ai-chat-sfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8082/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu3"
+      mode: "chat"
+
+  - model_name: "local-ai-chat-sfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8083/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu4"
+      mode: "chat"
+
+  # =============================================================================
+  # NSFW MODELS - 4x GPU (GPUs 5-8)
+  # Public API name: local-ai-nsfw
+  # Internal name: local-ai-chat-nsfw
+  # =============================================================================
+
+  - model_name: "local-ai-chat-nsfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8084/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu5"
+      mode: "chat"
+
+  - model_name: "local-ai-chat-nsfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8085/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu6"
+      mode: "chat"
+
+  - model_name: "local-ai-chat-nsfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8086/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu7"
+      mode: "chat"
+
+  - model_name: "local-ai-chat-nsfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8087/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu8"
+      mode: "chat"
+
+  # =============================================================================
+  # EMBEDDING MODELS - 8x GPU load balancing
+  # For RAG/semantic search
+  # =============================================================================
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text"
+      api_base: "http://192.168.0.145:8090/v1"
+      api_key: "sk-local"
+    model_info:
+      id: "local-ai-embed1"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text"
+      api_base: "http://192.168.0.145:8091/v1"
+      api_key: "sk-local"
+    model_info:
+      id: "local-ai-embed2"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text"
+      api_base: "http://192.168.0.145:8092/v1"
+      api_key: "sk-local"
+    model_info:
+      id: "local-ai-embed3"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text"
+      api_base: "http://192.168.0.145:8093/v1"
+      api_key: "sk-local"
+    model_info:
+      id: "local-ai-embed4"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text"
+      api_base: "http://192.168.0.145:8094/v1"
+      api_key: "sk-local"
+    model_info:
+      id: "local-ai-embed5"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text"
+      api_base: "http://192.168.0.145:8095/v1"
+      api_key: "sk-local"
+    model_info:
+      id: "local-ai-embed6"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text"
+      api_base: "http://192.168.0.145:8096/v1"
+      api_key: "sk-local"
+    model_info:
+      id: "local-ai-embed7"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text"
+      api_base: "http://192.168.0.145:8097/v1"
+      api_key: "sk-local"
+    model_info:
+      id: "local-ai-embed8"
+      mode: "embedding"
+
+# Router settings for load balancing
+router_settings:
+  routing_strategy: "least-busy"
+  num_retries: 2
+  retry_after: 3
+  timeout: 90
+  allowed_fails: 2
+  cooldown_time: 60
+
+  # Health check settings
+  enable_health_check: true
+  health_check_interval: 15  # Check more frequently (was 30)
+
+  # Rate limiting per deployment to prevent GPU overload
+  # Each GPU can handle ~2-3 concurrent requests safely
+  # 30 rpm tested safe with 10 VUs for 30 min
+  # 45 rpm testing with 500-token prompts
+  model_rate_limits:
+    - model_name: "local-ai-chat-sfw"
+      tpm: 50000
+      rpm: 45
+    - model_name: "local-ai-chat-nsfw"
+      tpm: 50000
+      rpm: 45
+
+  # Model aliases - map public API names to internal model names
+  model_group_alias:
+    "local-ai-default": "local-ai-chat-sfw"
+    "local-ai-sfw": "local-ai-chat-sfw"
+    "local-ai-nsfw": "local-ai-chat-nsfw"
+
+# General settings - PostgreSQL-backed API key management
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+
+  # Concurrency limits
+  # 8 GPUs * 2 concurrent requests each = 16 max safe
+  max_parallel_requests: 8
+  global_max_parallel_requests: 16
+
+  # Request timeout
+  request_timeout: 90
+
+  # Logging
+  json_logs: true
+
+  # CORS
+  allow_credentials: true
+
+# LiteLLM settings
+litellm_settings:
+  set_verbose: false
+  drop_params: true  # Drop unsupported params instead of erroring
+
+# Environment variables needed:
+#   LITELLM_MASTER_KEY - Master key for admin API access
+#   DATABASE_URL - PostgreSQL connection string (set in docker-compose)
+#   LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_HOST - Optional observability

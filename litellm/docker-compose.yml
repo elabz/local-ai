@@ -1,0 +1,70 @@
+# Local AI - LiteLLM Proxy
+#
+# OpenAI-compatible proxy for load-balancing chat requests across GPU servers.
+# Uses PostgreSQL-backed API key management (LiteLLM native).
+#
+# Start: docker compose up -d
+# LiteLLM UI: http://localhost:4000/ui
+# Health:     http://localhost:4000/health
+#
+# API Key Management:
+#   Create key:  curl -X POST http://localhost:4000/key/generate \
+#                  -H "Authorization: Bearer $MASTER_KEY" \
+#                  -d '{"models":["local-ai-chat-sfw","local-ai-embed"]}'
+#   Delete key:  curl -X POST http://localhost:4000/key/delete \
+#                  -H "Authorization: Bearer $MASTER_KEY" \
+#                  -d '{"keys":["sk-..."]}'
+
+services:
+  litellm-postgres:
+    image: postgres:16-alpine
+    container_name: local-ai-litellm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: ${LITELLM_DB_PASSWORD}
+    volumes:
+      - litellm_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: local-ai-litellm
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://litellm:${LITELLM_DB_PASSWORD}@litellm-postgres:5432/litellm
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+      - LITELLM_LOG=${LITELLM_LOG:-INFO}
+      - LITELLM_MODE=PRODUCTION
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-}
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    depends_on:
+      litellm-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+volumes:
+  litellm_postgres_data:

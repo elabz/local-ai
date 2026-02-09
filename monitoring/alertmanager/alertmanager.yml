@@ -1,0 +1,41 @@
+global:
+  resolve_timeout: 5m
+  # IMPORTANT: Set SLACK_WEBHOOK_URL in your .env file
+  # The old webhook was exposed and should be revoked in Slack Admin
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+
+# Route all alerts to Slack
+route:
+  group_by: ['alertname', 'severity']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'slack-hardware-alerts'
+
+receivers:
+  - name: 'slack-hardware-alerts'
+    slack_configs:
+      - channel: '#hardware-alerts'
+        username: 'Prometheus Alert'
+        icon_emoji: ':fire:'
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} {{ .CommonLabels.alertname }}'
+        text: >-
+          {{ range .Alerts }}
+            *Alert:* {{ .Annotations.summary }}
+            *Description:* {{ .Annotations.description }}
+            *Severity:* {{ .Labels.severity }}
+            *Status:* {{ .Status }}
+            {{ if eq .Status "firing" }}*Started:* {{ .StartsAt.Format "2006-01-02 15:04:05" }}{{ end }}
+            {{ if eq .Status "resolved" }}*Resolved:* {{ .EndsAt.Format "2006-01-02 15:04:05" }}{{ end }}
+          {{ end }}
+        color: '{{ if eq .Status "firing" }}{{ if eq .CommonLabels.severity "critical" }}danger{{ else }}warning{{ end }}{{ else }}good{{ end }}'
+        send_resolved: true
+
+# Inhibit rules to prevent alert spam
+inhibit_rules:
+  # Inhibit warning if critical is firing for the same alert
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']

@@ -1,0 +1,72 @@
+# GPU Server Build Pipeline
+
+name: GPU Server Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'gpu-server/**'
+  workflow_dispatch:
+
+jobs:
+  build-gpu-server:
+    name: Build GPU Server Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push GPU server
+        uses: docker/build-push-action@v5
+        with:
+          context: ./gpu-server
+          file: ./gpu-server/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/gpu-server:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/gpu-server:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            CUDA_VERSION=11.8.0
+
+      - name: Deploy to GPU servers
+        if: github.ref == 'refs/heads/main'
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.GPU_SERVER_HOST }}
+          username: ${{ secrets.GPU_SERVER_USER }}
+          key: ${{ secrets.GPU_SERVER_SSH_KEY }}
+          script: |
+            cd /opt/heartcode/gpu-server
+
+            # Pull new image
+            docker pull ghcr.io/${{ github.repository }}/gpu-server:${{ github.sha }}
+
+            # Graceful restart (one at a time for zero downtime)
+            docker compose stop gpu-server-1
+            docker compose up -d gpu-server-1
+
+            # Wait for health check
+            sleep 60
+            curl -f http://localhost:8080/health || exit 1
+
+            docker compose stop gpu-server-2
+            docker compose up -d gpu-server-2
+
+            sleep 60
+            curl -f http://localhost:8081/health || exit 1
+
+            # Cleanup
+            docker image prune -f

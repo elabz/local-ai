@@ -1,0 +1,50 @@
+# Prometheus configuration for HeartCode Image Server
+# Collects metrics from LocalAI, GPU, and system
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alertmanager configuration (main infrastructure)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["192.168.0.161:9093"]
+
+scrape_configs:
+  # LocalAI Image Server 1
+  - job_name: 'image-server-1'
+    static_configs:
+      - targets: ['image-server-1:8080']
+        labels:
+          gpu_id: '0'
+          service: 'localai'
+    metrics_path: '/metrics'
+
+  # LocalAI Image Server 2
+  - job_name: 'image-server-2'
+    static_configs:
+      - targets: ['image-server-2:8080']
+        labels:
+          gpu_id: '1'
+          service: 'localai'
+    metrics_path: '/metrics'
+
+  # DCGM GPU Metrics
+  - job_name: 'dcgm-exporter'
+    static_configs:
+      - targets: ['192.168.0.143:9400']
+        labels:
+          instance: 'oak'
+
+  # Node Exporter for CPU/system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['192.168.0.143:9100']
+        labels:
+          instance: 'oak'
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

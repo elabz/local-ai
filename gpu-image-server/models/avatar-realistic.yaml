@@ -1,0 +1,18 @@
+# DreamShaper 8 - Realistic portrait generation
+# For photorealistic character avatars
+name: avatar-realistic
+parameters:
+  model: DreamShaper_8_pruned.safetensors
+backend: diffusers
+step: 30
+f16: true
+
+diffusers:
+  pipeline_type: StableDiffusionPipeline
+  cuda: true
+  enable_parameters: "negative_prompt,num_inference_steps,guidance_scale"
+  scheduler_type: k_dpmpp_2m
+
+download_files:
+- filename: DreamShaper_8_pruned.safetensors
+  uri: huggingface://Lykon/DreamShaper/DreamShaper_8_pruned.safetensors

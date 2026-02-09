@@ -1,0 +1,221 @@
+# Prometheus Alert Rules for HeartCode
+
+groups:
+  # =============================================================================
+  # GPU Alerts
+  # =============================================================================
+  - name: gpu_alerts
+    rules:
+      - alert: GPUHighMemoryUsage
+        expr: gpu_memory_used_bytes / gpu_memory_total_bytes > 0.95
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "GPU {{ $labels.gpu_id }} memory usage is high"
+          description: "GPU {{ $labels.gpu_id }} memory usage is above 95% for 5 minutes"
+
+      - alert: GPUHighTemperature
+        expr: gpu_temperature_celsius > 85
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "GPU {{ $labels.gpu_id }} temperature critical"
+          description: "GPU {{ $labels.gpu_id }} temperature is {{ $value }}°C"
+
+      - alert: GPUServerDown
+        expr: up{job="gpu-servers"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "GPU server is down"
+          description: "GPU server {{ $labels.instance }} is unreachable"
+
+      - alert: ModelNotLoaded
+        expr: model_loaded == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Model not loaded on GPU server"
+          description: "No model loaded on {{ $labels.instance }}"
+
+  # =============================================================================
+  # API Alerts
+  # =============================================================================
+  - name: api_alerts
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+          / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High API error rate"
+          description: "Error rate is above 5% for 5 minutes"
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+          > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency"
+          description: "95th percentile latency is above 5 seconds"
+
+      - alert: BackendDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend API is down"
+          description: "Backend API is unreachable"
+
+  # =============================================================================
+  # Inference Alerts
+  # =============================================================================
+  - name: inference_alerts
+    rules:
+      - alert: InferenceQueueBacklog
+        expr: active_requests > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Inference queue backlog"
+          description: "{{ $value }} requests waiting in queue"
+
+      - alert: SlowInference
+        expr: |
+          histogram_quantile(0.95, sum(rate(inference_duration_seconds_bucket[5m])) by (le))
+          > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow inference times"
+          description: "95th percentile inference time is {{ $value }}s"
+
+      - alert: InferenceErrors
+        expr: |
+          sum(rate(inference_requests_total{status="error"}[5m]))
+          / sum(rate(inference_requests_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High inference error rate"
+          description: "Inference error rate is above 10%"
+
+  # =============================================================================
+  # Database Alerts
+  # =============================================================================
+  - name: database_alerts
+    rules:
+      - alert: MySQLDown
+        expr: mysql_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MySQL is down"
+          description: "MySQL database is unreachable"
+
+      - alert: MySQLHighConnections
+        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL connection usage high"
+          description: "MySQL using {{ $value | humanizePercentage }} of max connections"
+
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis is unreachable"
+
+      - alert: RedisHighMemory
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis using {{ $value | humanizePercentage }} of max memory"
+
+  # =============================================================================
+  # Security Alerts
+  # =============================================================================
+  - name: security_alerts
+    rules:
+      - alert: ContentViolationSpike
+        expr: increase(content_violations_total[1h]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Content violation spike detected"
+          description: "{{ $value }} content violations in the last hour"
+
+      - alert: CSAMViolation
+        expr: increase(content_violations_total{type="csam"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CSAM violation detected"
+          description: "CSAM content detected - requires immediate review"
+
+      - alert: HighAuthFailures
+        expr: |
+          sum(rate(auth_failures_total[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High authentication failure rate"
+          description: "{{ $value }} auth failures per second"
+
+  # =============================================================================
+  # Infrastructure Alerts
+  # =============================================================================
+  - name: infrastructure_alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 90% on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 90% on {{ $labels.instance }}"
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space"
+          description: "Less than 10% disk space remaining on {{ $labels.mountpoint }}"

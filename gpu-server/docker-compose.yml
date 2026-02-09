@@ -1,0 +1,509 @@
+# HeartCode GPU Server - ASH Configuration
+# 8x NVIDIA P106-100 (6GB each), 16GB RAM, 2-core Celeron
+#
+# Layout:
+#   GPU 0-7: Chat inference (8 instances)
+#   GPU 0-7: Embeddings (shared, 8 instances) - small model fits alongside chat
+#
+# Memory Budget (16GB total):
+#   - 8x chat containers: 1.5GB each = 12GB max
+#   - 8x embed containers: 512MB each = 4GB max
+#   - System/Docker overhead: ~2GB reserved
+#   - Swap available: 8GB
+#
+# Usage:
+#   docker compose up -d
+#   docker compose logs -f
+
+x-gpu-server-common: &gpu-server-common
+  image: local-ai-llama:latest
+  build:
+    context: .
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  volumes:
+    - ./models:/models:ro
+    - ./configs:/app/configs:ro
+    - ./server.py:/app/server.py:ro
+    - ./metrics.py:/app/metrics.py:ro
+    - ./routes.py:/app/routes.py:ro
+    - ./llama_client.py:/app/llama_client.py:ro
+    - ./config.py:/app/config.py:ro
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    interval: 15s      # More frequent checks (was 30s) - detect issues faster
+    timeout: 5s        # Faster timeout (was 10s) - fail fast
+    retries: 2         # Fewer retries (was 3) - mark unhealthy quicker
+    start_period: 120s # Model load time
+  networks:
+    - gpu-network
+  # Memory limits to prevent OOM crashes
+  # 16GB total / 8 GPUs = ~1.5GB per chat container + headroom
+  mem_limit: 1536m
+  memswap_limit: 2048m  # Allow some swap usage
+
+x-gpu-env-common: &gpu-env-common
+  # MODEL_PATH is set per-GPU via .env file (GPU_N_MODEL_PATH)
+  N_GPU_LAYERS: 33
+  N_CTX: 4096            # Reduced from 8192 to save memory
+  N_BATCH: 128           # Reduced for 2-core CPU (was 512)
+  N_UBATCH: 64           # Micro-batch for better CPU handling (2-core CPU cannot sustain 128)
+  N_THREADS: 2           # Match 2-core CPU (was 4)
+  CACHE_REUSE: 256       # Enable prompt caching for faster TTFT
+  CACHE_TYPE_K: q8_0     # Quantize KV cache
+  CACHE_TYPE_V: q8_0
+  PORT: 8080
+
+x-embedding-server-common: &embedding-server-common
+  image: local-ai-llama:latest  # Same image as chat servers
+  restart: unless-stopped
+  volumes:
+    - ./models:/models:ro
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+    interval: 15s      # More frequent checks (was 30s) - detect issues faster
+    timeout: 5s        # Faster timeout (was 10s) - fail fast
+    retries: 2         # Fewer retries (was 3) - mark unhealthy quicker
+    start_period: 60s  # Model load time
+  networks:
+    - gpu-network
+  # Memory limits - embedding model is much smaller (~350MB)
+  mem_limit: 512m
+  memswap_limit: 768m
+  # GPU-accelerated embeddings - shares GPU with chat server
+  # Uses same custom-built llama-server (no AVX) but in embedding mode
+  entrypoint: ["llama-server"]
+  command:
+    - "--model"
+    - "/models/nomic-embed-text-v1.5.Q8_0.gguf"
+    - "--port"
+    - "8090"
+    - "--host"
+    - "0.0.0.0"
+    - "--embedding"
+    - "--ctx-size"
+    - "2048"
+    - "--batch-size"
+    - "512"
+    - "--n-gpu-layers"
+    - "99"
+    - "--cache-type-k"
+    - "q8_0"
+    - "--cache-type-v"
+    - "q8_0"
+
+services:
+  # =============================================================================
+  # CHAT INFERENCE SERVERS (8x GPU)
+  # =============================================================================
+
+  gpu-server-1:
+    <<: *gpu-server-common
+    container_name: local-ai-gpu-1
+    runtime: nvidia
+    environment:
+      <<: *gpu-env-common
+      NVIDIA_VISIBLE_DEVICES: 0
+      SERVER_ID: gpu-1
+      MODEL_PATH: ${GPU_1_MODEL_PATH:-/models/model.gguf}
+      MODEL_TYPE: ${GPU_1_MODEL_TYPE:-sfw}
+      MODEL_NAME: ${GPU_1_MODEL_NAME:-unknown}
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+
+  gpu-server-2:
+    <<: *gpu-server-common
+    container_name: local-ai-gpu-2
+    runtime: nvidia
+    environment:
+      <<: *gpu-env-common
+      NVIDIA_VISIBLE_DEVICES: 1
+      SERVER_ID: gpu-2
+      MODEL_PATH: ${GPU_2_MODEL_PATH:-/models/model.gguf}
+      MODEL_TYPE: ${GPU_2_MODEL_TYPE:-sfw}
+      MODEL_NAME: ${GPU_2_MODEL_NAME:-unknown}
+    ports:
+      - "8081:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1']
+              capabilities: [gpu]
+
+  gpu-server-3:
+    <<: *gpu-server-common
+    container_name: local-ai-gpu-3
+    runtime: nvidia
+    environment:
+      <<: *gpu-env-common
+      NVIDIA_VISIBLE_DEVICES: 2
+      SERVER_ID: gpu-3
+      MODEL_PATH: ${GPU_3_MODEL_PATH:-/models/model.gguf}
+      MODEL_TYPE: ${GPU_3_MODEL_TYPE:-sfw}
+      MODEL_NAME: ${GPU_3_MODEL_NAME:-unknown}
+    ports:
+      - "8082:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['2']
+              capabilities: [gpu]
+
+  gpu-server-4:
+    <<: *gpu-server-common
+    container_name: local-ai-gpu-4
+    runtime: nvidia
+    environment:
+      <<: *gpu-env-common
+      NVIDIA_VISIBLE_DEVICES: 3
+      SERVER_ID: gpu-4
+      MODEL_PATH: ${GPU_4_MODEL_PATH:-/models/model.gguf}
+      MODEL_TYPE: ${GPU_4_MODEL_TYPE:-sfw}
+      MODEL_NAME: ${GPU_4_MODEL_NAME:-unknown}
+    ports:
+      - "8083:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['3']
+              capabilities: [gpu]
+
+  gpu-server-5:
+    <<: *gpu-server-common
+    container_name: local-ai-gpu-5
+    runtime: nvidia
+    environment:
+      <<: *gpu-env-common
+      NVIDIA_VISIBLE_DEVICES: 4
+      SERVER_ID: gpu-5
+      MODEL_PATH: ${GPU_5_MODEL_PATH:-/models/model.gguf}
+      MODEL_TYPE: ${GPU_5_MODEL_TYPE:-sfw}
+      MODEL_NAME: ${GPU_5_MODEL_NAME:-unknown}
+    ports:
+      - "8084:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['4']
+              capabilities: [gpu]
+
+  gpu-server-6:
+    <<: *gpu-server-common
+    container_name: local-ai-gpu-6
+    runtime: nvidia
+    environment:
+      <<: *gpu-env-common
+      NVIDIA_VISIBLE_DEVICES: 5
+      SERVER_ID: gpu-6
+      MODEL_PATH: ${GPU_6_MODEL_PATH:-/models/model.gguf}
+      MODEL_TYPE: ${GPU_6_MODEL_TYPE:-sfw}
+      MODEL_NAME: ${GPU_6_MODEL_NAME:-unknown}
+    ports:
+      - "8085:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['5']
+              capabilities: [gpu]
+
+  gpu-server-7:
+    <<: *gpu-server-common
+    container_name: local-ai-gpu-7
+    runtime: nvidia
+    environment:
+      <<: *gpu-env-common
+      NVIDIA_VISIBLE_DEVICES: 6
+      SERVER_ID: gpu-7
+      MODEL_PATH: ${GPU_7_MODEL_PATH:-/models/model.gguf}
+      MODEL_TYPE: ${GPU_7_MODEL_TYPE:-sfw}
+      MODEL_NAME: ${GPU_7_MODEL_NAME:-unknown}
+    ports:
+      - "8086:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['6']
+              capabilities: [gpu]
+
+  gpu-server-8:
+    <<: *gpu-server-common
+    container_name: local-ai-gpu-8
+    runtime: nvidia
+    environment:
+      <<: *gpu-env-common
+      NVIDIA_VISIBLE_DEVICES: 7
+      SERVER_ID: gpu-8
+      MODEL_PATH: ${GPU_8_MODEL_PATH:-/models/model.gguf}
+      MODEL_TYPE: ${GPU_8_MODEL_TYPE:-sfw}
+      MODEL_NAME: ${GPU_8_MODEL_NAME:-unknown}
+    ports:
+      - "8087:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['7']
+              capabilities: [gpu]
+
+  # =============================================================================
+  # EMBEDDINGS SERVERS (8x GPU - shares GPU with chat servers)
+  # Using llama.cpp server in embedding mode with nomic-embed-text
+  # Each GPU runs both chat model (~5.3GB) + embedding model (~350MB)
+  # =============================================================================
+
+  embedding-server-1:
+    <<: *embedding-server-common
+    container_name: local-ai-embed-1
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: 0
+    ports:
+      - "8090:8090"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+
+  embedding-server-2:
+    <<: *embedding-server-common
+    container_name: local-ai-embed-2
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: 1
+    ports:
+      - "8091:8090"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1']
+              capabilities: [gpu]
+
+  embedding-server-3:
+    <<: *embedding-server-common
+    container_name: local-ai-embed-3
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: 2
+    ports:
+      - "8092:8090"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['2']
+              capabilities: [gpu]
+
+  embedding-server-4:
+    <<: *embedding-server-common
+    container_name: local-ai-embed-4
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: 3
+    ports:
+      - "8093:8090"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['3']
+              capabilities: [gpu]
+
+  embedding-server-5:
+    <<: *embedding-server-common
+    container_name: local-ai-embed-5
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: 4
+    ports:
+      - "8094:8090"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['4']
+              capabilities: [gpu]
+
+  embedding-server-6:
+    <<: *embedding-server-common
+    container_name: local-ai-embed-6
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: 5
+    ports:
+      - "8095:8090"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['5']
+              capabilities: [gpu]
+
+  embedding-server-7:
+    <<: *embedding-server-common
+    container_name: local-ai-embed-7
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: 6
+    ports:
+      - "8096:8090"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['6']
+              capabilities: [gpu]
+
+  embedding-server-8:
+    <<: *embedding-server-common
+    container_name: local-ai-embed-8
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: 7
+    ports:
+      - "8097:8090"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['7']
+              capabilities: [gpu]
+
+  # =============================================================================
+  # LITELLM PROXY (Load Balancer + Observability)
+  # =============================================================================
+
+  litellm-proxy:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: local-ai-litellm
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-local-ai-dev}
+      # Langfuse observability (set in .env)
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-}
+    volumes:
+      - ./configs/litellm_config.yaml:/app/config.yaml:ro
+    ports:
+      - "4000:4000"
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    depends_on:
+      gpu-server-1:
+        condition: service_healthy
+      gpu-server-2:
+        condition: service_healthy
+      gpu-server-3:
+        condition: service_healthy
+      gpu-server-4:
+        condition: service_healthy
+      gpu-server-5:
+        condition: service_healthy
+      gpu-server-6:
+        condition: service_healthy
+      gpu-server-7:
+        condition: service_healthy
+      gpu-server-8:
+        condition: service_healthy
+      embedding-server-1:
+        condition: service_healthy
+    networks:
+      - gpu-network
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=4000"
+      - "prometheus.path=/metrics"
+
+  # =============================================================================
+  # MONITORING
+  # =============================================================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: local-ai-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./configs/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - gpu-network
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: local-ai-node-exporter
+    restart: unless-stopped
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    ports:
+      - "9100:9100"
+    network_mode: host
+
+  dcgm-exporter:
+    image: nvidia/dcgm-exporter:latest
+    container_name: local-ai-dcgm-exporter
+    restart: unless-stopped
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    ports:
+      - "9400:9400"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+networks:
+  gpu-network:
+    driver: bridge
+
+volumes:
+  prometheus_data:

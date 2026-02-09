@@ -1,0 +1,28 @@
+[Unit]
+Description=HeartCode GPU Watchdog Service
+Documentation=https://github.com/heartcode
+After=docker.service nvidia-persistenced.service
+Requires=docker.service
+PartOf=docker.service
+
+[Service]
+Type=simple
+ExecStart=/home/boss/heartcode/gpu-server/scripts/gpu-watchdog.sh --daemon
+Restart=always
+RestartSec=10
+Environment="POLL_INTERVAL=5"
+Environment="MIN_VRAM_MB=100"
+Environment="HEALTH_CHECK_TIMEOUT=3"
+Environment="LOG_FILE=/var/log/gpu-watchdog.log"
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=gpu-watchdog
+
+# Security
+User=root
+Group=docker
+
+[Install]
+WantedBy=multi-user.target

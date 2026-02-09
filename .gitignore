@@ -1,0 +1,32 @@
+# Environment files
+.env
+*.env.local
+
+# Model files (large binaries)
+gpu-server/models/*.gguf
+gpu-server/models/*.bin
+gpu-image-server/models/*.safetensors
+
+# Load test artifacts
+load-tests/.api_key
+load-tests/.auth_token
+load-tests/logs/
+load-tests/*.log
+
+# Docker volumes
+postgres_data/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+.venv/

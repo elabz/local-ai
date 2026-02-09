@@ -1,0 +1,26 @@
+# Grafana Datasource Provisioning
+# GPU Server Prometheus at 192.168.0.145:9090 (LLM inference)
+# GPU Image Server Prometheus at 192.168.0.143:9091 (image generation)
+
+apiVersion: 1
+
+datasources:
+  - name: GPU Server Prometheus
+    type: prometheus
+    access: proxy
+    url: http://192.168.0.145:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: "15s"
+      queryTimeout: "60s"
+
+  - name: Image Server Prometheus
+    type: prometheus
+    access: proxy
+    url: http://192.168.0.143:9091
+    isDefault: false
+    editable: true
+    jsonData:
+      timeInterval: "15s"
+      queryTimeout: "60s"

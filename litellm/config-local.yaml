@@ -1,0 +1,439 @@
+# Local AI - LiteLLM Configuration (Local Development)
+#
+# Connects to GPU servers on LAN at 192.168.0.145 (ASH hardware).
+# Uses PostgreSQL-backed API key management.
+#
+# GPU Server Setup (ASH - 192.168.0.145):
+#   SFW:  ports 8080-8083 (4 GPUs, Stheno-L3.1-8B)
+#   NSFW: ports 8084-8087 (4 GPUs, Lumimaid-v0.2-8B)
+#   Embed: ports 8090-8097 (8 GPUs, nomic-embed-text-v1.5)
+#
+# Model Groups:
+#   - local-ai-chat-sfw: GPUs 1-4 at 192.168.0.145:8080-8083
+#   - local-ai-chat-nsfw: GPUs 5-8 at 192.168.0.145:8084-8087
+#   - local-ai-embed: GPUs 1-8 at 192.168.0.145:8090-8097
+
+model_list:
+  # =============================================================================
+  # SFW MODELS - GPUs 1-4
+  # Request with model: "local-ai-chat-sfw"
+  # =============================================================================
+
+  - model_name: "local-ai-chat-sfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8080/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu1"
+      mode: "chat"
+      model_type: "sfw"
+      gpu_index: 1
+      model_name: "Sao10K/Stheno-L3.1-8B-GGUF"
+
+  - model_name: "local-ai-chat-sfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8081/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu2"
+      mode: "chat"
+      model_type: "sfw"
+      gpu_index: 2
+      model_name: "Sao10K/Stheno-L3.1-8B-GGUF"
+
+  - model_name: "local-ai-chat-sfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8082/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu3"
+      mode: "chat"
+      model_type: "sfw"
+      gpu_index: 3
+      model_name: "Sao10K/Stheno-L3.1-8B-GGUF"
+
+  - model_name: "local-ai-chat-sfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8083/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu4"
+      mode: "chat"
+      model_type: "sfw"
+      gpu_index: 4
+      model_name: "Sao10K/Stheno-L3.1-8B-GGUF"
+
+  # =============================================================================
+  # NSFW MODELS - GPUs 5-8
+  #
+  # RATE LIMITING: NSFW models are limited to 5 concurrent requests max due to
+  # VRAM constraints on P106-100 (6GB). This is a capacity limit at 10 VU concurrency.
+  #
+  # All 4 NSFW GPUs are registered for failover/load distribution, but the router
+  # will respect the max_parallel_requests limit per model_name group.
+  # =============================================================================
+
+  - model_name: "local-ai-chat-nsfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8084/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu5"
+      mode: "chat"
+      model_type: "nsfw"
+      gpu_index: 5
+      model_name: "Lewdiculous/Lumimaid-v0.2-8B-GGUF"
+      rate_limit_group: "nsfw"
+
+  - model_name: "local-ai-chat-nsfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8085/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu6"
+      mode: "chat"
+      model_type: "nsfw"
+      gpu_index: 6
+      model_name: "Lewdiculous/Lumimaid-v0.2-8B-GGUF"
+      rate_limit_group: "nsfw"
+
+  - model_name: "local-ai-chat-nsfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8086/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu7"
+      mode: "chat"
+      model_type: "nsfw"
+      gpu_index: 7
+      model_name: "Lewdiculous/Lumimaid-v0.2-8B-GGUF"
+      rate_limit_group: "nsfw"
+
+  - model_name: "local-ai-chat-nsfw"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8087/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-gpu8"
+      mode: "chat"
+      model_type: "nsfw"
+      gpu_index: 8
+      model_name: "Lewdiculous/Lumimaid-v0.2-8B-GGUF"
+      rate_limit_group: "nsfw"
+
+  # =============================================================================
+  # LEGACY ALIAS - Routes "local-ai-chat" to SFW models for backward compat
+  # =============================================================================
+
+  - model_name: "local-ai-chat"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8080/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-legacy-gpu1"
+      mode: "chat"
+      model_type: "sfw"
+      gpu_index: 1
+
+  - model_name: "local-ai-chat"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8081/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-legacy-gpu2"
+      mode: "chat"
+      model_type: "sfw"
+      gpu_index: 2
+
+  - model_name: "local-ai-chat"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8082/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-legacy-gpu3"
+      mode: "chat"
+      model_type: "sfw"
+      gpu_index: 3
+
+  - model_name: "local-ai-chat"
+    litellm_params:
+      model: "openai/model"
+      api_base: "http://192.168.0.145:8083/v1"
+      api_key: "sk-local"
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: "local-ai-legacy-gpu4"
+      mode: "chat"
+      model_type: "sfw"
+      gpu_index: 4
+
+  # =============================================================================
+  # EMBEDDING MODELS - Load balanced across 8 GPU servers
+  # Each GPU runs both chat model (~5.3GB) + embedding model (~350MB)
+  # =============================================================================
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8090/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed1"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8091/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed2"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8092/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed3"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8093/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed4"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8094/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed5"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8095/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed6"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8096/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed7"
+      mode: "embedding"
+
+  - model_name: "local-ai-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8097/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed8"
+      mode: "embedding"
+
+  # Also register as default text-embedding model for OpenAI compatibility
+  - model_name: "text-embedding-nomic"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8090/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed-alias1"
+      mode: "embedding"
+
+  - model_name: "text-embedding-nomic"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8091/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed-alias2"
+      mode: "embedding"
+
+  - model_name: "text-embedding-nomic"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8092/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed-alias3"
+      mode: "embedding"
+
+  - model_name: "text-embedding-nomic"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8093/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed-alias4"
+      mode: "embedding"
+
+  - model_name: "text-embedding-nomic"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8094/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed-alias5"
+      mode: "embedding"
+
+  - model_name: "text-embedding-nomic"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8095/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed-alias6"
+      mode: "embedding"
+
+  - model_name: "text-embedding-nomic"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8096/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed-alias7"
+      mode: "embedding"
+
+  - model_name: "text-embedding-nomic"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5"
+      api_base: "http://192.168.0.145:8097/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "local-ai-embed-alias8"
+      mode: "embedding"
+
+# Router settings for load balancing
+router_settings:
+  routing_strategy: "simple-shuffle"  # Round-robin distribution across all GPUs
+
+  # Retry settings - fail fast instead of hanging
+  num_retries: 2                # Max 2 retries to different GPUs
+  retry_after: 3                # 3 second delay before retry (allows temp recovery)
+  timeout: 90                   # 90 second timeout per request (matches backend)
+
+  # Unhealthy server detection (more aggressive for NSFW to prevent cascades)
+  allowed_fails: 2              # Mark unhealthy after 2 consecutive failures
+  cooldown_time: 60             # Don't retry unhealthy GPU for 60s (watchdog time)
+
+  # Health check settings
+  enable_health_check: true
+  health_check_interval: 15     # 15 second health check (faster than Docker's 30s)
+
+  # Rate limiting at proxy level (optional Redis-based rate limiting)
+  redis_host: null              # Set if using Redis for distributed rate limiting
+  redis_port: null
+  redis_password: null
+
+# Global rate limits to prevent memory exhaustion
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+
+  # Concurrent request limits (32GB RAM upgrade, 2 slots per GPU)
+  # 8 GPUs × 2 slots = 16 total concurrent requests
+  max_parallel_requests: 16
+  global_max_parallel_requests: 20
+
+  # Request timeout
+  request_timeout: 90
+
+  # Logging
+  json_logs: true
+
+  # CORS
+  allow_credentials: true
+
+# Callbacks for monitoring
+# Langfuse integration for LLM observability
+litellm_settings:
+  success_callback: ["langfuse"]
+  failure_callback: ["langfuse"]
+  set_verbose: false
+  drop_params: true  # Drop unsupported params instead of erroring
+
+# Langfuse configuration
+# Set these environment variables in docker-compose or .env:
+#   LANGFUSE_PUBLIC_KEY=pk-lf-xxx (get from Langfuse UI after setup)
+#   LANGFUSE_SECRET_KEY=sk-lf-xxx (get from Langfuse UI after setup)
+#   LANGFUSE_HOST=http://langfuse-web:3000 (internal docker network)

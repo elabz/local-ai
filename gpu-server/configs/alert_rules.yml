@@ -1,0 +1,106 @@
+groups:
+  - name: hardware_alerts
+    interval: 30s
+    rules:
+      # GPU Temperature Alerts
+      - alert: GPUTemperatureHigh
+        expr: gpu_temperature_celsius > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "GPU {{$labels.gpu_id}} temperature is high"
+          description: "GPU {{$labels.gpu_id}} temperature is {{$value}}°C (threshold: 80°C)"
+      
+      - alert: GPUTemperatureCritical
+        expr: gpu_temperature_celsius > 85
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "GPU {{$labels.gpu_id}} temperature is CRITICAL"
+          description: "GPU {{$labels.gpu_id}} temperature is {{$value}}°C (threshold: 85°C) - IMMEDIATE ACTION REQUIRED"
+      
+      # CPU Temperature Alerts (supports Intel coretemp, AMD k10temp, and generic hwmon)
+      - alert: CPUTemperatureHigh
+        expr: |
+          max by (instance) (
+            node_hwmon_temp_celsius{chip=~".*coretemp.*|.*k10temp.*|.*acpitz.*"}
+          ) > 65
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU temperature is high on {{$labels.instance}}"
+          description: "CPU temperature is {{$value}}°C (threshold: 65°C for 2-core system)"
+
+      - alert: CPUTemperatureCritical
+        expr: |
+          max by (instance) (
+            node_hwmon_temp_celsius{chip=~".*coretemp.*|.*k10temp.*|.*acpitz.*"}
+          ) > 80
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CPU temperature is CRITICAL on {{$labels.instance}}"
+          description: "CPU temperature is {{$value}}°C (threshold: 80°C) - IMMEDIATE ACTION REQUIRED"
+
+      # CPU Load Alert (critical for 2-core system)
+      - alert: CPULoadHigh
+        expr: node_load1 > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU load is high on {{$labels.instance}}"
+          description: "1-minute load average is {{$value}} (threshold: 2.0 for 2-core system)"
+
+      - alert: CPULoadCritical
+        expr: node_load1 > 4
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CPU load is CRITICAL on {{$labels.instance}}"
+          description: "1-minute load average is {{$value}} (threshold: 4.0 for 2-core system) - system may be unresponsive"
+      
+      # GPU Memory Alerts
+      - alert: GPUMemoryHigh
+        expr: (gpu_memory_used_bytes / gpu_memory_total_bytes * 100) > 95
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "GPU {{$labels.gpu_id}} memory usage is high"
+          description: "GPU {{$labels.gpu_id}} memory usage is {{$value}}% (threshold: 95%)"
+      
+      # CPU Usage Alerts
+      - alert: CPUUsageHigh
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage is high on {{$labels.instance}}"
+          description: "CPU usage is {{$value}}% (threshold: 90%)"
+      
+      # Model Offline Alert
+      - alert: ModelOffline
+        expr: model_loaded == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Model is offline on {{$labels.job}}"
+          description: "GPU server {{$labels.job}} has no model loaded"
+      
+      # Inference Latency Alert
+      - alert: InferenceLatencyHigh
+        expr: rate(inference_duration_seconds_sum[5m]) / rate(inference_duration_seconds_count[5m]) > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Inference latency is high on {{$labels.job}}"
+          description: "Average inference latency is {{$value}}s (threshold: 30s)"

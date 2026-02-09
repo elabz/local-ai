@@ -1,0 +1,41 @@
+{
+  "model_name": "Stheno L3.1 8B",
+  "model_file": "stheno-l3.1-8b-q4_k_m.gguf",
+  "description": "Excellent roleplay model based on Llama 3.1 8B",
+  "context_length": 4096,
+  "recommended_settings": {
+    "temperature": 0.8,
+    "top_p": 0.95,
+    "top_k": 40,
+    "repeat_penalty": 1.1,
+    "min_p": 0.05
+  },
+  "prompt_format": "chatml",
+  "stop_tokens": ["<|im_end|>", "<|im_start|>"],
+  "system_prompt_template": "<|im_start|>system\n{system}<|im_end|>",
+  "user_prompt_template": "<|im_start|>user\n{user}<|im_end|>",
+  "assistant_prompt_template": "<|im_start|>assistant\n{assistant}<|im_end|>",
+  "gpu_layers": {
+    "P106-100_6GB": 33,
+    "P104-100_8GB": 33,
+    "RTX_3060_12GB": 33,
+    "RTX_3080_10GB": 33
+  },
+  "quantizations": {
+    "Q4_K_M": {
+      "size_gb": 4.9,
+      "min_vram_gb": 6,
+      "quality": "good"
+    },
+    "Q5_K_M": {
+      "size_gb": 5.7,
+      "min_vram_gb": 7,
+      "quality": "better"
+    },
+    "Q6_K": {
+      "size_gb": 6.6,
+      "min_vram_gb": 8,
+      "quality": "best"
+    }
+  }
+}
