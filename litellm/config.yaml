@@ -200,7 +200,6 @@ router_settings:
 
   # Health check settings
   enable_health_check: true
-  health_check_interval: 15  # Check more frequently (was 30)
 
   # Rate limiting per deployment to prevent GPU overload
   # Each GPU can handle ~2-3 concurrent requests safely
@@ -238,6 +237,9 @@ general_settings:
 
   # CORS
   allow_credentials: true
+
+  # Health check interval (seconds)
+  health_check_interval: 15
 
 # LiteLLM settings
 litellm_settings:

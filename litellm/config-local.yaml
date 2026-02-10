@@ -398,7 +398,6 @@ router_settings:
 
   # Health check settings
   enable_health_check: true
-  health_check_interval: 15     # 15 second health check (faster than Docker's 30s)
 
   # Rate limiting at proxy level (optional Redis-based rate limiting)
   redis_host: null              # Set if using Redis for distributed rate limiting
@@ -423,6 +422,9 @@ general_settings:
 
   # CORS
   allow_credentials: true
+
+  # Health check interval (seconds)
+  health_check_interval: 15
 
 # Callbacks for monitoring
 # Langfuse integration for LLM observability
