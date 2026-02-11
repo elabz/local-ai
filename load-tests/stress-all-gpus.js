@@ -2,8 +2,8 @@
  * k6 Stress Test: All 8 GPUs (SFW + NSFW)
  *
  * Tests both model types to distribute load across all GPUs:
- * - GPUs 1-4: local-ai-chat-sfw
- * - GPUs 5-8: local-ai-chat-nsfw
+ * - GPUs 1-4: heartcode-chat-sfw
+ * - GPUs 5-8: heartcode-chat-nsfw
  *
  * Features:
  * - Pre-test health check of all GPUs
@@ -187,7 +187,7 @@ export function setup() {
 export default function (data) {
   // Alternate between SFW and NSFW models to distribute load
   const useSfw = Math.random() > 0.5;
-  const model = useSfw ? 'local-ai-chat-sfw' : 'local-ai-chat-nsfw';
+  const model = useSfw ? 'heartcode-chat-sfw' : 'heartcode-chat-nsfw';
   const prompt = TEST_PROMPTS[Math.floor(Math.random() * TEST_PROMPTS.length)];
 
   const payload = JSON.stringify({

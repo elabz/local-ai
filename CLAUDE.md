@@ -57,7 +57,7 @@ curl http://localhost:4000/health       # Health check
 # API Key Management
 curl -X POST http://localhost:4000/key/generate \
   -H "Authorization: Bearer $MASTER_KEY" \
-  -d '{"models":["local-ai-chat-sfw"],"key_alias":"test"}'
+  -d '{"models":["heartcode-chat-sfw"],"key_alias":"test"}'
 ```
 
 ### Load Testing
@@ -69,10 +69,10 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 
 ## Model Names
 
-- `local-ai-chat-sfw` - SFW chat (GPUs 1-4, Stheno-L3.1-8B)
-- `local-ai-chat-nsfw` - NSFW chat (GPUs 5-8, Lumimaid-v0.2-8B)
-- `local-ai-chat` - Alias for local-ai-chat-sfw
-- `local-ai-embed` - Embeddings (GPUs 1-8, nomic-embed-text-v1.5)
+- `heartcode-chat-sfw` - SFW chat (GPUs 1-4, Stheno-L3.1-8B)
+- `heartcode-chat-nsfw` - NSFW chat (GPUs 5-8, Lumimaid-v0.2-8B)
+- `heartcode-chat` - Alias for heartcode-chat-sfw
+- `heartcode-embed` - Embeddings (GPUs 1-8, nomic-embed-text-v1.5)
 
 ## Key Configuration
 

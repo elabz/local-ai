@@ -94,13 +94,13 @@ curl -H "Authorization: Bearer sk-O5z4E7s-6NhLDG3ZZbq9tQ" \
 curl -X POST http://localhost:4000/v1/chat/completions \
   -H "Authorization: Bearer sk-O5z4E7s-6NhLDG3ZZbq9tQ" \
   -H "Content-Type: application/json" \
-  -d '{"model": "local-ai-chat-sfw", "messages": [{"role": "user", "content": "Hello"}], "max_tokens": 50}'
+  -d '{"model": "heartcode-chat-sfw", "messages": [{"role": "user", "content": "Hello"}], "max_tokens": 50}'
 
 # Embeddings endpoint
 curl -X POST http://localhost:4000/v1/embeddings \
   -H "Authorization: Bearer sk-O5z4E7s-6NhLDG3ZZbq9tQ" \
   -H "Content-Type: application/json" \
-  -d '{"model": "local-ai-embed", "input": ["test"]}'
+  -d '{"model": "heartcode-embed", "input": ["test"]}'
 ```
 
 ## References

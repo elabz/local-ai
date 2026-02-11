@@ -56,7 +56,7 @@ sleep 30
 curl -X POST http://192.168.0.145:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "local-ai-chat-sfw",
+    "model": "heartcode-chat-sfw",
     "messages": [{"role": "user", "content": "Hello"}],
     "temperature": 0.8
   }' -w '\nTime: %{time_total}s\n'
@@ -244,7 +244,7 @@ for i in $(seq 1 $ITERATIONS); do
     response=$(curl -s -X POST "$API_URL" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "local-ai-chat-sfw",
+        "model": "heartcode-chat-sfw",
         "messages": [{"role": "user", "content": "Write a haiku about AI"}],
         "temperature": 0.8,
         "max_tokens": 50

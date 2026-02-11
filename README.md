@@ -68,7 +68,7 @@ docker compose up -d    # Start LiteLLM + PostgreSQL
 curl -X POST http://192.168.0.152:4000/key/generate \
   -H "Authorization: Bearer $LITELLM_MASTER_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"models": ["local-ai-chat-sfw", "local-ai-chat-nsfw", "local-ai-embed"],
+  -d '{"models": ["heartcode-chat-sfw", "heartcode-chat-nsfw", "heartcode-embed"],
        "key_alias": "my-project"}'
 ```
 
@@ -79,7 +79,7 @@ curl -X POST http://192.168.0.152:4000/key/generate \
 curl http://192.168.0.152:4000/v1/chat/completions \
   -H "Authorization: Bearer sk-your-key" \
   -H "Content-Type: application/json" \
-  -d '{"model": "local-ai-chat-sfw",
+  -d '{"model": "heartcode-chat-sfw",
        "messages": [{"role": "user", "content": "Hello!"}],
        "max_tokens": 256}'
 
@@ -87,7 +87,7 @@ curl http://192.168.0.152:4000/v1/chat/completions \
 curl http://192.168.0.152:4000/v1/embeddings \
   -H "Authorization: Bearer sk-your-key" \
   -H "Content-Type: application/json" \
-  -d '{"model": "local-ai-embed",
+  -d '{"model": "heartcode-embed",
        "input": "Text to embed"}'
 ```
 
@@ -95,10 +95,10 @@ curl http://192.168.0.152:4000/v1/embeddings \
 
 | Model Name | GPUs | Hardware | Description |
 |-----------|------|----------|-------------|
-| `local-ai-chat-sfw` | 1-4 | P106-100 | Stheno-L3.1-8B (SFW chat) |
-| `local-ai-chat-nsfw` | 5-8 | P106-100 | Lumimaid-v0.2-8B (NSFW chat) |
-| `local-ai-chat` | 1-4 | P106-100 | Alias for local-ai-chat-sfw |
-| `local-ai-embed` | 1-8 | P106-100 | nomic-embed-text-v1.5 |
+| `heartcode-chat-sfw` | 1-4 | P106-100 | Stheno-L3.1-8B (SFW chat) |
+| `heartcode-chat-nsfw` | 5-8 | P106-100 | Lumimaid-v0.2-8B (NSFW chat) |
+| `heartcode-chat` | 1-4 | P106-100 | Alias for heartcode-chat-sfw |
+| `heartcode-embed` | 1-8 | P106-100 | nomic-embed-text-v1.5 |
 
 ## API Key Management
 
@@ -108,7 +108,7 @@ LiteLLM uses PostgreSQL-backed virtual keys. Manage via the master key:
 # Create key with model restrictions and rate limits
 curl -X POST http://localhost:4000/key/generate \
   -H "Authorization: Bearer $MASTER_KEY" \
-  -d '{"models": ["local-ai-chat-sfw", "local-ai-embed"],
+  -d '{"models": ["heartcode-chat-sfw", "heartcode-embed"],
        "rpm_limit": 30,
        "key_alias": "project-name"}'
 

@@ -216,7 +216,7 @@ curl http://localhost:4000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sk-local-ai-dev" \
   -d '{
-    "model": "local-ai-chat",
+    "model": "heartcode-chat",
     "messages": [{"role": "user", "content": "Hello!"}],
     "max_tokens": 100
   }'
@@ -365,7 +365,7 @@ gpu-server-9:
 
 ```yaml
 # Add new model entry
-- model_name: "local-ai-chat"
+- model_name: "heartcode-chat"
   litellm_params:
     model: "openai/model"
     api_base: "http://gpu-server-9:8080/v1"

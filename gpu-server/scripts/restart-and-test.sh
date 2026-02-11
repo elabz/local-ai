@@ -165,7 +165,7 @@ for i in $(seq 1 $ITERATIONS); do
     response=$(timeout 60 curl -s -X POST "$API_URL" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "local-ai-chat-sfw",
+        "model": "heartcode-chat-sfw",
         "messages": [{"role": "user", "content": "Write a haiku about AI"}],
         "temperature": 0.8,
         "max_tokens": 50

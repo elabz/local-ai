@@ -32,7 +32,7 @@ curl http://localhost:4000/v1/chat/completions \
     -H "Authorization: Bearer $LITELLM_MASTER_KEY" \
     -H "Content-Type: application/json" \
     -d '{
-        "model": "local-ai-chat-sfw",
+        "model": "heartcode-chat-sfw",
         "messages": [{"role": "user", "content": "Hello!"}],
         "max_tokens": 100
     }'
@@ -50,7 +50,7 @@ curl http://localhost:4000/v1/chat/completions \
 - Connects to GPU servers via LAN IP: `http://192.168.0.145:8080-8087`
 - Connects to embedding servers via LAN IP: `http://192.168.0.145:8090-8097`
 - Uses master key authentication (no custom auth needed for local)
-- Models: `local-ai-chat-sfw` (GPUs 1-4), `local-ai-chat-nsfw` (GPUs 5-8), `local-ai-embed` (embeddings)
+- Models: `heartcode-chat-sfw` (GPUs 1-4), `heartcode-chat-nsfw` (GPUs 5-8), `heartcode-embed` (embeddings)
 - Database: Connects to local MySQL at `host.docker.internal:3306`
 
 **View logs**:
@@ -189,7 +189,7 @@ curl http://localhost:4000/v1/chat/completions \
     -H "Authorization: Bearer hc-sk-your-api-key" \
     -H "Content-Type: application/json" \
     -d '{
-        "model": "local-ai-chat-sfw",
+        "model": "heartcode-chat-sfw",
         "messages": [{"role": "user", "content": "Hello!"}]
     }'
 ```
@@ -210,9 +210,9 @@ curl http://localhost:4000/v1/chat/completions \
 
 | Public API Model | Internal Model | Description |
 |------------------|----------------|-------------|
-| `local-ai-default` | `local-ai-chat-sfw` | Default SFW model |
-| `local-ai-sfw` | `local-ai-chat-sfw` | Explicit SFW model |
-| `local-ai-nsfw` | `local-ai-chat-nsfw` | NSFW (age-verified only) |
+| `heartcode-default` | `heartcode-chat-sfw` | Default SFW model |
+| `heartcode-sfw` | `heartcode-chat-sfw` | Explicit SFW model |
+| `heartcode-nsfw` | `heartcode-chat-nsfw` | NSFW (age-verified only) |
 
 ### Rate Limits
 

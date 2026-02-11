@@ -10,7 +10,7 @@
  * Environment Variables:
  *   API_KEY     - HeartCode API key (hc-sk-...) [required]
  *   API_URL     - LiteLLM URL (default: http://localhost:4000)
- *   MODEL       - Model to use (default: local-ai-chat-sfw)
+ *   MODEL       - Model to use (default: heartcode-chat-sfw)
  */
 
 import http from 'k6/http';
@@ -40,7 +40,7 @@ export const options = {
 
 const API_URL = __ENV.API_URL || 'http://localhost:4000';
 const API_KEY = __ENV.API_KEY || '';
-const MODEL = __ENV.MODEL || 'local-ai-chat-sfw';
+const MODEL = __ENV.MODEL || 'heartcode-chat-sfw';
 
 // Test prompts - varied complexity
 const TEST_PROMPTS = [
