@@ -22,9 +22,6 @@
 
 x-gpu-server-common: &gpu-server-common
   image: local-ai-llama:latest
-  build:
-    context: ..
-    dockerfile: Dockerfile
   restart: unless-stopped
   volumes:
     - ./models:/models:ro
