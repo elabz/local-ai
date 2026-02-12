@@ -26,19 +26,28 @@ RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/lib
 
 # Build with CUDA support for Pascal architecture (compute capability 6.1)
 # P106-100 and P104-100 are based on GP106/GP104 (Pascal)
-# Disable AVX instructions for Celeron processors without AVX support
+# Disable AVX/AMX instructions for Celeron processors without AVX support
+# Uses GGML_ prefix (current naming convention) for CPU feature flags
 RUN LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
     cmake -B build \
     -DGGML_CUDA=ON \
     -DCMAKE_CUDA_ARCHITECTURES="61" \
     -DLLAMA_CURL=ON \
     -DCMAKE_BUILD_TYPE=Release \
-    -DLLAMA_AVX=OFF \
-    -DLLAMA_AVX2=OFF \
-    -DLLAMA_FMA=OFF \
-    -DLLAMA_F16C=OFF \
-    -DLLAMA_AVX512=OFF \
+    -DGGML_NATIVE=OFF \
+    -DGGML_AVX=OFF \
+    -DGGML_AVX2=OFF \
+    -DGGML_AVX512=OFF \
+    -DGGML_AVX512_VBMI=OFF \
+    -DGGML_AVX512_VNNI=OFF \
+    -DGGML_AVX512_BF16=OFF \
+    -DGGML_AMX_TILE=OFF \
+    -DGGML_AMX_INT8=OFF \
+    -DGGML_AMX_BF16=OFF \
+    -DGGML_FMA=OFF \
+    -DGGML_F16C=OFF \
     -DCMAKE_CXX_FLAGS="-march=x86-64" \
+    -DCMAKE_C_FLAGS="-march=x86-64" \
     -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,/usr/local/cuda/lib64/stubs"
 
 RUN LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
