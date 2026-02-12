@@ -1,5 +1,5 @@
 # HeartCode GPU Server - PEA Configuration
-# 8x NVIDIA P104-100 (8GB each), 16GB RAM, 2-core Celeron
+# 8x NVIDIA P104-100 (8GB each), 32GB RAM, 2-core Celeron
 #
 # Layout:
 #   GPU 0-2: SFW Chat (Stheno v3.4 Q5_K_M) + Embeddings (3 instances)
@@ -9,7 +9,7 @@
 # Context: 16K tokens (N_CTX=16384) — uses ~1GB KV cache at q8_0
 # VRAM budget: ~5.7GB model + ~1GB KV + ~0.35GB embed + ~0.55GB overhead = ~7.6GB / 8GB
 #
-# Memory Budget (16GB total):
+# Memory Budget (32GB total):
 #   - 7x chat containers: 2GB each = 14GB max
 #   - 7x embed containers: 768MB each = 5.25GB max
 #   - 1x image container: 4GB max
@@ -417,7 +417,7 @@ services:
       - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     ports:
-      - "9090:9090"
+      - "9099:9090"
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
