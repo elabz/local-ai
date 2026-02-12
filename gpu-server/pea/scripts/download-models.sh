@@ -61,10 +61,10 @@ echo ""
 echo "2/3: NSFW Chat Model (Lumimaid-v0.2-8B)"
 if [ "$FALLBACK_Q4" = true ]; then
   echo "  Using Q4_K_M (fallback mode)"
-  download_hf "NeverSleep/Lumimaid-v0.2-8B-GGUF" "Lumimaid-v0.2-8B-Q4_K_M.gguf" "Lumimaid-v0.2-8B-Q4_K_M.gguf"
+  download_hf "NeverSleep/Lumimaid-v0.2-8B-GGUF" "Lumimaid-v0.2-8B.q4_k_m.gguf" "Lumimaid-v0.2-8B.q4_k_m.gguf"
 else
   echo "  Using Q5_K_M"
-  download_hf "NeverSleep/Lumimaid-v0.2-8B-GGUF" "Lumimaid-v0.2-8B-Q5_K_M.gguf" "Lumimaid-v0.2-8B-Q5_K_M.gguf"
+  download_hf "NeverSleep/Lumimaid-v0.2-8B-GGUF" "Lumimaid-v0.2-8B.q5_k_m.gguf" "Lumimaid-v0.2-8B.q5_k_m.gguf"
 fi
 
 # --- Embedding Model ---
