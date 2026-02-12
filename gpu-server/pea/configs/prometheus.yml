@@ -1,0 +1,64 @@
+# Prometheus configuration for HeartCode PEA GPU monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # GPU Chat Servers (7 instances)
+  - job_name: 'gpu-chat-servers'
+    static_configs:
+      - targets: ['pea-gpu-1:9091']
+        labels:
+          gpu_id: '0'
+          model_type: 'sfw'
+      - targets: ['pea-gpu-2:9091']
+        labels:
+          gpu_id: '1'
+          model_type: 'sfw'
+      - targets: ['pea-gpu-3:9091']
+        labels:
+          gpu_id: '2'
+          model_type: 'sfw'
+      - targets: ['pea-gpu-4:9091']
+        labels:
+          gpu_id: '3'
+          model_type: 'nsfw'
+      - targets: ['pea-gpu-5:9091']
+        labels:
+          gpu_id: '4'
+          model_type: 'nsfw'
+      - targets: ['pea-gpu-6:9091']
+        labels:
+          gpu_id: '5'
+          model_type: 'nsfw'
+      - targets: ['pea-gpu-7:9091']
+        labels:
+          gpu_id: '6'
+          model_type: 'nsfw'
+
+  # Image Server (LocalAI metrics)
+  - job_name: 'image-server'
+    static_configs:
+      - targets: ['pea-image-1:8080']
+        labels:
+          gpu_id: '7'
+          model_type: 'image'
+    metrics_path: '/metrics'
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter for CPU/system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['192.168.0.144:9100']
+        labels:
+          instance: 'pea'
+
+  # DCGM GPU Exporter
+  - job_name: 'dcgm-exporter'
+    static_configs:
+      - targets: ['pea-dcgm-exporter:9400']

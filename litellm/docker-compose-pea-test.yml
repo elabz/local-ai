@@ -1,0 +1,34 @@
+# Local AI - LiteLLM Proxy (PEA Test Configuration)
+#
+# Lightweight LiteLLM setup for testing PEA GPU servers locally.
+# No PostgreSQL needed - uses in-memory storage.
+#
+# Usage:
+#   cd litellm
+#   docker compose -f docker-compose-pea-test.yml up -d
+#   curl http://localhost:4000/health
+#
+# Test endpoints:
+#   curl http://localhost:4000/v1/chat/completions \
+#     -H "Authorization: Bearer sk-pea-test-key" \
+#     -d '{"model":"heartcode-chat-sfw","messages":[{"role":"user","content":"Hi"}]}'
+
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: local-ai-litellm-pea-test
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./config-pea.yaml:/app/config.yaml:ro
+    environment:
+      - LITELLM_MASTER_KEY=sk-pea-test-key
+      - LITELLM_LOG=DEBUG
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

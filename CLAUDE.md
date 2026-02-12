@@ -8,8 +8,11 @@ Local AI is a shared GPU inference infrastructure for local network projects. It
 
 ```
 local-ai/
-├── gpu-server/           # llama.cpp inference (8x P106-100 GPUs on ASH)
-│   ├── docker-compose.yml  # 8 chat + 8 embed servers
+├── gpu-server/           # llama.cpp inference servers
+│   ├── pea/                # PEA config (8x P104-100, primary)
+│   │   ├── docker-compose.yml  # 7 chat + 7 embed + 1 image + monitoring
+│   │   └── scripts/            # setup-pea.sh, download-models.sh
+│   ├── docker-compose.yml  # ASH config (legacy, 8x P106-100)
 │   ├── server.py           # FastAPI wrapper with metrics
 │   ├── Dockerfile          # CUDA build for Pascal GPUs
 │   └── scripts/            # Watchdog, diagnostics, model download
@@ -32,13 +35,24 @@ local-ai/
 
 ## Deployment Topology
 
-- **ASH (192.168.0.145)**: GPU servers - `gpu-server/docker-compose.yml`
+- **PEA (192.168.0.144)**: All GPU servers — 3 SFW + 4 NSFW + 7 embed + 1 image - `gpu-server/pea/docker-compose.yml`
+- **ASH (192.168.0.145)**: Legacy GPU servers - `gpu-server/docker-compose.yml`
 - **Prod (192.168.0.152)**: LiteLLM proxy + monitoring - `litellm/docker-compose.yml`
-- **Image (192.168.0.143)**: Stable Diffusion - `gpu-image-server/docker-compose.yml`
+- **Image (192.168.0.143)**: Legacy Stable Diffusion - `gpu-image-server/docker-compose.yml`
 
 ## Common Commands
 
-### GPU Server (on ASH)
+### GPU Server (on PEA - primary)
+```bash
+cd gpu-server/pea
+docker compose up -d                    # Start all GPU servers
+docker compose ps                       # Check health
+docker compose logs -f pea-gpu-1        # View specific GPU logs
+docker compose restart gpu-server-1     # Restart one server
+./scripts/setup-pea.sh                  # Full deployment from scratch
+```
+
+### GPU Server (on ASH - legacy)
 ```bash
 cd gpu-server
 docker compose up -d                    # Start all GPU servers
@@ -69,10 +83,11 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 
 ## Model Names
 
-- `heartcode-chat-sfw` - SFW chat (GPUs 1-4, Stheno-L3.1-8B)
-- `heartcode-chat-nsfw` - NSFW chat (GPUs 5-8, Lumimaid-v0.2-8B)
+- `heartcode-chat-sfw` - SFW chat (PEA GPUs 0-2, Stheno v3.4 8B Q5_K_M)
+- `heartcode-chat-nsfw` - NSFW chat (PEA GPUs 3-6, Lumimaid v0.2 8B Q5_K_M)
 - `heartcode-chat` - Alias for heartcode-chat-sfw
-- `heartcode-embed` - Embeddings (GPUs 1-8, nomic-embed-text-v1.5)
+- `heartcode-embed` - Embeddings (PEA GPUs 0-6, nomic-embed-text-v1.5)
+- `heartcode-image` - Image generation (PEA GPU 7, Segmind SSD-1B)
 
 ## Key Configuration
 
@@ -90,7 +105,14 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 
 ## Hardware Constraints
 
-- **CPUs**: 2-core Celeron (no AVX) - needs special llama.cpp build flags
+### PEA (primary)
+- **CPUs**: 2-core Celeron 3865U (no AVX) - needs special llama.cpp build flags
+- **GPUs**: 8x P104-100 (8GB VRAM, Pascal architecture, compute 6.1)
+- **RAM**: 16GB
+- **Safe limits**: 35 RPM SFW (3 GPUs), 45 RPM NSFW (4 GPUs)
+
+### ASH (legacy)
+- **CPUs**: 2-core Celeron (no AVX)
 - **GPUs**: 8x P106-100 (6GB VRAM, Pascal architecture)
 - **RAM**: 32GB (upgraded from 16GB)
 - **Safe limits**: 30 RPM confirmed, 45 RPM testing
