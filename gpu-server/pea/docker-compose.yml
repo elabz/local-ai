@@ -440,23 +440,6 @@ services:
       - "9100:9100"
     network_mode: host
 
-  dcgm-exporter:
-    image: nvidia/dcgm-exporter:latest
-    container_name: pea-dcgm-exporter
-    restart: unless-stopped
-    runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-    ports:
-      - "9400:9400"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
 networks:
   gpu-network:
     driver: bridge
