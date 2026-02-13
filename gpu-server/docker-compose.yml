@@ -51,6 +51,7 @@ x-gpu-env-common: &gpu-env-common
   CACHE_REUSE: 256
   CACHE_TYPE_K: q8_0
   CACHE_TYPE_V: q8_0
+  EXTRA_ARGS: "--jinja --reasoning-budget 0"
   PORT: 8080
 
 x-embedding-server-common: &embedding-server-common

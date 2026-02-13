@@ -73,7 +73,7 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 ## Model Names
 
 - `heartcode-chat-sfw` - SFW chat (PEA GPU 1-3, Stheno v3.4 8B Q5_K_M)
-- `heartcode-chat-nsfw` - NSFW chat (PEA GPU 4-7, Lumimaid v0.2 8B Q5_K_M)
+- `heartcode-chat-nsfw` - NSFW chat (PEA GPU 4-7, Josiefied-Qwen3-8B Q5_K_M)
 - `heartcode-chat` - Alias for heartcode-chat-sfw
 - `heartcode-embed` - Embeddings (PEA GPU 1-7, nomic-embed-text-v1.5)
 - `heartcode-image` - Image generation (PEA GPU 8, Segmind SSD-1B)

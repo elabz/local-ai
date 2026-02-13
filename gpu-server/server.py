@@ -51,6 +51,10 @@ def start_llama_server() -> subprocess.Popen:
         "--cache-type-v", settings.cache_type_v,
     ]
 
+    # Append extra args (e.g. --jinja --reasoning-budget 0 for Qwen3)
+    if settings.extra_args:
+        cmd.extend(settings.extra_args.split())
+
     logger.info(f"Starting llama.cpp server: {' '.join(cmd)}")
 
     process = subprocess.Popen(
