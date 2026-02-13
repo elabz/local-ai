@@ -45,7 +45,6 @@ def start_llama_server() -> subprocess.Popen:
         "--threads", str(settings.n_threads),
         "--parallel", str(settings.max_concurrent_requests),
         "--cont-batching",
-        "--flash-attn", "on",
         "--mlock",
         "--cache-reuse", str(settings.cache_reuse),  # Enable prompt caching for faster TTFT
         "--cache-type-k", settings.cache_type_k,  # Quantize KV cache
