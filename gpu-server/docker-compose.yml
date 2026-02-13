@@ -1,18 +1,18 @@
 # HeartCode GPU Server - PEA Configuration
 # 8x NVIDIA P104-100 (8GB each), 32GB RAM, 2-core Celeron
 #
-# Layout:
-#   GPU 0-2: SFW Chat (Stheno v3.4 Q5_K_M) + Embeddings (3 instances)
-#   GPU 3-5: NSFW Chat (Lumimaid v0.2 Q5_K_M) + Embeddings (3 instances)
-#   GPU 6-7: Image generation (Segmind SSD-1B via LocalAI, 2 instances)
+# Layout (1-indexed GPU numbering):
+#   GPU 1-3: SFW Chat (Stheno v3.4 Q5_K_M) + Embeddings
+#   GPU 4-7: NSFW Chat (Lumimaid v0.2 Q5_K_M) + Embeddings
+#   GPU 8:   Image generation (Segmind SSD-1B via LocalAI)
 #
 # Context: 16K tokens (N_CTX=16384) — uses ~1GB KV cache at q8_0
 # VRAM budget: ~5.7GB model + ~1GB KV + ~0.35GB embed + ~0.55GB overhead = ~7.6GB / 8GB
 #
 # Memory Budget (32GB total):
-#   - 6x chat containers: 2GB each = 12GB max
-#   - 6x embed containers: 768MB each = 4.5GB max
-#   - 2x image containers: 4GB each = 8GB max
+#   - 7x chat containers: 2GB each = 14GB max
+#   - 7x embed containers: 768MB each = 5.25GB max
+#   - 1x image container: 4GB max
 #   - Note: mem_limit is per-container max, not reserved. Actual use much lower.
 #   - Swap available for spikes
 #
@@ -90,7 +90,7 @@ x-embedding-server-common: &embedding-server-common
 
 services:
   # =============================================================================
-  # SFW CHAT SERVERS (GPUs 0-2)
+  # SFW CHAT SERVERS (GPU 1-3)
   # =============================================================================
 
   gpu-server-1:
@@ -157,7 +157,7 @@ services:
               capabilities: [gpu]
 
   # =============================================================================
-  # NSFW CHAT SERVERS (GPUs 3-5)
+  # NSFW CHAT SERVERS (GPU 4-7)
   # =============================================================================
 
   gpu-server-4:
@@ -223,8 +223,29 @@ services:
               device_ids: ['5']
               capabilities: [gpu]
 
+  gpu-server-7:
+    <<: *gpu-server-common
+    container_name: pea-gpu-7
+    runtime: nvidia
+    environment:
+      <<: *gpu-env-common
+      NVIDIA_VISIBLE_DEVICES: 6
+      SERVER_ID: gpu-7
+      MODEL_PATH: ${GPU_7_MODEL_PATH:-/models/model.gguf}
+      MODEL_TYPE: ${GPU_7_MODEL_TYPE:-nsfw}
+      MODEL_NAME: ${GPU_7_MODEL_NAME:-unknown}
+    ports:
+      - "8086:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['6']
+              capabilities: [gpu]
+
   # =============================================================================
-  # EMBEDDING SERVERS (GPUs 0-5, co-located with chat servers)
+  # EMBEDDING SERVERS (GPU 1-7, co-located with chat servers)
   # =============================================================================
 
   embedding-server-1:
@@ -323,40 +344,14 @@ services:
               device_ids: ['5']
               capabilities: [gpu]
 
-  # =============================================================================
-  # IMAGE GENERATION SERVERS (GPUs 6-7)
-  # Segmind SSD-1B via LocalAI — 2 instances for parallel image generation
-  # =============================================================================
-
-  image-server-1:
-    image: localai/localai:latest-gpu-nvidia-cuda-12
-    container_name: pea-image-1
-    restart: unless-stopped
+  embedding-server-7:
+    <<: *embedding-server-common
+    container_name: pea-embed-7
     runtime: nvidia
-    entrypoint: ["/config/entrypoint-wrapper.sh"]
     environment:
-      - NVIDIA_VISIBLE_DEVICES=6
-      - DEBUG=true
-      - THREADS=2
-      - MODELS_PATH=/models
-      - IMAGE_PATH=/tmp/generated
-      - SINGLE_ACTIVE_BACKEND=true
-    volumes:
-      - ./models:/models
-      - ./configs:/config:ro
-      - image_cache_1:/tmp/generated
+      NVIDIA_VISIBLE_DEVICES: 6
     ports:
-      - "5100:8080"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 180s
-    networks:
-      - gpu-network
-    mem_limit: 4096m
-    memswap_limit: 6144m
+      - "8096:8090"
     deploy:
       resources:
         reservations:
@@ -365,9 +360,14 @@ services:
               device_ids: ['6']
               capabilities: [gpu]
 
-  image-server-2:
+  # =============================================================================
+  # IMAGE GENERATION SERVER (GPU 8)
+  # Segmind SSD-1B via LocalAI
+  # =============================================================================
+
+  image-server:
     image: localai/localai:latest-gpu-nvidia-cuda-12
-    container_name: pea-image-2
+    container_name: pea-image-1
     restart: unless-stopped
     runtime: nvidia
     entrypoint: ["/config/entrypoint-wrapper.sh"]
@@ -381,9 +381,9 @@ services:
     volumes:
       - ./models:/models
       - ./configs:/config:ro
-      - image_cache_2:/tmp/generated
+      - image_cache:/tmp/generated
     ports:
-      - "5101:8080"
+      - "5100:8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
       interval: 30s
@@ -446,5 +446,4 @@ networks:
 
 volumes:
   prometheus_data:
-  image_cache_1:
-  image_cache_2:
+  image_cache:

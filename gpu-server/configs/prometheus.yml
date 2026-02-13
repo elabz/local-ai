@@ -5,43 +5,44 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  # GPU Chat Servers (7 instances)
+  # GPU Chat Servers (7 instances, GPU 1-7)
   - job_name: 'gpu-chat-servers'
     static_configs:
       - targets: ['pea-gpu-1:9091']
         labels:
-          gpu_id: '0'
+          gpu_id: '1'
           model_type: 'sfw'
       - targets: ['pea-gpu-2:9091']
         labels:
-          gpu_id: '1'
+          gpu_id: '2'
           model_type: 'sfw'
       - targets: ['pea-gpu-3:9091']
         labels:
-          gpu_id: '2'
+          gpu_id: '3'
           model_type: 'sfw'
       - targets: ['pea-gpu-4:9091']
         labels:
-          gpu_id: '3'
+          gpu_id: '4'
           model_type: 'nsfw'
       - targets: ['pea-gpu-5:9091']
         labels:
-          gpu_id: '4'
+          gpu_id: '5'
           model_type: 'nsfw'
       - targets: ['pea-gpu-6:9091']
         labels:
-          gpu_id: '5'
+          gpu_id: '6'
           model_type: 'nsfw'
-  # Image Servers (LocalAI metrics)
-  - job_name: 'image-servers'
+      - targets: ['pea-gpu-7:9091']
+        labels:
+          gpu_id: '7'
+          model_type: 'nsfw'
+
+  # Image Server (LocalAI metrics, GPU 8)
+  - job_name: 'image-server'
     static_configs:
       - targets: ['pea-image-1:8080']
         labels:
-          gpu_id: '6'
-          model_type: 'image'
-      - targets: ['pea-image-2:8080']
-        labels:
-          gpu_id: '7'
+          gpu_id: '8'
           model_type: 'image'
     metrics_path: '/metrics'
 
