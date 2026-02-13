@@ -34,7 +34,7 @@ local-ai/
 
 ## Deployment Topology
 
-- **PEA (192.168.0.144)**: All GPU servers — 3 SFW + 4 NSFW + 7 embed + 1 image - `gpu-server/docker-compose.yml`
+- **PEA (192.168.0.144)**: All GPU servers — 3 SFW + 3 NSFW + 6 embed + 2 image - `gpu-server/docker-compose.yml`
 - **Prod (192.168.0.152)**: LiteLLM proxy + monitoring - `litellm/docker-compose.yml`
 - **Image (192.168.0.143)**: Legacy Stable Diffusion - `gpu-image-server/docker-compose.yml`
 
@@ -73,10 +73,10 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 ## Model Names
 
 - `heartcode-chat-sfw` - SFW chat (PEA GPUs 0-2, Stheno v3.4 8B Q5_K_M)
-- `heartcode-chat-nsfw` - NSFW chat (PEA GPUs 3-6, Lumimaid v0.2 8B Q5_K_M)
+- `heartcode-chat-nsfw` - NSFW chat (PEA GPUs 3-5, Lumimaid v0.2 8B Q5_K_M)
 - `heartcode-chat` - Alias for heartcode-chat-sfw
-- `heartcode-embed` - Embeddings (PEA GPUs 0-6, nomic-embed-text-v1.5)
-- `heartcode-image` - Image generation (PEA GPU 7, Segmind SSD-1B)
+- `heartcode-embed` - Embeddings (PEA GPUs 0-5, nomic-embed-text-v1.5)
+- `heartcode-image` - Image generation (PEA GPUs 6-7, Segmind SSD-1B)
 
 ## Key Configuration
 

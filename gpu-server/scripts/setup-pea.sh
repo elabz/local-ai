@@ -75,18 +75,18 @@ echo ""
 echo "=== Step 5: Starting services ==="
 
 echo "Starting chat servers..."
-docker compose up -d gpu-server-1 gpu-server-2 gpu-server-3 gpu-server-4 gpu-server-5 gpu-server-6 gpu-server-7
+docker compose up -d gpu-server-1 gpu-server-2 gpu-server-3 gpu-server-4 gpu-server-5 gpu-server-6
 echo "Waiting 30s for chat servers to initialize..."
 sleep 30
 
 echo "Starting embedding servers..."
-docker compose up -d embedding-server-1 embedding-server-2 embedding-server-3 embedding-server-4 embedding-server-5 embedding-server-6 embedding-server-7
+docker compose up -d embedding-server-1 embedding-server-2 embedding-server-3 embedding-server-4 embedding-server-5 embedding-server-6
 echo "Waiting 15s for embedding servers to initialize..."
 sleep 15
 
-echo "Starting image server..."
-docker compose up -d image-server
-echo "Waiting 30s for image server to initialize..."
+echo "Starting image servers..."
+docker compose up -d image-server-1 image-server-2
+echo "Waiting 30s for image servers to initialize..."
 sleep 30
 
 echo "Starting monitoring..."
@@ -110,21 +110,22 @@ check_health() {
 }
 
 echo "Chat servers:"
-for i in $(seq 0 6); do
+for i in $(seq 0 5); do
   port=$((8080 + i))
   check_health "GPU $i (chat)" "http://localhost:$port/health"
 done
 
 echo ""
 echo "Embedding servers:"
-for i in $(seq 0 6); do
+for i in $(seq 0 5); do
   port=$((8090 + i))
   check_health "GPU $i (embed)" "http://localhost:$port/health"
 done
 
 echo ""
-echo "Image server:"
-check_health "GPU 7 (image)" "http://localhost:5100/readyz"
+echo "Image servers:"
+check_health "GPU 6 (image)" "http://localhost:5100/readyz"
+check_health "GPU 7 (image)" "http://localhost:5101/readyz"
 
 echo ""
 echo "Monitoring:"

@@ -3,25 +3,23 @@
 # Load-balancing proxy for GPU inference servers.
 # Uses PostgreSQL-backed API key management (native LiteLLM).
 #
-# GPU Servers (ASH - 192.168.0.145):
-#   SFW:  ports 8080-8083 (4 GPUs)
-#   NSFW: ports 8084-8087 (4 GPUs)
-#   Embed: ports 8090-8097 (8 GPUs)
+# GPU Servers (PEA - 192.168.0.144):
+#   SFW:   ports 8080-8082 (3 GPUs, Stheno v3.4 Q5_K_M)
+#   NSFW:  ports 8083-8085 (3 GPUs, Lumimaid v0.2 Q5_K_M)
+#   Embed: ports 8090-8095 (6 GPUs, nomic-embed-text-v1.5)
+#   Image: ports 5100-5101 (2 GPUs, Segmind SSD-1B via LocalAI)
 
 model_list:
   # =============================================================================
-  # SFW MODELS - 8x GPU load balancing
+  # SFW MODELS - 3x GPU load balancing (GPUs 0-2)
   # Public API names: heartcode-default, heartcode-sfw
   # Internal name: heartcode-chat-sfw
-  #
-  # LOCAL TESTING: Points directly to ASH GPU server (192.168.0.145)
-  # CLOUD DEPLOYMENT: Change api_base to http://localhost:808X with SSH tunnels
   # =============================================================================
 
   - model_name: "heartcode-chat-sfw"
     litellm_params:
-      model: "openai/Stheno-L3.1-8B-Q4_K_M.gguf"
-      api_base: "http://192.168.0.145:8080/v1"
+      model: "openai/Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf"
+      api_base: "http://192.168.0.144:8080/v1"
       api_key: "sk-local"
       max_tokens: 512
       temperature: 0.8
@@ -31,8 +29,8 @@ model_list:
 
   - model_name: "heartcode-chat-sfw"
     litellm_params:
-      model: "openai/Stheno-L3.1-8B-Q4_K_M.gguf"
-      api_base: "http://192.168.0.145:8081/v1"
+      model: "openai/Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf"
+      api_base: "http://192.168.0.144:8081/v1"
       api_key: "sk-local"
       max_tokens: 512
       temperature: 0.8
@@ -42,8 +40,8 @@ model_list:
 
   - model_name: "heartcode-chat-sfw"
     litellm_params:
-      model: "openai/Stheno-L3.1-8B-Q4_K_M.gguf"
-      api_base: "http://192.168.0.145:8082/v1"
+      model: "openai/Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf"
+      api_base: "http://192.168.0.144:8082/v1"
       api_key: "sk-local"
       max_tokens: 512
       temperature: 0.8
@@ -51,10 +49,16 @@ model_list:
       id: "heartcode-gpu3"
       mode: "chat"
 
-  - model_name: "heartcode-chat-sfw"
+  # =============================================================================
+  # NSFW MODELS - 3x GPU load balancing (GPUs 3-5)
+  # Public API name: heartcode-nsfw
+  # Internal name: heartcode-chat-nsfw
+  # =============================================================================
+
+  - model_name: "heartcode-chat-nsfw"
     litellm_params:
-      model: "openai/Stheno-L3.1-8B-Q4_K_M.gguf"
-      api_base: "http://192.168.0.145:8083/v1"
+      model: "openai/Lumimaid-v0.2-8B.q5_k_m.gguf"
+      api_base: "http://192.168.0.144:8083/v1"
       api_key: "sk-local"
       max_tokens: 512
       temperature: 0.8
@@ -62,16 +66,10 @@ model_list:
       id: "heartcode-gpu4"
       mode: "chat"
 
-  # =============================================================================
-  # NSFW MODELS - 4x GPU (GPUs 5-8)
-  # Public API name: heartcode-nsfw
-  # Internal name: heartcode-chat-nsfw
-  # =============================================================================
-
   - model_name: "heartcode-chat-nsfw"
     litellm_params:
-      model: "openai/Lumimaid-v0.2-8B-Q4_K_M.gguf"
-      api_base: "http://192.168.0.145:8084/v1"
+      model: "openai/Lumimaid-v0.2-8B.q5_k_m.gguf"
+      api_base: "http://192.168.0.144:8084/v1"
       api_key: "sk-local"
       max_tokens: 512
       temperature: 0.8
@@ -81,8 +79,8 @@ model_list:
 
   - model_name: "heartcode-chat-nsfw"
     litellm_params:
-      model: "openai/Lumimaid-v0.2-8B-Q4_K_M.gguf"
-      api_base: "http://192.168.0.145:8085/v1"
+      model: "openai/Lumimaid-v0.2-8B.q5_k_m.gguf"
+      api_base: "http://192.168.0.144:8085/v1"
       api_key: "sk-local"
       max_tokens: 512
       temperature: 0.8
@@ -90,37 +88,15 @@ model_list:
       id: "heartcode-gpu6"
       mode: "chat"
 
-  - model_name: "heartcode-chat-nsfw"
-    litellm_params:
-      model: "openai/Lumimaid-v0.2-8B-Q4_K_M.gguf"
-      api_base: "http://192.168.0.145:8086/v1"
-      api_key: "sk-local"
-      max_tokens: 512
-      temperature: 0.8
-    model_info:
-      id: "heartcode-gpu7"
-      mode: "chat"
-
-  - model_name: "heartcode-chat-nsfw"
-    litellm_params:
-      model: "openai/Lumimaid-v0.2-8B-Q4_K_M.gguf"
-      api_base: "http://192.168.0.145:8087/v1"
-      api_key: "sk-local"
-      max_tokens: 512
-      temperature: 0.8
-    model_info:
-      id: "heartcode-gpu8"
-      mode: "chat"
-
   # =============================================================================
-  # EMBEDDING MODELS - 8x GPU load balancing
+  # EMBEDDING MODELS - 6x GPU load balancing (GPUs 0-5)
   # For RAG/semantic search
   # =============================================================================
 
   - model_name: "heartcode-embed"
     litellm_params:
       model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.145:8090/v1"
+      api_base: "http://192.168.0.144:8090/v1"
       api_key: "sk-local"
       extra_body:
         encoding_format: "float"
@@ -131,7 +107,7 @@ model_list:
   - model_name: "heartcode-embed"
     litellm_params:
       model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.145:8091/v1"
+      api_base: "http://192.168.0.144:8091/v1"
       api_key: "sk-local"
       extra_body:
         encoding_format: "float"
@@ -142,7 +118,7 @@ model_list:
   - model_name: "heartcode-embed"
     litellm_params:
       model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.145:8092/v1"
+      api_base: "http://192.168.0.144:8092/v1"
       api_key: "sk-local"
       extra_body:
         encoding_format: "float"
@@ -153,7 +129,7 @@ model_list:
   - model_name: "heartcode-embed"
     litellm_params:
       model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.145:8093/v1"
+      api_base: "http://192.168.0.144:8093/v1"
       api_key: "sk-local"
       extra_body:
         encoding_format: "float"
@@ -164,7 +140,7 @@ model_list:
   - model_name: "heartcode-embed"
     litellm_params:
       model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.145:8094/v1"
+      api_base: "http://192.168.0.144:8094/v1"
       api_key: "sk-local"
       extra_body:
         encoding_format: "float"
@@ -175,34 +151,12 @@ model_list:
   - model_name: "heartcode-embed"
     litellm_params:
       model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.145:8095/v1"
+      api_base: "http://192.168.0.144:8095/v1"
       api_key: "sk-local"
       extra_body:
         encoding_format: "float"
     model_info:
       id: "heartcode-embed6"
-      mode: "embedding"
-
-  - model_name: "heartcode-embed"
-    litellm_params:
-      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.145:8096/v1"
-      api_key: "sk-local"
-      extra_body:
-        encoding_format: "float"
-    model_info:
-      id: "heartcode-embed7"
-      mode: "embedding"
-
-  - model_name: "heartcode-embed"
-    litellm_params:
-      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.145:8097/v1"
-      api_key: "sk-local"
-      extra_body:
-        encoding_format: "float"
-    model_info:
-      id: "heartcode-embed8"
       mode: "embedding"
 
 # Router settings for load balancing
@@ -218,22 +172,20 @@ router_settings:
   enable_health_check: true
 
   # Rate limiting per deployment to prevent GPU overload
-  # Each GPU can handle ~2-3 concurrent requests safely
-  # 30 rpm tested safe with 10 VUs for 30 min
-  # 45 rpm testing with 500-token prompts
   model_rate_limits:
     - model_name: "heartcode-chat-sfw"
       tpm: 50000
-      rpm: 45
+      rpm: 35
     - model_name: "heartcode-chat-nsfw"
       tpm: 50000
-      rpm: 45
+      rpm: 35
 
   # Model aliases - map public API names to internal model names
   model_group_alias:
     "heartcode-default": "heartcode-chat-sfw"
     "heartcode-sfw": "heartcode-chat-sfw"
     "heartcode-nsfw": "heartcode-chat-nsfw"
+    "heartcode-chat": "heartcode-chat-sfw"
 
 # General settings - PostgreSQL-backed API key management
 general_settings:
@@ -241,9 +193,9 @@ general_settings:
   database_url: os.environ/DATABASE_URL
 
   # Concurrency limits
-  # 8 GPUs * 2 concurrent requests each = 16 max safe
-  max_parallel_requests: 8
-  global_max_parallel_requests: 16
+  # 6 chat GPUs * 2 concurrent requests each = 12 max safe
+  max_parallel_requests: 6
+  global_max_parallel_requests: 12
 
   # Request timeout
   request_timeout: 90
