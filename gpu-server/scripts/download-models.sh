@@ -61,10 +61,10 @@ echo ""
 echo "2/3: NSFW Chat Model (Josiefied-Qwen3-8B-abliterated)"
 if [ "$FALLBACK_Q4" = true ]; then
   echo "  Using Q4_K_M (fallback mode)"
-  download_hf "Mungert/Josiefied-Qwen3-8B-abliterated-v1-GGUF" "Josiefied-Qwen3-8B-abliterated-v1-Q4_K_M.gguf" "Josiefied-Qwen3-8B-abliterated-v1-Q4_K_M.gguf"
+  download_hf "Mungert/Josiefied-Qwen3-8B-abliterated-v1-GGUF" "Josiefied-Qwen3-8B-abliterated-v1-q4_k_m.gguf" "Josiefied-Qwen3-8B-abliterated-v1-q4_k_m.gguf"
 else
   echo "  Using Q5_K_M"
-  download_hf "Mungert/Josiefied-Qwen3-8B-abliterated-v1-GGUF" "Josiefied-Qwen3-8B-abliterated-v1-Q5_K_M.gguf" "Josiefied-Qwen3-8B-abliterated-v1-Q5_K_M.gguf"
+  download_hf "Mungert/Josiefied-Qwen3-8B-abliterated-v1-GGUF" "Josiefied-Qwen3-8B-abliterated-v1-q5_k_m.gguf" "Josiefied-Qwen3-8B-abliterated-v1-q5_k_m.gguf"
 fi
 
 # --- Embedding Model ---
