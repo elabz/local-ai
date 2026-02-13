@@ -62,7 +62,7 @@ def start_llama_server() -> subprocess.Popen:
     return process
 
 
-async def wait_for_llama_server(client: LlamaClient, timeout: int = 120) -> bool:
+async def wait_for_llama_server(client: LlamaClient, timeout: int = 300) -> bool:
     """Wait for llama.cpp server to be ready."""
     import httpx
 
