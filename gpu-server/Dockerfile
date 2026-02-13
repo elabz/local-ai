@@ -35,6 +35,8 @@ RUN LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
     -DLLAMA_CURL=ON \
     -DCMAKE_BUILD_TYPE=Release \
     -DGGML_NATIVE=OFF \
+    -DCMAKE_CXX_FLAGS="-march=x86-64" \
+    -DCMAKE_C_FLAGS="-march=x86-64" \
     -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,/usr/local/cuda/lib64/stubs"
 
 RUN LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
