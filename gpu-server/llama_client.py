@@ -1,6 +1,5 @@
 """Client for communicating with llama.cpp server."""
 
-import asyncio
 import logging
 from typing import AsyncGenerator, Optional, List, Dict, Any
 
@@ -126,6 +125,10 @@ class LlamaClient:
                         except Exception as e:
                             logger.warning(f"Failed to parse chunk: {e}")
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+    )
     async def chat_completion(
         self,
         messages: List[Dict[str, str]],
@@ -135,110 +138,70 @@ class LlamaClient:
         stream: bool = False,
     ) -> Dict[str, Any]:
         """
-        OpenAI-compatible chat completion.
-        Converts messages to llama.cpp prompt format.
+        Proxy chat completion to llama.cpp's native /v1/chat/completions.
+        llama-server handles chat template conversion via --jinja.
         """
-        # Convert chat messages to prompt
-        prompt = self._messages_to_prompt(messages)
+        payload = {
+            "messages": messages,
+            "max_tokens": max_tokens or settings.default_max_tokens,
+            "temperature": temperature or settings.default_temperature,
+            "top_p": top_p or settings.default_top_p,
+            "stream": False,
+        }
 
-        if stream:
-            # Return generator for streaming
-            return self.completion_stream(
-                prompt=prompt,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                top_p=top_p,
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            response = await client.post(
+                f"{self.base_url}/v1/chat/completions",
+                json=payload,
             )
-        else:
-            result = await self.completion(
-                prompt=prompt,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                top_p=top_p,
-            )
+            response.raise_for_status()
+            return response.json()
 
-            # Convert to OpenAI format
-            return {
-                "id": f"chatcmpl-{settings.server_id}",
-                "object": "chat.completion",
-                "model": settings.model_path.split("/")[-1],
-                "choices": [
-                    {
-                        "index": 0,
-                        "message": {
-                            "role": "assistant",
-                            "content": result.get("content", ""),
-                        },
-                        "finish_reason": "stop" if result.get("stop", False) else "length",
-                    }
-                ],
-                "usage": {
-                    "prompt_tokens": result.get("tokens_evaluated", 0),
-                    "completion_tokens": result.get("tokens_predicted", 0),
-                    "total_tokens": result.get("tokens_evaluated", 0) + result.get("tokens_predicted", 0),
-                },
-            }
-
-    def _messages_to_prompt(self, messages: List[Dict[str, str]]) -> str:
+    async def chat_completion_stream(
+        self,
+        messages: List[Dict[str, str]],
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        top_p: Optional[float] = None,
+    ) -> AsyncGenerator[str, None]:
         """
-        Convert chat messages to prompt format based on configured template.
-        Dispatches to the appropriate template method.
+        Stream chat completion via llama.cpp's native /v1/chat/completions.
+        Yields content deltas as strings.
         """
-        template = settings.chat_template.lower()
-        
-        if template == "llama3":
-            return self._llama3_template(messages)
-        elif template == "chatml":
-            return self._chatml_template(messages)
-        else:
-            logger.warning(f"Unknown chat template \"{template}\", defaulting to llama3")
-            return self._llama3_template(messages)
+        import orjson
 
-    def _llama3_template(self, messages: List[Dict[str, str]]) -> str:
-        """
-        Llama 3 chat template format.
-        Reference: https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
-        """
-        prompt_parts = ["<|begin_of_text|>"]
+        payload = {
+            "messages": messages,
+            "max_tokens": max_tokens or settings.default_max_tokens,
+            "temperature": temperature or settings.default_temperature,
+            "top_p": top_p or settings.default_top_p,
+            "stream": True,
+        }
 
-        for message in messages:
-            role = message.get("role", "user")
-            content = message.get("content", "")
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with client.stream(
+                "POST",
+                f"{self.base_url}/v1/chat/completions",
+                json=payload,
+            ) as response:
+                if response.status_code != 200:
+                    error_text = await response.aread()
+                    logger.error(f"Chat stream request failed: {response.status_code} - {error_text.decode()}")
+                response.raise_for_status()
 
-            if role == "system":
-                prompt_parts.append(f"<|start_header_id|>system<|end_header_id|>\n\n{content}<|eot_id|>")
-            elif role == "user":
-                prompt_parts.append(f"<|start_header_id|>user<|end_header_id|>\n\n{content}<|eot_id|>")
-            elif role == "assistant":
-                prompt_parts.append(f"<|start_header_id|>assistant<|end_header_id|>\n\n{content}<|eot_id|>")
-
-        # Add assistant prefix for generation
-        prompt_parts.append("<|start_header_id|>assistant<|end_header_id|>\n\n")
-
-        return "".join(prompt_parts)
-
-    def _chatml_template(self, messages: List[Dict[str, str]]) -> str:
-        """
-        ChatML format (used by many models like Mistral, etc.)
-        Reference: https://github.com/openai/openai-python/blob/main/chatml.md
-        """
-        prompt_parts = []
-
-        for message in messages:
-            role = message.get("role", "user")
-            content = message.get("content", "")
-
-            if role == "system":
-                prompt_parts.append(f"<|im_start|>system\\n{content}<|im_end|>")
-            elif role == "user":
-                prompt_parts.append(f"<|im_start|>user\\n{content}<|im_end|>")
-            elif role == "assistant":
-                prompt_parts.append(f"<|im_start|>assistant\\n{content}<|im_end|>")
-
-        # Add assistant prefix for generation
-        prompt_parts.append("<|im_start|>assistant\\n")
-
-        return "\\n".join(prompt_parts)
+                async for line in response.aiter_lines():
+                    if line.startswith("data: "):
+                        data = line[6:]
+                        if data == "[DONE]":
+                            break
+                        try:
+                            chunk = orjson.loads(data)
+                            delta = chunk.get("choices", [{}])[0].get("delta", {})
+                            content = delta.get("content", "")
+                            if content:
+                                yield content
+                        except Exception as e:
+                            logger.warning(f"Failed to parse chat stream chunk: {e}")
 
     async def tokenize(self, text: str) -> Dict[str, Any]:
         """Tokenize text and return token count."""

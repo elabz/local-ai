@@ -215,14 +215,12 @@ async def _stream_completion(llama_client, body: CompletionRequest):
 
 
 async def _stream_chat_completion(llama_client, messages: list, body: ChatCompletionRequest):
-    """Stream chat completion responses."""
+    """Stream chat completion responses via llama.cpp native chat API."""
     import orjson
 
     try:
-        prompt = llama_client._messages_to_prompt(messages)
-
-        async for token in llama_client.completion_stream(
-            prompt=prompt,
+        async for token in llama_client.chat_completion_stream(
+            messages=messages,
             max_tokens=body.max_tokens,
             temperature=body.temperature,
             top_p=body.top_p,
