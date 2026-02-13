@@ -8,14 +8,13 @@ Local AI is a shared GPU inference infrastructure for local network projects. It
 
 ```
 local-ai/
-├── gpu-server/           # llama.cpp inference servers
-│   ├── pea/                # PEA config (8x P104-100, primary)
-│   │   ├── docker-compose.yml  # 7 chat + 7 embed + 1 image + monitoring
-│   │   └── scripts/            # setup-pea.sh, download-models.sh
-│   ├── docker-compose.yml  # ASH config (legacy, 8x P106-100)
+├── gpu-server/           # llama.cpp inference servers (PEA - primary)
+│   ├── docker-compose.yml  # 7 chat + 7 embed + 1 image + monitoring
 │   ├── server.py           # FastAPI wrapper with metrics
 │   ├── Dockerfile          # CUDA build for Pascal GPUs
-│   └── scripts/            # Watchdog, diagnostics, model download
+│   ├── configs/            # prometheus.yml, entrypoint-wrapper.sh, etc.
+│   ├── scripts/            # setup-pea.sh, download-models.sh, watchdog, diagnostics
+│   └── models/             # .gitkeep + heartcode-image.yaml (GGUF files excluded)
 ├── litellm/              # LiteLLM proxy + PostgreSQL API key management
 │   ├── docker-compose.yml  # LiteLLM + PostgreSQL
 │   ├── config.yaml         # Production config (model routing, rate limits)
@@ -35,30 +34,20 @@ local-ai/
 
 ## Deployment Topology
 
-- **PEA (192.168.0.144)**: All GPU servers — 3 SFW + 4 NSFW + 7 embed + 1 image - `gpu-server/pea/docker-compose.yml`
-- **ASH (192.168.0.145)**: Legacy GPU servers - `gpu-server/docker-compose.yml`
+- **PEA (192.168.0.144)**: All GPU servers — 3 SFW + 4 NSFW + 7 embed + 1 image - `gpu-server/docker-compose.yml`
 - **Prod (192.168.0.152)**: LiteLLM proxy + monitoring - `litellm/docker-compose.yml`
 - **Image (192.168.0.143)**: Legacy Stable Diffusion - `gpu-image-server/docker-compose.yml`
 
 ## Common Commands
 
-### GPU Server (on PEA - primary)
+### GPU Server (on PEA)
 ```bash
-cd gpu-server/pea
+cd gpu-server
 docker compose up -d                    # Start all GPU servers
 docker compose ps                       # Check health
 docker compose logs -f pea-gpu-1        # View specific GPU logs
 docker compose restart gpu-server-1     # Restart one server
 ./scripts/setup-pea.sh                  # Full deployment from scratch
-```
-
-### GPU Server (on ASH - legacy)
-```bash
-cd gpu-server
-docker compose up -d                    # Start all GPU servers
-docker compose ps                       # Check health
-docker compose logs -f gpu-sfw-1        # View specific GPU logs
-docker compose restart gpu-sfw-1        # Restart one server
 ```
 
 ### LiteLLM Proxy (on Prod)
@@ -98,8 +87,8 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 - Max 8-16 parallel requests (depends on config)
 
 ### GPU Server Config (`gpu-server/docker-compose.yml`)
-- Memory limit: 3072m per chat server
-- N_GPU_LAYERS=33, N_BATCH=128, N_UBATCH=64
+- Memory limit: 2048m per chat server
+- N_GPU_LAYERS=33, N_CTX=16384, N_BATCH=128, N_UBATCH=64
 - KV cache: q8_0 quantization
 - Power limit: 90W per GPU (nvidia-power-limit.service)
 
@@ -108,11 +97,5 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 ### PEA (primary)
 - **CPUs**: 2-core Celeron 3865U (no AVX) - needs special llama.cpp build flags
 - **GPUs**: 8x P104-100 (8GB VRAM, Pascal architecture, compute 6.1)
-- **RAM**: 16GB
+- **RAM**: 32GB
 - **Safe limits**: 35 RPM SFW (3 GPUs), 45 RPM NSFW (4 GPUs)
-
-### ASH (legacy)
-- **CPUs**: 2-core Celeron (no AVX)
-- **GPUs**: 8x P106-100 (6GB VRAM, Pascal architecture)
-- **RAM**: 32GB (upgraded from 16GB)
-- **Safe limits**: 30 RPM confirmed, 45 RPM testing

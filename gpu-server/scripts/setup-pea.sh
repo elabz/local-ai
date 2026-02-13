@@ -68,7 +68,7 @@ bash "$SCRIPT_DIR/download-models.sh" $DOWNLOAD_ARGS
 echo ""
 echo "=== Step 4: Building Docker image ==="
 cd "$PEA_DIR"
-docker compose build
+docker build -t local-ai-llama:latest .
 
 # --- Step 5: Start services in stages ---
 echo ""
@@ -90,7 +90,7 @@ echo "Waiting 30s for image server to initialize..."
 sleep 30
 
 echo "Starting monitoring..."
-docker compose up -d prometheus node-exporter dcgm-exporter
+docker compose up -d prometheus node-exporter
 
 # --- Step 6: Health checks ---
 echo ""
@@ -128,9 +128,8 @@ check_health "GPU 7 (image)" "http://localhost:5100/readyz"
 
 echo ""
 echo "Monitoring:"
-check_health "Prometheus" "http://localhost:9090/-/ready"
+check_health "Prometheus" "http://localhost:9099/-/ready"
 check_health "Node Exporter" "http://localhost:9100/metrics"
-check_health "DCGM Exporter" "http://localhost:9400/metrics"
 
 # --- Summary ---
 echo ""

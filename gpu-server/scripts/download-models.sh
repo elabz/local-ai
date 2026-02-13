@@ -1,6 +1,6 @@
 #!/bin/bash
 # Download all models for HeartCode PEA GPU server
-# Run from gpu-server/pea/ directory
+# Run from gpu-server/ directory
 set -euo pipefail
 
 MODELS_DIR="$(cd "$(dirname "$0")/.." && pwd)/models"
