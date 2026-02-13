@@ -46,8 +46,9 @@ RUN LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
     -DGGML_AMX_BF16=OFF \
     -DGGML_FMA=OFF \
     -DGGML_F16C=OFF \
-    -DCMAKE_CXX_FLAGS="-march=x86-64" \
-    -DCMAKE_C_FLAGS="-march=x86-64" \
+    -DGGML_BMI2=OFF \
+    -DCMAKE_CXX_FLAGS="-march=x86-64 -mno-bmi2" \
+    -DCMAKE_C_FLAGS="-march=x86-64 -mno-bmi2" \
     -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,/usr/local/cuda/lib64/stubs"
 
 RUN LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
