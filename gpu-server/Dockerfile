@@ -26,17 +26,28 @@ RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/lib
 
 # Build with CUDA support for Pascal architecture (compute capability 6.1)
 # P106-100 and P104-100 are based on GP106/GP104 (Pascal)
-# CPU backend disabled — Celeron 3865U too slow and lacks AVX/BMI2
+# Celeron 3865U: has SSE4.2 but no AVX, no BMI2 — use x86-64 baseline
 RUN LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
     cmake -B build \
     -DGGML_CUDA=ON \
-    -DGGML_CPU=OFF \
     -DCMAKE_CUDA_ARCHITECTURES="61" \
     -DLLAMA_CURL=ON \
     -DCMAKE_BUILD_TYPE=Release \
     -DGGML_NATIVE=OFF \
-    -DCMAKE_CXX_FLAGS="-march=x86-64" \
-    -DCMAKE_C_FLAGS="-march=x86-64" \
+    -DGGML_AVX=OFF \
+    -DGGML_AVX2=OFF \
+    -DGGML_AVX512=OFF \
+    -DGGML_AVX512_VBMI=OFF \
+    -DGGML_AVX512_VNNI=OFF \
+    -DGGML_AVX512_BF16=OFF \
+    -DGGML_AMX_TILE=OFF \
+    -DGGML_AMX_INT8=OFF \
+    -DGGML_AMX_BF16=OFF \
+    -DGGML_FMA=OFF \
+    -DGGML_F16C=OFF \
+    -DGGML_BMI2=OFF \
+    -DCMAKE_CXX_FLAGS="-march=x86-64 -mno-bmi2" \
+    -DCMAKE_C_FLAGS="-march=x86-64 -mno-bmi2" \
     -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,/usr/local/cuda/lib64/stubs"
 
 RUN LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
