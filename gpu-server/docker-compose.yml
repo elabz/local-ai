@@ -367,7 +367,7 @@ services:
   # =============================================================================
 
   image-server:
-    image: localai/localai:latest-aio-gpu-nvidia-cuda-12
+    image: localai/localai:latest-gpu-nvidia-cuda-12
     container_name: pea-image-1
     restart: unless-stopped
     runtime: nvidia
@@ -379,10 +379,12 @@ services:
       - MODELS_PATH=/models
       - IMAGE_PATH=/tmp/generated
       - SINGLE_ACTIVE_BACKEND=true
+      - BACKENDS_PATH=/backends
     volumes:
       - ./models:/models
       - ./configs:/config:ro
       - image_cache:/tmp/generated
+      - image_backends:/backends
     ports:
       - "5100:8080"
     healthcheck:
@@ -448,3 +450,4 @@ networks:
 volumes:
   prometheus_data:
   image_cache:
+  image_backends:
