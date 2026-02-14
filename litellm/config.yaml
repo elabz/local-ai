@@ -181,6 +181,19 @@ model_list:
       id: "heartcode-embed7"
       mode: "embedding"
 
+  # =============================================================================
+  # IMAGE MODEL - GPU 8 (Segmind SSD-1B via LocalAI)
+  # =============================================================================
+
+  - model_name: "heartcode-image"
+    litellm_params:
+      model: "openai/heartcode-image"
+      api_base: "http://192.168.0.144:5100/v1"
+      api_key: "sk-local"
+    model_info:
+      id: "heartcode-image"
+      mode: "image_generation"
+
 # Router settings for load balancing
 router_settings:
   routing_strategy: "least-busy"
