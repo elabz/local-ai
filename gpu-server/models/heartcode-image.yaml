@@ -1,8 +1,8 @@
 # Segmind SSD-1B - SDXL Distilled for fast image generation
-# Optimized for Pascal GPUs at 512x512
+# Optimized for Pascal GPUs (8GB VRAM) at 512x512
 name: heartcode-image
 parameters:
-  model: segmind-ssd-1b.safetensors
+  model: segmind/SSD-1B
 backend: diffusers
 step: 20
 f16: true
@@ -11,8 +11,3 @@ diffusers:
   pipeline_type: StableDiffusionXLPipeline
   cuda: true
   scheduler_type: k_dpmpp_2m
-
-# Auto-download model from HuggingFace on first request
-download_files:
-  - filename: segmind-ssd-1b.safetensors
-    uri: huggingface://segmind/SSD-1B/SSD-1B.safetensors
