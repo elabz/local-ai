@@ -24,7 +24,7 @@ echo ""
 # Check for huggingface-cli
 if ! command -v huggingface-cli &> /dev/null; then
   echo "Installing huggingface-hub CLI..."
-  pip3 install -q huggingface-hub
+  python3 -m pip install -q huggingface-hub
 fi
 
 download_hf() {
