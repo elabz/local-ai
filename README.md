@@ -45,7 +45,7 @@ Shared GPU inference infrastructure for local network projects. Provides OpenAI-
 | API Name | Type | GPUs | Model | Quantization |
 |----------|------|------|-------|--------------|
 | `heartcode-chat-sfw` | Chat | 1-3 (3x P104-100) | Llama-3.1-8B-Stheno-v3.4 | Q5_K_M |
-| `heartcode-chat-nsfw` | Chat | 4-7 (4x P104-100) | Josiefied-Qwen3-8B-abliterated-v1 | Q5_K_M |
+| `heartcode-chat-nsfw` | Chat | 4-7 (4x P104-100) | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M |
 | `heartcode-embed` | Embedding | 1-7 (7x P104-100) | nomic-embed-text-v1.5 | Q8_0 |
 | `heartcode-image` | Image | 8 (1x P104-100) | Segmind SSD-1B (SDXL distilled) | FP16 |
 

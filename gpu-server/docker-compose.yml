@@ -3,7 +3,7 @@
 #
 # Layout (1-indexed GPU numbering):
 #   GPU 1-3: SFW Chat (Stheno v3.4 Q5_K_M) + Embeddings
-#   GPU 4-7: NSFW Chat (Lumimaid v0.2 Q5_K_M) + Embeddings
+#   GPU 4-7: NSFW Chat (Lumimaid v0.2 8B Q5_K_M) + Embeddings
 #   GPU 8:   Image generation (Segmind SSD-1B via LocalAI)
 #
 # Context: 16K tokens (N_CTX=16384) — uses ~1GB KV cache at q8_0
@@ -51,7 +51,7 @@ x-gpu-env-common: &gpu-env-common
   CACHE_REUSE: 256
   CACHE_TYPE_K: q8_0
   CACHE_TYPE_V: q8_0
-  EXTRA_ARGS: "--jinja --reasoning-budget 0"
+  EXTRA_ARGS: "--jinja"
   PORT: 8080
 
 x-embedding-server-common: &embedding-server-common

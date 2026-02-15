@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     # llama.cpp server settings
     llama_server_host: str = Field(default="127.0.0.1")
     llama_server_port: int = Field(default=8081)
-    extra_args: str = Field(default="")  # Extra llama-server args, e.g. "--jinja --reasoning-budget 0"
+    extra_args: str = Field(default="")  # Extra llama-server args, e.g. "--jinja"
 
     # Inference defaults
     default_temperature: float = Field(default=0.8)

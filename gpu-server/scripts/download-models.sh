@@ -58,13 +58,13 @@ fi
 
 # --- NSFW Chat Model ---
 echo ""
-echo "2/3: NSFW Chat Model (Josiefied-Qwen3-8B-abliterated)"
+echo "2/3: NSFW Chat Model (Lumimaid v0.2 8B)"
 if [ "$FALLBACK_Q4" = true ]; then
   echo "  Using Q4_K_M (fallback mode)"
-  download_hf "Mungert/Josiefied-Qwen3-8B-abliterated-v1-GGUF" "Josiefied-Qwen3-8B-abliterated-v1-q4_k_m.gguf" "Josiefied-Qwen3-8B-abliterated-v1-q4_k_m.gguf"
+  download_hf "Lewdiculous/Lumimaid-v0.2-8B-GGUF-IQ-Imatrix" "Lumimaid-v0.2-8B-Q4_K_M-imat.gguf" "Lumimaid-v0.2-8B-Q4_K_M-imat.gguf"
 else
-  echo "  Using Q5_K_M"
-  download_hf "Mungert/Josiefied-Qwen3-8B-abliterated-v1-GGUF" "Josiefied-Qwen3-8B-abliterated-v1-q5_k_m.gguf" "Josiefied-Qwen3-8B-abliterated-v1-q5_k_m.gguf"
+  echo "  Using Q5_K_M (imatrix)"
+  download_hf "Lewdiculous/Lumimaid-v0.2-8B-GGUF-IQ-Imatrix" "Lumimaid-v0.2-8B-Q5_K_M-imat.gguf" "Lumimaid-v0.2-8B-Q5_K_M-imat.gguf"
 fi
 
 # --- Embedding Model ---

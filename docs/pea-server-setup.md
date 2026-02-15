@@ -111,7 +111,7 @@ cd local-ai/gpu-server
 ./scripts/download-models.sh
 # Downloads:
 #   - Stheno v3.4 8B Q5_K_M (SFW chat, ~5.7GB)
-#   - Josiefied-Qwen3-8B Q5_K_M (NSFW chat, ~5.6GB)
+#   - Lumimaid v0.2 8B Q5_K_M imatrix (NSFW chat, ~5.73GB)
 #   - nomic-embed-text-v1.5 Q8_0 (embeddings, ~137MB)
 
 # For lower VRAM GPUs (6GB), use Q4 quantization:
@@ -127,7 +127,7 @@ cd models/
 wget "https://huggingface.co/bartowski/Llama-3.1-8B-Stheno-v3.4-GGUF/resolve/main/Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf"
 
 # NSFW Chat Model
-wget "https://huggingface.co/Mungert/Josiefied-Qwen3-8B-abliterated-v1-GGUF/resolve/main/Josiefied-Qwen3-8B-abliterated-v1-q5_k_m.gguf"
+wget "https://huggingface.co/Lewdiculous/Lumimaid-v0.2-8B-GGUF-IQ-Imatrix/resolve/main/Lumimaid-v0.2-8B-Q5_K_M-imat.gguf"
 
 # Embedding Model
 wget "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/main/nomic-embed-text-v1.5.Q8_0.gguf"
@@ -143,7 +143,7 @@ The Segmind SSD-1B model auto-downloads from HuggingFace on the first image gene
 ls -lh models/*.gguf
 # Expected:
 # Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf     ~5.7GB
-# Josiefied-Qwen3-8B-abliterated-v1-q5_k_m.gguf  ~5.6GB
+# Lumimaid-v0.2-8B-Q5_K_M-imat.gguf               ~5.73GB
 # nomic-embed-text-v1.5.Q8_0.gguf           ~137MB
 ```
 
@@ -158,7 +158,7 @@ Edit `.env` to set model paths per GPU. The default `.env.example` is pre-config
 | GPU | Type | Model Path |
 |-----|------|------------|
 | 1-3 | SFW Chat | `/models/Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf` |
-| 4-7 | NSFW Chat | `/models/Josiefied-Qwen3-8B-abliterated-v1-q5_k_m.gguf` |
+| 4-7 | NSFW Chat | `/models/Lumimaid-v0.2-8B-Q5_K_M-imat.gguf` |
 | 8 | Image | Managed by LocalAI (no path needed) |
 
 Each GPU has three environment variables:
@@ -333,7 +333,7 @@ curl -X POST http://localhost:4000/key/generate \
 | `CACHE_REUSE` | 256 | Prompt cache reuse window |
 | `CACHE_TYPE_K` | q8_0 | KV cache key quantization |
 | `CACHE_TYPE_V` | q8_0 | KV cache value quantization |
-| `EXTRA_ARGS` | `--jinja --reasoning-budget 0` | Enables Jinja chat templates, disables thinking mode |
+| `EXTRA_ARGS` | `--jinja` | Enables Jinja chat templates for Llama 3.1 models |
 
 ### Container Memory Limits
 
@@ -376,14 +376,14 @@ curl -X POST http://localhost:4000/key/generate \
 - **VRAM usage**: ~6.5GB with 16K context
 - **HuggingFace**: `bartowski/Llama-3.1-8B-Stheno-v3.4-GGUF`
 
-### NSFW Chat: Josiefied-Qwen3-8B-abliterated-v1
+### NSFW Chat: Lumimaid-v0.2-8B (NeverSleep)
 
-- **Architecture**: Qwen3 8B (abliterated for uncensored output)
-- **Chat template**: ChatML (`<|im_start|>`/`<|im_end|>`) — requires `--jinja` flag
-- **Thinking mode**: Disabled via `--reasoning-budget 0` (prevents `<think>` blocks)
-- **Quantization**: Q5_K_M (~5.6GB)
+- **Architecture**: Llama 3.1 8B (same as SFW model)
+- **Chat template**: Llama 3 Instruct — same `--jinja` flag as SFW
+- **Training**: 60% roleplay/ERP data, 40% general conversational data, OAS treated
+- **Quantization**: Q5_K_M imatrix (~5.73GB)
 - **VRAM usage**: ~6.5GB with 16K context
-- **HuggingFace**: `Mungert/Josiefied-Qwen3-8B-abliterated-v1-GGUF`
+- **HuggingFace**: `Lewdiculous/Lumimaid-v0.2-8B-GGUF-IQ-Imatrix`
 
 ### Embeddings: nomic-embed-text-v1.5
 
@@ -415,7 +415,7 @@ docker compose logs gpu-server-N --tail 20
 ```
 
 ### Chat template issues (garbled output)
-Ensure `EXTRA_ARGS: "--jinja --reasoning-budget 0"` is set in docker-compose.yml. The `--jinja` flag tells llama.cpp to use the model's built-in chat template.
+Ensure `EXTRA_ARGS: "--jinja"` is set in docker-compose.yml. The `--jinja` flag tells llama.cpp to use the model's built-in Jinja chat template (both Stheno and Lumimaid are Llama 3.1 based).
 
 ### Image generation "backend not found: diffusers"
 The diffusers backend installs from LocalAI gallery on first container start. Check that:

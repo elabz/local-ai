@@ -51,7 +51,7 @@ def start_llama_server() -> subprocess.Popen:
         "--cache-type-v", settings.cache_type_v,
     ]
 
-    # Append extra args (e.g. --jinja --reasoning-budget 0 for Qwen3)
+    # Append extra args (e.g. --jinja for Llama 3.1 chat templates)
     if settings.extra_args:
         cmd.extend(settings.extra_args.split())
 

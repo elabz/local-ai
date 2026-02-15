@@ -80,7 +80,7 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 | API Name | Type | GPUs | Model | Quant | Chat Template |
 |----------|------|------|-------|-------|---------------|
 | `heartcode-chat-sfw` | Chat | 1-3 | Llama-3.1-8B-Stheno-v3.4 | Q5_K_M | Llama3 |
-| `heartcode-chat-nsfw` | Chat | 4-7 | Josiefied-Qwen3-8B-abliterated-v1 | Q5_K_M | ChatML (Jinja) |
+| `heartcode-chat-nsfw` | Chat | 4-7 | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M | Llama3 |
 | `heartcode-embed` | Embedding | 1-7 | nomic-embed-text-v1.5 | Q8_0 | — |
 | `heartcode-image` | Image | 8 | Segmind SSD-1B (SDXL distilled) | FP16 | — |
 
@@ -103,7 +103,7 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 - Memory limit: 2048m per chat server, 512m per embed server, 4096m for image server
 - `N_GPU_LAYERS=33`, `N_CTX=16384`, `N_BATCH=128`, `N_UBATCH=64`, `N_THREADS=2`
 - KV cache: `q8_0` quantization for both keys and values
-- `EXTRA_ARGS: "--jinja --reasoning-budget 0"` — enables Jinja chat templates, disables Qwen3 thinking mode
+- `EXTRA_ARGS: "--jinja"` — enables Jinja chat templates for Llama 3.1 models
 - `CACHE_REUSE=256` — prompt caching for faster TTFT
 - Power limit: 90W per GPU (`nvidia-power-limit.service`)
 
