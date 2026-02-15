@@ -4,19 +4,13 @@ GPU inference server using llama.cpp, optimized for Pascal GPUs (P106-100, P104-
 
 ## Quick Start
 
-### 1. Download a Model
+### 1. Download Models
 
 ```bash
-./scripts/download_model.sh stheno Q4_K_M
+./scripts/download-models.sh
 ```
 
-Available models:
-- `stheno` - Stheno L3.1 8B (recommended for roleplay)
-- `lumimaid` - Lumimaid 8B (creative writing)
-
-Quantizations:
-- `Q4_K_M` - 4-bit, ~5GB, fits 6GB VRAM (P106-100)
-- `Q5_K_M` - 5-bit, ~6GB, needs 8GB VRAM (P104-100)
+Downloads all models (SFW chat, NSFW chat, embeddings). Use `--fallback-q4` for 6GB VRAM GPUs.
 
 ### 2. Start the Server
 
