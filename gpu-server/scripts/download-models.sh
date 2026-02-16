@@ -21,12 +21,7 @@ echo "=== HeartCode PEA Model Download ==="
 echo "Target directory: $MODELS_DIR"
 echo ""
 
-# Check for huggingface-cli
-if ! command -v huggingface-cli &> /dev/null; then
-  echo "Installing huggingface-hub CLI..."
-  python3 -m pip install -q huggingface-hub
-fi
-
+# Download a file from HuggingFace using wget or curl
 download_hf() {
   local repo="$1"
   local file="$2"
@@ -37,11 +32,16 @@ download_hf() {
     return 0
   fi
 
-  echo "  [DOWNLOAD] $repo/$file -> $dest"
-  huggingface-cli download "$repo" "$file" --local-dir . --local-dir-use-symlinks False
-  # huggingface-cli downloads to subdir, move if needed
-  if [ -f "$file" ]; then
-    mv "$file" "$dest" 2>/dev/null || true
+  local url="https://huggingface.co/${repo}/resolve/main/${file}"
+  echo "  [DOWNLOAD] $url"
+
+  if command -v wget &> /dev/null; then
+    wget --progress=bar:force -O "$dest" "$url" || { rm -f "$dest"; return 1; }
+  elif command -v curl &> /dev/null; then
+    curl -L --progress-bar -o "$dest" "$url" || { rm -f "$dest"; return 1; }
+  else
+    echo "ERROR: Neither wget nor curl found."
+    exit 1
   fi
 }
 
@@ -75,7 +75,6 @@ download_hf "nomic-ai/nomic-embed-text-v1.5-GGUF" "nomic-embed-text-v1.5.Q8_0.gg
 # --- Image Model ---
 echo ""
 echo "Image model (Segmind SSD-1B) will auto-download via LocalAI on first request."
-echo "To pre-download, run: huggingface-cli download segmind/SSD-1B SSD-1B.safetensors --local-dir $MODELS_DIR"
 
 echo ""
 echo "=== Download Complete ==="
