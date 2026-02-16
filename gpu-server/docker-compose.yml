@@ -6,6 +6,16 @@
 #   GPU 4-7: NSFW Chat (Lumimaid v0.2 8B Q5_K_M) + Embeddings
 #   GPU 8:   Image generation (Segmind SSD-1B via LocalAI)
 #
+# GPU UUIDs (from nvidia-smi -L):
+#   GPU 0: GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8
+#   GPU 1: GPU-f1fa6009-d240-3810-d6ca-4c65ecc22dcf
+#   GPU 2: GPU-1f2ba781-081b-56cf-da1a-802759aea70b
+#   GPU 3: GPU-48054f5b-0660-6e89-ec5b-9ac85db7b7b1
+#   GPU 4: GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b
+#   GPU 5: GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9
+#   GPU 6: GPU-f417c539-26db-94e9-4c8f-c5a775291988
+#   GPU 7: GPU-c710b68a-493d-0d55-9b1a-f48d8ad71978
+#
 # Context: 16K tokens (N_CTX=16384) — uses ~1GB KV cache at q8_0
 # VRAM budget: ~5.7GB model + ~1GB KV + ~0.35GB embed + ~0.55GB overhead = ~7.6GB / 8GB
 #
@@ -100,7 +110,7 @@ services:
     runtime: nvidia
     environment:
       <<: *gpu-env-common
-      NVIDIA_VISIBLE_DEVICES: 0
+      NVIDIA_VISIBLE_DEVICES: GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8
       SERVER_ID: gpu-1
       MODEL_PATH: ${GPU_1_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_1_MODEL_TYPE:-sfw}
@@ -112,7 +122,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['0']
+              device_ids: ['GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8']
               capabilities: [gpu]
 
   gpu-server-2:
@@ -121,7 +131,7 @@ services:
     runtime: nvidia
     environment:
       <<: *gpu-env-common
-      NVIDIA_VISIBLE_DEVICES: 1
+      NVIDIA_VISIBLE_DEVICES: GPU-f1fa6009-d240-3810-d6ca-4c65ecc22dcf
       SERVER_ID: gpu-2
       MODEL_PATH: ${GPU_2_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_2_MODEL_TYPE:-sfw}
@@ -133,7 +143,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['1']
+              device_ids: ['GPU-f1fa6009-d240-3810-d6ca-4c65ecc22dcf']
               capabilities: [gpu]
 
   gpu-server-3:
@@ -142,7 +152,7 @@ services:
     runtime: nvidia
     environment:
       <<: *gpu-env-common
-      NVIDIA_VISIBLE_DEVICES: 2
+      NVIDIA_VISIBLE_DEVICES: GPU-1f2ba781-081b-56cf-da1a-802759aea70b
       SERVER_ID: gpu-3
       MODEL_PATH: ${GPU_3_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_3_MODEL_TYPE:-sfw}
@@ -154,7 +164,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['2']
+              device_ids: ['GPU-1f2ba781-081b-56cf-da1a-802759aea70b']
               capabilities: [gpu]
 
   # =============================================================================
@@ -167,7 +177,7 @@ services:
     runtime: nvidia
     environment:
       <<: *gpu-env-common
-      NVIDIA_VISIBLE_DEVICES: 3
+      NVIDIA_VISIBLE_DEVICES: GPU-48054f5b-0660-6e89-ec5b-9ac85db7b7b1
       SERVER_ID: gpu-4
       MODEL_PATH: ${GPU_4_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_4_MODEL_TYPE:-nsfw}
@@ -179,7 +189,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['3']
+              device_ids: ['GPU-48054f5b-0660-6e89-ec5b-9ac85db7b7b1']
               capabilities: [gpu]
 
   gpu-server-5:
@@ -188,7 +198,7 @@ services:
     runtime: nvidia
     environment:
       <<: *gpu-env-common
-      NVIDIA_VISIBLE_DEVICES: 4
+      NVIDIA_VISIBLE_DEVICES: GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b
       SERVER_ID: gpu-5
       MODEL_PATH: ${GPU_5_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_5_MODEL_TYPE:-nsfw}
@@ -200,7 +210,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['4']
+              device_ids: ['GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b']
               capabilities: [gpu]
 
   gpu-server-6:
@@ -209,7 +219,7 @@ services:
     runtime: nvidia
     environment:
       <<: *gpu-env-common
-      NVIDIA_VISIBLE_DEVICES: 5
+      NVIDIA_VISIBLE_DEVICES: GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9
       SERVER_ID: gpu-6
       MODEL_PATH: ${GPU_6_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_6_MODEL_TYPE:-nsfw}
@@ -221,7 +231,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['5']
+              device_ids: ['GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9']
               capabilities: [gpu]
 
   gpu-server-7:
@@ -230,7 +240,7 @@ services:
     runtime: nvidia
     environment:
       <<: *gpu-env-common
-      NVIDIA_VISIBLE_DEVICES: 6
+      NVIDIA_VISIBLE_DEVICES: GPU-f417c539-26db-94e9-4c8f-c5a775291988
       SERVER_ID: gpu-7
       MODEL_PATH: ${GPU_7_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_7_MODEL_TYPE:-nsfw}
@@ -242,7 +252,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['6']
+              device_ids: ['GPU-f417c539-26db-94e9-4c8f-c5a775291988']
               capabilities: [gpu]
 
   # =============================================================================
@@ -254,7 +264,7 @@ services:
     container_name: pea-embed-1
     runtime: nvidia
     environment:
-      NVIDIA_VISIBLE_DEVICES: 0
+      NVIDIA_VISIBLE_DEVICES: GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8
     ports:
       - "8090:8090"
     deploy:
@@ -262,7 +272,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['0']
+              device_ids: ['GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8']
               capabilities: [gpu]
 
   embedding-server-2:
@@ -270,7 +280,7 @@ services:
     container_name: pea-embed-2
     runtime: nvidia
     environment:
-      NVIDIA_VISIBLE_DEVICES: 1
+      NVIDIA_VISIBLE_DEVICES: GPU-f1fa6009-d240-3810-d6ca-4c65ecc22dcf
     ports:
       - "8091:8090"
     deploy:
@@ -278,7 +288,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['1']
+              device_ids: ['GPU-f1fa6009-d240-3810-d6ca-4c65ecc22dcf']
               capabilities: [gpu]
 
   embedding-server-3:
@@ -286,7 +296,7 @@ services:
     container_name: pea-embed-3
     runtime: nvidia
     environment:
-      NVIDIA_VISIBLE_DEVICES: 2
+      NVIDIA_VISIBLE_DEVICES: GPU-1f2ba781-081b-56cf-da1a-802759aea70b
     ports:
       - "8092:8090"
     deploy:
@@ -294,7 +304,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['2']
+              device_ids: ['GPU-1f2ba781-081b-56cf-da1a-802759aea70b']
               capabilities: [gpu]
 
   embedding-server-4:
@@ -302,7 +312,7 @@ services:
     container_name: pea-embed-4
     runtime: nvidia
     environment:
-      NVIDIA_VISIBLE_DEVICES: 3
+      NVIDIA_VISIBLE_DEVICES: GPU-48054f5b-0660-6e89-ec5b-9ac85db7b7b1
     ports:
       - "8093:8090"
     deploy:
@@ -310,7 +320,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['3']
+              device_ids: ['GPU-48054f5b-0660-6e89-ec5b-9ac85db7b7b1']
               capabilities: [gpu]
 
   embedding-server-5:
@@ -318,7 +328,7 @@ services:
     container_name: pea-embed-5
     runtime: nvidia
     environment:
-      NVIDIA_VISIBLE_DEVICES: 4
+      NVIDIA_VISIBLE_DEVICES: GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b
     ports:
       - "8094:8090"
     deploy:
@@ -326,7 +336,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['4']
+              device_ids: ['GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b']
               capabilities: [gpu]
 
   embedding-server-6:
@@ -334,7 +344,7 @@ services:
     container_name: pea-embed-6
     runtime: nvidia
     environment:
-      NVIDIA_VISIBLE_DEVICES: 5
+      NVIDIA_VISIBLE_DEVICES: GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9
     ports:
       - "8095:8090"
     deploy:
@@ -342,7 +352,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['5']
+              device_ids: ['GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9']
               capabilities: [gpu]
 
   embedding-server-7:
@@ -350,7 +360,7 @@ services:
     container_name: pea-embed-7
     runtime: nvidia
     environment:
-      NVIDIA_VISIBLE_DEVICES: 6
+      NVIDIA_VISIBLE_DEVICES: GPU-f417c539-26db-94e9-4c8f-c5a775291988
     ports:
       - "8096:8090"
     deploy:
@@ -358,7 +368,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['6']
+              device_ids: ['GPU-f417c539-26db-94e9-4c8f-c5a775291988']
               capabilities: [gpu]
 
   # =============================================================================
@@ -373,7 +383,7 @@ services:
     runtime: nvidia
     entrypoint: ["/config/entrypoint-wrapper.sh"]
     environment:
-      - NVIDIA_VISIBLE_DEVICES=7
+      - NVIDIA_VISIBLE_DEVICES=GPU-c710b68a-493d-0d55-9b1a-f48d8ad71978
       - DEBUG=true
       - THREADS=2
       - MODELS_PATH=/models
@@ -402,7 +412,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['7']
+              device_ids: ['GPU-c710b68a-493d-0d55-9b1a-f48d8ad71978']
               capabilities: [gpu]
 
   # =============================================================================
