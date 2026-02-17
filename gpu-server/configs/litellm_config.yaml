@@ -77,7 +77,7 @@ model_list:
   # VRAM constraints on P106-100 (6GB). This is a capacity limit at 10 VU concurrency.
   # See NSFW-GPU-CAPACITY-INVESTIGATION.md for details.
   #
-  # All 4 NSFW GPUs are registered for failover/load distribution, but the router
+  # All 3 NSFW GPUs (5-7) are registered for failover/load distribution, but the router
   # will respect the max_parallel_requests limit per model_name group.
   # =============================================================================
 
@@ -123,21 +123,6 @@ model_list:
       mode: "chat"
       model_type: "nsfw"
       gpu_index: 7
-      model_name: "Lewdiculous/Lumimaid-v0.2-8B-GGUF"
-      rate_limit_group: "nsfw"    # Tag for rate limiting
-
-  - model_name: "heartcode-chat-nsfw"
-    litellm_params:
-      model: "openai/model"
-      api_base: "http://gpu-server-8:8080/v1"
-      api_key: "sk-local"
-      max_tokens: 512
-      temperature: 0.8
-    model_info:
-      id: "heartcode-gpu8"
-      mode: "chat"
-      model_type: "nsfw"
-      gpu_index: 8
       model_name: "Lewdiculous/Lumimaid-v0.2-8B-GGUF"
       rate_limit_group: "nsfw"    # Tag for rate limiting
 
@@ -384,8 +369,8 @@ model_list:
 #
 # NSFW RATE LIMITING STRATEGY:
 # - SFW (heartcode-chat-sfw): 8 concurrent max (4 GPUs × 2 concurrent each)
-# - NSFW (heartcode-chat-nsfw): 5 concurrent max (4 GPUs × 1.25 concurrent avg)
-# - Strategy: Allow 5 concurrent NSFW requests total across all 4 NSFW GPUs
+# - NSFW (heartcode-chat-nsfw): 5 concurrent max (3 GPUs × ~1.7 concurrent avg)
+# - Strategy: Allow 5 concurrent NSFW requests total across all 3 NSFW GPUs (5-7)
 # - Excess requests are queued by LiteLLM and served when capacity available
 # - This prevents VRAM exhaustion on P106-100 (6GB) at high concurrency
 #
@@ -419,13 +404,14 @@ general_settings:
   # CRITICAL: Limit concurrent requests to prevent OOM
   # 8 GPUs available:
   #   - SFW: 4 GPUs, 8 concurrent max (2 per GPU)
-  #   - NSFW: 4 GPUs, 5 concurrent max (1.25 per GPU) - VRAM capacity limit
+  #   - NSFW: 3 GPUs (5-7), 5 concurrent max (~1.7 per GPU) - VRAM capacity limit
   #   - Total global: 8 concurrent (SFW + NSFW combined)
   #   - Total with buffer: 12 (small headroom for failover)
   #
   # NSFW Rate Limiting:
-  # - NSFW is rate-limited to 5 concurrent due to P106-100 VRAM exhaustion
-  #   at >10 VU concurrency (see NSFW-GPU-CAPACITY-INVESTIGATION.md)
+  # - NSFW is rate-limited to 5 concurrent across 3 GPUs (5-7) due to
+  #   P106-100 VRAM exhaustion at >10 VU concurrency
+  #   (see NSFW-GPU-CAPACITY-INVESTIGATION.md)
   # - At 5 concurrent: NSFW achieves 92.9% success
   # - At 10 concurrent: NSFW fails to 19.5% due to VRAM exhaustion
   # - LiteLLM will queue excess NSFW requests until capacity available

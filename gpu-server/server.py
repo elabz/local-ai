@@ -123,7 +123,54 @@ async def lifespan(app: FastAPI):
 
     logger.info(f"GPU Server {settings.server_id} started successfully")
 
+    # Start background watchdog to exit if llama.cpp becomes unhealthy
+    async def watchdog():
+        """Monitor llama.cpp process and exit if it dies or model unloads."""
+        consecutive_failures = 0
+        max_failures = 3  # Exit after 3 consecutive health check failures
+
+        while True:
+            await asyncio.sleep(15)
+
+            # Check if the process itself is dead
+            if llama_process and llama_process.poll() is not None:
+                logger.error(
+                    f"llama.cpp process exited with code {llama_process.returncode}"
+                )
+                model_loaded_gauge.set(0)
+                os._exit(1)
+
+            # Check if model is still loaded
+            try:
+                health = await llama_client.health_check()
+                if health.get("status") == "ok":
+                    consecutive_failures = 0
+                else:
+                    consecutive_failures += 1
+                    logger.warning(
+                        f"llama.cpp unhealthy: status='{health.get('status')}' "
+                        f"({consecutive_failures}/{max_failures})"
+                    )
+            except Exception as e:
+                consecutive_failures += 1
+                logger.warning(
+                    f"llama.cpp health check failed: {e} "
+                    f"({consecutive_failures}/{max_failures})"
+                )
+
+            if consecutive_failures >= max_failures:
+                logger.error(
+                    f"llama.cpp failed {max_failures} consecutive health checks, "
+                    f"exiting for container restart"
+                )
+                model_loaded_gauge.set(0)
+                os._exit(1)
+
+    watchdog_task = asyncio.create_task(watchdog())
+
     yield
+
+    watchdog_task.cancel()
 
     # Cleanup
     logger.info("Shutting down GPU server...")

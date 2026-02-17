@@ -54,15 +54,28 @@ class TokenizeRequest(BaseModel):
 # Routes
 @router.get("/health")
 async def health_check(request: Request):
-    """Health check endpoint."""
+    """Health check endpoint. Returns 503 unless llama.cpp reports status 'ok'."""
     try:
         llama_client = request.app.state.llama_client
         health = await llama_client.health_check()
+        llama_status = health.get("status")
+
+        if llama_status != "ok":
+            logger.warning(
+                f"Health check: llama.cpp status is '{llama_status}', not 'ok'"
+            )
+            raise HTTPException(
+                status_code=503,
+                detail=f"Model not ready: {llama_status}",
+            )
+
         return {
             "status": "healthy",
             "server_id": settings.server_id,
-            "llama_status": health.get("status"),
+            "llama_status": llama_status,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=503, detail="Server unhealthy")
