@@ -5,7 +5,7 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  # GPU Chat Servers (7 instances, GPU 1-7)
+  # GPU Chat Servers (6 instances, GPU 1-6; GPU 7 reassigned to multimodal embed)
   - job_name: 'gpu-chat-servers'
     static_configs:
       - targets: ['pea-gpu-1:9091']
@@ -32,10 +32,14 @@ scrape_configs:
         labels:
           gpu_id: '6'
           model_type: 'nsfw'
-      - targets: ['pea-gpu-7:9091']
+
+  # Multimodal Embedding Server (nomic-embed-multimodal-3b, dedicated GPU 7)
+  - job_name: 'multimodal-embed'
+    static_configs:
+      - targets: ['pea-embed-mm-1:9091']
         labels:
           gpu_id: '7'
-          model_type: 'nsfw'
+          model_type: 'embed-multimodal'
 
   # Image Server (LocalAI metrics, GPU 8)
   - job_name: 'image-server'

@@ -5,9 +5,9 @@
 #
 # GPU Servers (PEA - 192.168.0.144):
 #   SFW:   GPU 1-3, ports 8080-8082 (Stheno v3.4 Q5_K_M)
-#   NSFW:  GPU 4-7, ports 8083-8086 (Lumimaid v0.2 8B Q5_K_M)
-#   Embed: GPU 1-7, ports 8090-8096 (nomic-embed-text-v1.5)
-#   Image: GPU 8, port 5100 (Segmind SSD-1B via LocalAI)
+#   NSFW:  GPU 4-6, ports 8083-8085 (Lumimaid v0.2 8B Q5_K_M)
+#   Embed: GPU 7,   port 8100 (nomic-embed-multimodal-3b — text + image, 3584-d)
+#   Image: GPU 8,   port 5100 (Segmind SSD-1B via LocalAI)
 
 model_list:
   # =============================================================================
@@ -100,86 +100,47 @@ model_list:
       mode: "chat"
 
   # =============================================================================
-  # EMBEDDING MODELS - 7x GPU load balancing (GPU 1-7)
-  # For RAG/semantic search
+  # EMBEDDING MODEL - multimodal, 1x dedicated GPU (GPU 7, port 8100)
+  # nomic-embed-multimodal-3b (BiQwen2.5) — text + image, 3584-d shared space.
+  # Replaces the old 7x nomic-embed-text-v1.5 deployments (ports 8090-8096).
+  # Heavier/lower-throughput: 1 GPU, serialized inference, higher latency.
+  #
+  # ROLLBACK: `git checkout HEAD~1 -- litellm/config.yaml` restores the 7
+  # text-embed deployments. Their containers (embed-1..6, ports 8090-8095)
+  # remain up until decommission (change task 7.2).
   # =============================================================================
 
   - model_name: "heartcode-embed"
     litellm_params:
-      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.144:8090/v1"
+      model: "openai/nomic-embed-multimodal-3b"
+      api_base: "http://192.168.0.144:8100/v1"
       api_key: "sk-local"
+      timeout: 120          # Pascal multimodal embeds are slow (esp. images)
       extra_body:
         encoding_format: "float"
     model_info:
-      id: "heartcode-embed1"
+      id: "heartcode-embed-mm"
       mode: "embedding"
 
-  - model_name: "heartcode-embed"
-    litellm_params:
-      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.144:8091/v1"
-      api_key: "sk-local"
-      extra_body:
-        encoding_format: "float"
-    model_info:
-      id: "heartcode-embed2"
-      mode: "embedding"
-
-  - model_name: "heartcode-embed"
-    litellm_params:
-      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.144:8092/v1"
-      api_key: "sk-local"
-      extra_body:
-        encoding_format: "float"
-    model_info:
-      id: "heartcode-embed3"
-      mode: "embedding"
-
-  - model_name: "heartcode-embed"
-    litellm_params:
-      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.144:8093/v1"
-      api_key: "sk-local"
-      extra_body:
-        encoding_format: "float"
-    model_info:
-      id: "heartcode-embed4"
-      mode: "embedding"
-
-  - model_name: "heartcode-embed"
-    litellm_params:
-      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.144:8094/v1"
-      api_key: "sk-local"
-      extra_body:
-        encoding_format: "float"
-    model_info:
-      id: "heartcode-embed5"
-      mode: "embedding"
-
-  - model_name: "heartcode-embed"
-    litellm_params:
-      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.144:8095/v1"
-      api_key: "sk-local"
-      extra_body:
-        encoding_format: "float"
-    model_info:
-      id: "heartcode-embed6"
-      mode: "embedding"
-
-  - model_name: "heartcode-embed"
-    litellm_params:
-      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.144:8096/v1"
-      api_key: "sk-local"
-      extra_body:
-        encoding_format: "float"
-    model_info:
-      id: "heartcode-embed7"
-      mode: "embedding"
+  # =============================================================================
+  # PLANNED — heartcode-embed-vision (openspec change: add-image-semantic-search)
+  # nomic-embed-vision-v1.5 (images) + nomic-embed-text-v1.5 (text), shared 768-d
+  # space, for natural-photo text→image / image→image search via the image-search
+  # service. NOT YET DEPLOYED — endpoint/port + GPU finalized in change tasks
+  # 2.1/2.2 (replace vs coexist with heartcode-embed on GPU 7). Uncomment and set
+  # api_base once the model serves an OpenAI /v1/embeddings endpoint.
+  # =============================================================================
+  # - model_name: "heartcode-embed-vision"
+  #   litellm_params:
+  #     model: "openai/nomic-embed-vision-v1.5"
+  #     api_base: "http://192.168.0.144:8101/v1"   # placeholder port — finalize on deploy
+  #     api_key: "sk-local"
+  #     timeout: 60
+  #     extra_body:
+  #       encoding_format: "float"
+  #   model_info:
+  #     id: "heartcode-embed-vision"
+  #     mode: "embedding"
 
   # =============================================================================
   # IMAGE MODEL - GPU 8 (Segmind SSD-1B via LocalAI)
@@ -211,9 +172,12 @@ router_settings:
     - model_name: "heartcode-chat-sfw"
       tpm: 50000
       rpm: 35
-    - model_name: "heartcode-chat-nsfw"
-      tpm: 50000
-      rpm: 45
+    - model_name: "heartcode-chat-nsfw"  # now 3 GPUs (GPU 4-6), was 4
+      tpm: 38000
+      rpm: 34
+    - model_name: "heartcode-embed"      # 1 dedicated GPU, heavy multimodal
+      tpm: 20000
+      rpm: 20
 
   # Model aliases - map public API names to internal model names
   model_group_alias:
@@ -228,9 +192,9 @@ general_settings:
   database_url: os.environ/DATABASE_URL
 
   # Concurrency limits
-  # 7 chat GPUs * 2 concurrent requests each = 14 max safe
+  # 6 chat GPUs * 2 concurrent each = 12, + 1 multimodal embed = 13 max safe
   max_parallel_requests: 7
-  global_max_parallel_requests: 14
+  global_max_parallel_requests: 13
 
   # Request timeout
   request_timeout: 90
