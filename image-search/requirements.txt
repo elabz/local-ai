@@ -1,0 +1,13 @@
+# Image-search service - Python dependencies (lightweight, no GPU/ML stack;
+# embeddings come from the heartcode-embed HTTP endpoint, storage from ES REST).
+
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.18   # CVE-2024-24762, CVE-2024-53981
+httpx>=0.26.0              # embed endpoint + Elasticsearch REST client
+
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+
+prometheus-client==0.19.0
+orjson>=3.9.15             # CVE-2024-27454

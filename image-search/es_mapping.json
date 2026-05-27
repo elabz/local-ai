@@ -1,0 +1,29 @@
+{
+  "_comment": "openspec task 3.3 — Elasticsearch index mapping for image-search. Apply with: PUT /<index> with this body. Assumes the 768-d nomic-embed-vision-v1.5 / nomic-embed-text-v1.5 shared space (design Decision 2). If a higher-dim model wins the eval, bump dims (3584 requires ES >= 8.11) and re-create the index. dense_vector + cosine + HNSW. Vectors are L2-normalized by the service, so dot_product would also be valid.",
+  "settings": {
+    "index": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1
+    }
+  },
+  "mappings": {
+    "properties": {
+      "image_id": { "type": "keyword" },
+      "embedding": {
+        "type": "dense_vector",
+        "dims": 768,
+        "index": true,
+        "similarity": "cosine",
+        "index_options": {
+          "type": "hnsw",
+          "m": 16,
+          "ef_construction": 100
+        }
+      },
+      "source_ref": { "type": "keyword" },
+      "model": { "type": "keyword" },
+      "metadata": { "type": "object", "enabled": true },
+      "ingested_at": { "type": "date" }
+    }
+  }
+}
