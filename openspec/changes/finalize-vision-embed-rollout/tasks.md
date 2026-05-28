@@ -1,6 +1,6 @@
 ## 1. Prod LiteLLM cutover (ssh elm / 192.168.0.152)
 
-- [ ] 1.1 Reconcile `heartcode-embed` (merged config points it at the shelved `:8100`): choose restore-legacy (`:8090-8095`) / alias→`heartcode-embed-vision` / remove; apply to `litellm/config.yaml` (commit + push)
+- [x] 1.1 Reconcile `heartcode-embed` (merged config pointed it at the shelved `:8100`): **restore-legacy** → 4 text-embed backends (`:8090-8093`, per "4 text-embed servers"). Also removed the dead `heartcode-chat-nsfw` `:8086` deployment (pea-gpu-7 was removed) and fixed the NSFW header (3 GPUs); updated `CLAUDE.md`. All routed `api_base`s now map to live backends.
 - [ ] 1.2 `ssh elm`: `git pull origin main` (config is repo-mounted at `./config.yaml`)
 - [ ] 1.3 Restart LiteLLM (`docker compose up -d litellm`) to reload the config
 - [ ] 1.4 Validate through the proxy: `heartcode-embed-vision` text + image → 768-d, AND `heartcode-embed` still returns vectors (no dead route)
