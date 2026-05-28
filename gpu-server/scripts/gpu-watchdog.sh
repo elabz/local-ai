@@ -27,26 +27,23 @@ MAX_RESTARTS_IN_WINDOW="${MAX_RESTARTS_IN_WINDOW:-3}"  # Max 3 restarts per 10 m
 ENABLE_HEALTH_CHECKS="${ENABLE_HEALTH_CHECKS:-false}"  # Disable health-based restarts by default (only VRAM-based)
 
 # GPU to container mapping (physical 0-indexed GPU -> container names)
-# GPU 0 = gpu-server-1 + embedding-server-1, etc.
-# GPU 6 was reassigned from chat (gpu-server-7 + embedding-server-7) to the
-# dedicated vision embedding service (pea-embed-vision-1).
-# GPU 7 hosts the image server (pea-image-1).
+# GPU 0-2 (1-indexed 1-3): SFW chat + co-located vision-embed
+# GPU 3-5 (1-indexed 4-6): NSFW chat + co-located text-embed
+# GPU 6-7 (1-indexed 7-8): image generation (load-balanced)
 declare -A GPU_CONTAINERS=(
-    [0]="local-ai-gpu-1 local-ai-embed-1"
-    [1]="local-ai-gpu-2 local-ai-embed-2"
-    [2]="local-ai-gpu-3 local-ai-embed-3"
-    [3]="local-ai-gpu-4 local-ai-embed-4"
-    [4]="local-ai-gpu-5 local-ai-embed-5"
-    [5]="local-ai-gpu-6 local-ai-embed-6"
-    [6]="pea-embed-vision-1"
-    [7]="local-ai-gpu-8 local-ai-embed-8"
+    [0]="pea-gpu-1 pea-embed-vision-1"
+    [1]="pea-gpu-2 pea-embed-vision-2"
+    [2]="pea-gpu-3 pea-embed-vision-3"
+    [3]="pea-gpu-4 pea-embed-4"
+    [4]="pea-gpu-5 pea-embed-5"
+    [5]="pea-gpu-6 pea-embed-6"
+    [6]="pea-image-2"
+    [7]="pea-image-1"
 )
 
-# Optional health-check port override per GPU index (default 8080+idx). The
-# vision embed service publishes 8101, not 8086.
-declare -A GPU_HEALTH_PORTS=(
-    [6]=8101
-)
+# VRAM-based monitoring only (ENABLE_HEALTH_CHECKS defaults false); co-located
+# and image services share GPUs, so no per-GPU health-port override.
+declare -A GPU_HEALTH_PORTS=()
 
 # Restart tracking: Last restart timestamp per GPU (to enforce cooldown)
 declare -A LAST_RESTART_TIME=()
