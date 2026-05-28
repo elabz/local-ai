@@ -14,11 +14,11 @@
 ## 3. Integration (2+2+2 re-layout, minimal churn)
 
 - [x] 3.1 docker-compose: added `dino-embed-1` (GPU 3, `:8104`) + `dino-embed-2` (GPU 6, `:8105`); removed `vision-embed-3` + `embedding-server-6`. 16 services; YAML validated.
-- [ ] 3.2 PEA deploy: stop `pea-embed-vision-3` + `pea-embed-6`; start the 2 DINOv2; **verify VRAM ~7.5 GB fits** on GPU 3/6 (else ViT-B); confirm chat still healthy
-- [ ] 3.3 LiteLLM: add `heartcode-embed-visual` (2 backends `:8104-8105`, image-only); reduce `heartcode-embed-vision` → 2 (`:8101-8102`) and `heartcode-embed` → 2 (`:8093-8094`); commit + merge; prod pull + restart
-- [ ] 3.4 Validate through the proxy: `heartcode-embed-visual` image → vector + dimension; **text input → 4xx**; vision + text still serve
+- [x] 3.2 PEA deploy: removed `pea-embed-vision-3` + `pea-embed-6`; started 2 DINOv2 (`:8104-8105`), both healthy, dim **1024**. **VRAM fits: ~7.65 GB/8 GB on GPU 3/6** (chat + DINOv2-L) — ViT-L held, no ViT-B fallback needed; chat still healthy.
+- [x] 3.3 LiteLLM: added `heartcode-embed-visual` (2 backends `:8104-8105`); reduced `heartcode-embed-vision`→2 and `heartcode-embed`→2; merged (PR #9); prod pulled + restarted (healthy).
+- [x] 3.4 Validated through the prod proxy: `heartcode-embed-visual` image → 1024-d, **text → 400**; `heartcode-embed-vision` + `heartcode-embed` still 768-d.
 
 ## 4. Docs & validation
 
 - [x] 4.1 `CLAUDE.md` updated (Models table, port/GPU layout, allocation, structure, separate-index note); LiteLLM config also updated (visual added, vision/text→2). _`docs/pea-server-setup.md` deeper refresh = light follow-up._
-- [ ] 4.2 Run `openspec validate serve-dinov2-visual-embed --strict`
+- [x] 4.2 `openspec validate serve-dinov2-visual-embed --strict` — valid
