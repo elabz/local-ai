@@ -7,10 +7,10 @@
 
 ## 2. Serving implementation
 
-- [ ] 2.1 Build the model server for the chosen model (mirror `gpu-server/multimodal-embed/`): in-process load, **fp32**, eager attention (no bf16/flash-attn), single shared text+image space
-- [ ] 2.2 Implement `/v1/embeddings` accepting text strings and images (data URI / base64 / http(s) URL); apply the `search_query:` prefix to text queries; return OpenAI `data[]` in input order
-- [ ] 2.3 Reject malformed/oversized images with 4xx without crashing; cap image size/batch for Pascal activation memory
-- [ ] 2.4 `/health` (model-loaded readiness, reports dimension) + Prometheus metrics + Dockerfile
+- [x] 2.1 Build the model server for the chosen model (mirror `gpu-server/multimodal-embed/`): in-process load, **fp32**, eager attention (no bf16/flash-attn), single shared text+image space — `gpu-server/vision-embed/embed_model.py` (`VisionEmbedder`: loads nomic vision+text via transformers `trust_remote_code`, fp32, L2-normalized 768-d, dim-equality assert). **Best-effort — model load/pooling NOT verified on a P104-100 (see task 3.3).**
+- [x] 2.2 Implement `/v1/embeddings` accepting text strings and images (data URI / base64 / http(s) URL); apply the `search_query:` prefix to text queries; return OpenAI `data[]` in input order — `routes.py` (reused from multimodal-embed) + `search_query:` prefix applied in `embed_model.embed_texts`.
+- [x] 2.3 Reject malformed/oversized images with 4xx without crashing; cap image size/batch for Pascal activation memory — `image_input.py` (`ImageInputError`→400) + `MAX_IMAGE_EDGE`/`MAX_BATCH_SIZE`/`MAX_INPUT_ITEMS`/`MAX_IMAGE_BYTES` in `config.py`.
+- [x] 2.4 `/health` (model-loaded readiness, reports dimension) + Prometheus metrics + Dockerfile — `routes.py` `/health` (503 until loaded, reports `dimension`), `metrics.py`, `Dockerfile` (CUDA 12.1 + torch/torchvision cu121). All `.py` compile-checked; embedder interface matches routes/server.
 
 ## 3. Integration
 
