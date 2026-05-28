@@ -4,10 +4,11 @@
 # Uses PostgreSQL-backed API key management (native LiteLLM).
 #
 # GPU Servers (PEA - 192.168.0.144):
-#   SFW:   GPU 1-3, ports 8080-8082 (Stheno v3.4 Q5_K_M)
-#   NSFW:  GPU 4-6, ports 8083-8085 (Lumimaid v0.2 8B Q5_K_M)
-#   Embed: GPU 7,   port 8100 (nomic-embed-multimodal-3b — text + image, 3584-d)
-#   Image: GPU 8,   port 5100 (Segmind SSD-1B via LocalAI)
+#   SFW:    GPU 1-3, ports 8080-8082 (Stheno v3.4 Q5_K_M) + vision-embed :8101-8103
+#   NSFW:   GPU 4-6, ports 8083-8085 (Lumimaid v0.2 8B Q5_K_M) + text-embed :8093-8095
+#   Vision: GPU 1-3, ports 8101-8103 (nomic-embed-vision-v1.5 + text-v1.5, 768-d)
+#   Text:   GPU 4-6, ports 8093-8095 (nomic-embed-text-v1.5, 768-d)
+#   Image:  GPU 7-8, ports 5101/5100 (Segmind SSD-1B via LocalAI, 2x load-balanced)
 
 model_list:
   # =============================================================================
@@ -89,18 +90,16 @@ model_list:
       mode: "chat"
 
   # =============================================================================
-  # TEXT EMBEDDING MODEL - nomic-embed-text-v1.5 (768-d), 4 backends (GPU 1-4)
-  # Legacy text-embed tier, kept live. BiQwen2.5 (:8100) was shelved in favor of
-  # vision-embed (heartcode-embed-vision below), so heartcode-embed stays on the
-  # original text-embed servers. Routed across 4 of the 6 running backends
-  # (pea-embed-1..4 / :8090-8093) per the planned 4-text-embed layout;
-  # pea-embed-5/6 (:8094-8095) remain up but unrouted pending GPU re-allocation.
+  # TEXT EMBEDDING MODEL - nomic-embed-text-v1.5 (768-d), 3 backends (GPU 4-6)
+  # Co-located with NSFW chat (GPU 4-6, :8093-8095). The 3 vision-embed servers
+  # are co-located with SFW chat (GPU 1-3) under heartcode-embed-vision below.
+  # openspec: rebalance-embed-image-gpus.
   # =============================================================================
 
   - model_name: "heartcode-embed"
     litellm_params:
       model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.144:8090/v1"
+      api_base: "http://192.168.0.144:8093/v1"
       api_key: "sk-local"
       extra_body:
         encoding_format: "float"
@@ -111,7 +110,7 @@ model_list:
   - model_name: "heartcode-embed"
     litellm_params:
       model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.144:8091/v1"
+      api_base: "http://192.168.0.144:8094/v1"
       api_key: "sk-local"
       extra_body:
         encoding_format: "float"
@@ -122,7 +121,7 @@ model_list:
   - model_name: "heartcode-embed"
     litellm_params:
       model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.144:8092/v1"
+      api_base: "http://192.168.0.144:8095/v1"
       api_key: "sk-local"
       extra_body:
         encoding_format: "float"
@@ -130,22 +129,11 @@ model_list:
       id: "heartcode-embed3"
       mode: "embedding"
 
-  - model_name: "heartcode-embed"
-    litellm_params:
-      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
-      api_base: "http://192.168.0.144:8093/v1"
-      api_key: "sk-local"
-      extra_body:
-        encoding_format: "float"
-    model_info:
-      id: "heartcode-embed4"
-      mode: "embedding"
-
   # =============================================================================
-  # VISION EMBEDDING MODEL - 1x dedicated GPU (GPU 7, port 8101)
-  # nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 — natural-photo text + image
-  # embeddings, shared 768-d space (openspec change: serve-photo-embeddings).
-  # Replaces BiQwen2.5 (heartcode-embed) on GPU 7. Verified on hardware 2026-05-28.
+  # VISION EMBEDDING MODEL - nomic-embed-vision-v1.5 + nomic-embed-text-v1.5
+  # Natural-photo text + image embeddings, shared 768-d space. 3 backends
+  # co-located with SFW chat (GPU 1-3, :8101-8103).
+  # openspec: serve-photo-embeddings + rebalance-embed-image-gpus.
   # =============================================================================
 
   - model_name: "heartcode-embed-vision"
@@ -157,11 +145,36 @@ model_list:
       extra_body:
         encoding_format: "float"
     model_info:
-      id: "heartcode-embed-vision"
+      id: "heartcode-embed-vision1"
+      mode: "embedding"
+
+  - model_name: "heartcode-embed-vision"
+    litellm_params:
+      model: "openai/heartcode-embed-vision"
+      api_base: "http://192.168.0.144:8102/v1"
+      api_key: "sk-local"
+      timeout: 60
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "heartcode-embed-vision2"
+      mode: "embedding"
+
+  - model_name: "heartcode-embed-vision"
+    litellm_params:
+      model: "openai/heartcode-embed-vision"
+      api_base: "http://192.168.0.144:8103/v1"
+      api_key: "sk-local"
+      timeout: 60
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "heartcode-embed-vision3"
       mode: "embedding"
 
   # =============================================================================
-  # IMAGE MODEL - GPU 8 (Segmind SSD-1B via LocalAI)
+  # IMAGE MODEL - Segmind SSD-1B via LocalAI, 2x load-balanced (GPU 7 + GPU 8)
+  # openspec: rebalance-embed-image-gpus.
   # =============================================================================
 
   - model_name: "heartcode-image"
@@ -170,7 +183,16 @@ model_list:
       api_base: "http://192.168.0.144:5100/v1"
       api_key: "sk-local"
     model_info:
-      id: "heartcode-image"
+      id: "heartcode-image1"
+      mode: "image_generation"
+
+  - model_name: "heartcode-image"
+    litellm_params:
+      model: "openai/heartcode-image"
+      api_base: "http://192.168.0.144:5101/v1"
+      api_key: "sk-local"
+    model_info:
+      id: "heartcode-image2"
       mode: "image_generation"
 
 # Router settings for load balancing
@@ -193,12 +215,12 @@ router_settings:
     - model_name: "heartcode-chat-nsfw"  # now 3 GPUs (GPU 4-6), was 4
       tpm: 38000
       rpm: 34
-    - model_name: "heartcode-embed"      # 4 text-embed backends (GPU 1-4), fast GGUF text embeds
+    - model_name: "heartcode-embed"      # 3 text-embed backends (GPU 4-6), fast GGUF text embeds
       tpm: 40000
       rpm: 40
-    - model_name: "heartcode-embed-vision"  # 1 dedicated GPU (GPU 7), light CLIP pair
-      tpm: 30000
-      rpm: 40
+    - model_name: "heartcode-embed-vision"  # 3 backends co-located on SFW chat (GPU 1-3)
+      tpm: 45000
+      rpm: 60
 
   # Model aliases - map public API names to internal model names
   model_group_alias:
