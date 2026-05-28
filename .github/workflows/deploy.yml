@@ -1,0 +1,109 @@
+# Deploy to the private-LAN hosts (PEA / Prod).
+#
+# Runs on a SELF-HOSTED runner labeled `homelab` (register one on Prod,
+# 192.168.0.152 — it can reach PEA at 192.168.0.144 over the LAN). GitHub-hosted
+# runners cannot route to 192.168.0.x, which is why CI (gpu-build.yml) and CD
+# (this file) are split.
+#
+# Manual-only (workflow_dispatch) so fork PRs can never trigger it; the
+# `production` Environment adds a required-reviewer approval gate.
+#
+# Required repo configuration (see docs/pea-server-setup.md):
+#   Environment `production` with required reviewer(s)
+#   Variables : DEPLOY_DIR (default /opt/heartcode), LITELLM_HEALTH_URL
+#               (default http://localhost:4000/health/readiness)
+#   Secrets   : GPU_SERVER_HOST, GPU_SERVER_USER, GPU_SERVER_SSH_KEY  (PEA)
+
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "What to deploy"
+        type: choice
+        options: [litellm, gpu-server, both]
+        default: litellm
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  litellm:
+    name: Deploy LiteLLM (Prod)
+    if: ${{ inputs.target == 'litellm' || inputs.target == 'both' }}
+    runs-on: [self-hosted, homelab]
+    environment: production
+    env:
+      DEPLOY_DIR: ${{ vars.DEPLOY_DIR || '/opt/heartcode' }}
+      LITELLM_HEALTH_URL: ${{ vars.LITELLM_HEALTH_URL || 'http://localhost:4000/health/readiness' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate config (must pass before rollout)
+        run: |
+          python3 -m pip install --quiet --user pyyaml
+          python3 gpu-server/scripts/render-config.py --check
+          python3 litellm/validate_config.py
+
+      - name: Update Prod checkout and restart LiteLLM
+        run: |
+          set -euo pipefail
+          cd "$DEPLOY_DIR"
+          git fetch --all --prune
+          git checkout --force "${{ github.sha }}"
+          docker compose -f litellm/docker-compose.yml up -d litellm
+
+      - name: Health check
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            if curl -fsS "$LITELLM_HEALTH_URL" >/dev/null; then
+              echo "LiteLLM healthy"; exit 0
+            fi
+            echo "waiting for LiteLLM ($i/30)…"; sleep 5
+          done
+          echo "::error::LiteLLM did not become healthy"; exit 1
+
+  gpu-server:
+    name: Deploy GPU servers (PEA)
+    if: ${{ inputs.target == 'gpu-server' || inputs.target == 'both' }}
+    runs-on: [self-hosted, homelab]
+    environment: production
+    steps:
+      - name: Rebuild + rolling restart on PEA over the LAN
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.GPU_SERVER_HOST }}
+          username: ${{ secrets.GPU_SERVER_USER }}
+          key: ${{ secrets.GPU_SERVER_SSH_KEY }}
+          command_timeout: "40m"
+          script: |
+            set -euo pipefail
+            cd "${DEPLOY_DIR:-/opt/heartcode}"
+            git fetch --all --prune
+            git checkout --force "${{ github.sha }}"
+
+            # Regenerate the model-assignment env from the manifest, then build
+            # the llama.cpp image natively (PEA's no-AVX/Pascal flags live in the
+            # Dockerfile) and roll chat servers one at a time with health gating.
+            python3 gpu-server/scripts/render-config.py
+            cd gpu-server
+            docker build -t local-ai-llama:latest .
+
+            for i in 1 2 3 4 5 6; do
+              port=$((8079 + i))
+              echo "== restarting gpu-server-$i (:$port) =="
+              docker compose --env-file .env --env-file models.generated.env up -d --no-deps "gpu-server-$i"
+              ok=0
+              for t in $(seq 1 30); do
+                if curl -fsS "http://localhost:$port/health" >/dev/null; then ok=1; break; fi
+                sleep 5
+              done
+              [ "$ok" = 1 ] || { echo "gpu-server-$i unhealthy on :$port"; exit 1; }
+            done
+            docker image prune -f

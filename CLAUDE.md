@@ -78,6 +78,30 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 ./monitor.sh                            # Real-time monitoring
 ```
 
+## CI/CD
+
+Two workflows under `.github/workflows/`:
+
+- **`gpu-build.yml` (CI)** — runs on every push/PR on GitHub-hosted runners (no secrets, no LAN). Jobs: `compose-validate` (`docker compose config` for every stack), `litellm-validate` (`litellm/validate_config.py`), `model-manifest-validate` (`render-config.py --check`), `python-lint` (ruff + `py_compile`), and a **build-only**, path-filtered `gpu-build` (llama.cpp image, no push). GitHub-hosted runners **cannot reach the 192.168.0.x LAN**, so CI never deploys.
+- **`deploy.yml` (CD)** — manual `workflow_dispatch` (`target`: `litellm`/`gpu-server`/`both`) on a **self-hosted runner labeled `homelab`** (registered on Prod; can SSH to PEA over the LAN). Gated by the `production` Environment. LiteLLM = `git checkout <sha>` + `docker compose up -d litellm` + health check on Prod; GPU server = SSH to PEA, regenerate env, native `docker build`, rolling `gpu-server-1..6` restart with `/health` gating.
+
+### Changing a model or its tenancy (single source of truth)
+
+Edit **`gpu-server/models.yaml`** only, then regenerate:
+```bash
+cd gpu-server && python3 scripts/render-config.py     # writes the generated files
+python3 scripts/render-config.py --check              # what CI runs (fails on drift)
+```
+This renders (all **generated — do not hand-edit**): `gpu-server/models.generated.env` (chat `GPU_N_MODEL_*`), `litellm/config.yaml` (merged from `litellm/config.base.yaml` + the manifest), and `gpu-server/models.download.tsv` (consumed by `scripts/download-models.sh`). Secrets stay in the gitignored `gpu-server/.env`. Edit routing/retry/auth knobs in `litellm/config.base.yaml`. Structural changes (a GPU's *service kind*, e.g. chat→embed) are still manual `docker-compose.yml` edits.
+
+Then deploy via `deploy.yml`, or **manually** (fallback if the runner is down):
+```bash
+# Prod (LiteLLM):  git pull && docker compose -f litellm/docker-compose.yml up -d litellm
+# PEA (GPU):       git pull && cd gpu-server && python3 scripts/render-config.py \
+#                  && docker build -t local-ai-llama:latest . \
+#                  && docker compose --env-file .env --env-file models.generated.env up -d
+```
+
 ## Models
 
 | API Name | Type | GPUs | Model | Quant | Chat Template |

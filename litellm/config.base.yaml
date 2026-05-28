@@ -1,0 +1,54 @@
+# Local AI - LiteLLM Proxy: hand-maintained base settings.
+#
+# This file holds everything EXCEPT the model list and its per-model routing,
+# which are generated from gpu-server/models.yaml. The generator
+# (gpu-server/scripts/render-config.py) merges:
+#   - model_list                         (from the manifest)
+#   - router_settings.model_rate_limits  (from each model's rate_limit)
+#   - router_settings.model_group_alias  (from each model's aliases)
+# into this base to produce litellm/config.yaml. Edit routing knobs, retries,
+# timeouts, auth, etc. HERE; edit models/tenancy in the manifest.
+
+# Router settings for load balancing
+router_settings:
+  routing_strategy: "least-busy"
+  num_retries: 2
+  retry_after: 3
+  timeout: 90
+  allowed_fails: 2
+  cooldown_time: 60
+
+  # Health check settings
+  enable_health_check: true
+
+# General settings - PostgreSQL-backed API key management
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+
+  # Concurrency limits
+  # 6 chat GPUs * 2 concurrent each = 12, + 1 embed = 13 max safe
+  max_parallel_requests: 7
+  global_max_parallel_requests: 13
+
+  # Request timeout
+  request_timeout: 90
+
+  # Logging
+  json_logs: true
+
+  # CORS
+  allow_credentials: true
+
+  # Health check interval (seconds)
+  health_check_interval: 15
+
+# LiteLLM settings
+litellm_settings:
+  set_verbose: false
+  drop_params: true  # Drop unsupported params instead of erroring
+
+# Environment variables needed:
+#   LITELLM_MASTER_KEY - Master key for admin API access
+#   DATABASE_URL - PostgreSQL connection string (set in docker-compose)
+#   LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_HOST - Optional observability
