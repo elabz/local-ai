@@ -1,10 +1,10 @@
 ## 1. Prod LiteLLM cutover (ssh elm / 192.168.0.152)
 
 - [x] 1.1 Reconcile `heartcode-embed` (merged config pointed it at the shelved `:8100`): **restore-legacy** → 4 text-embed backends (`:8090-8093`, per "4 text-embed servers"). Also removed the dead `heartcode-chat-nsfw` `:8086` deployment (pea-gpu-7 was removed) and fixed the NSFW header (3 GPUs); updated `CLAUDE.md`. All routed `api_base`s now map to live backends.
-- [ ] 1.2 `ssh elm`: `git pull origin main` (config is repo-mounted at `./config.yaml`)
-- [ ] 1.3 Restart LiteLLM (`docker compose up -d litellm`) to reload the config
-- [ ] 1.4 Validate through the proxy: `heartcode-embed-vision` text + image → 768-d, AND `heartcode-embed` still returns vectors (no dead route)
-- [ ] 1.5 Confirm rollback path: revert config + restart restores prior routing
+- [x] 1.2 `ssh elm`: `git pull origin main` — prod at merge commit `f3b15ba` (config is repo-mounted at `./config.yaml`)
+- [x] 1.3 Restart LiteLLM (`docker compose restart litellm`) — healthy in ~25s; loaded SFW×3, NSFW×3, heartcode-embed×4, heartcode-embed-vision×1, image
+- [x] 1.4 Validate through the proxy — PASSED: `heartcode-embed-vision` text → 768-d, image → 768-d; `heartcode-embed` text → 768-d (no dead route)
+- [x] 1.5 Confirm rollback path — `git checkout <prev> -- litellm/config.yaml` + `docker compose restart litellm` restores prior routing (verified by design; not exercised to avoid a second prod blip)
 
 ## 2. Offline model eval (completes serve-photo-embeddings 1.x)
 
