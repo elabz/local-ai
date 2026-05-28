@@ -29,7 +29,7 @@ ENABLE_HEALTH_CHECKS="${ENABLE_HEALTH_CHECKS:-false}"  # Disable health-based re
 # GPU to container mapping (physical 0-indexed GPU -> container names)
 # GPU 0 = gpu-server-1 + embedding-server-1, etc.
 # GPU 6 was reassigned from chat (gpu-server-7 + embedding-server-7) to the
-# dedicated multimodal embedding service (pea-embed-mm-1).
+# dedicated vision embedding service (pea-embed-vision-1).
 # GPU 7 hosts the image server (pea-image-1).
 declare -A GPU_CONTAINERS=(
     [0]="local-ai-gpu-1 local-ai-embed-1"
@@ -38,14 +38,14 @@ declare -A GPU_CONTAINERS=(
     [3]="local-ai-gpu-4 local-ai-embed-4"
     [4]="local-ai-gpu-5 local-ai-embed-5"
     [5]="local-ai-gpu-6 local-ai-embed-6"
-    [6]="pea-embed-mm-1"
+    [6]="pea-embed-vision-1"
     [7]="local-ai-gpu-8 local-ai-embed-8"
 )
 
 # Optional health-check port override per GPU index (default 8080+idx). The
-# multimodal embed service publishes 8100, not 8086.
+# vision embed service publishes 8101, not 8086.
 declare -A GPU_HEALTH_PORTS=(
-    [6]=8100
+    [6]=8101
 )
 
 # Restart tracking: Last restart timestamp per GPU (to enforce cooldown)

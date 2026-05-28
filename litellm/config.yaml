@@ -123,24 +123,23 @@ model_list:
       mode: "embedding"
 
   # =============================================================================
-  # PLANNED — heartcode-embed-vision (openspec change: serve-photo-embeddings)
-  # nomic-embed-vision-v1.5 (images) + nomic-embed-text-v1.5 (text), shared 768-d
-  # space, for natural-photo text→image / image→image search via the image-search
-  # service. NOT YET DEPLOYED — endpoint/port + GPU finalized in change tasks
-  # 2.1/2.2 (replace vs coexist with heartcode-embed on GPU 7). Uncomment and set
-  # api_base once the model serves an OpenAI /v1/embeddings endpoint.
+  # VISION EMBEDDING MODEL - 1x dedicated GPU (GPU 7, port 8101)
+  # nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 — natural-photo text + image
+  # embeddings, shared 768-d space (openspec change: serve-photo-embeddings).
+  # Replaces BiQwen2.5 (heartcode-embed) on GPU 7. Verified on hardware 2026-05-28.
   # =============================================================================
-  # - model_name: "heartcode-embed-vision"
-  #   litellm_params:
-  #     model: "openai/nomic-embed-vision-v1.5"
-  #     api_base: "http://192.168.0.144:8101/v1"   # placeholder port — finalize on deploy
-  #     api_key: "sk-local"
-  #     timeout: 60
-  #     extra_body:
-  #       encoding_format: "float"
-  #   model_info:
-  #     id: "heartcode-embed-vision"
-  #     mode: "embedding"
+
+  - model_name: "heartcode-embed-vision"
+    litellm_params:
+      model: "openai/heartcode-embed-vision"
+      api_base: "http://192.168.0.144:8101/v1"
+      api_key: "sk-local"
+      timeout: 60
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "heartcode-embed-vision"
+      mode: "embedding"
 
   # =============================================================================
   # IMAGE MODEL - GPU 8 (Segmind SSD-1B via LocalAI)
@@ -175,9 +174,12 @@ router_settings:
     - model_name: "heartcode-chat-nsfw"  # now 3 GPUs (GPU 4-6), was 4
       tpm: 38000
       rpm: 34
-    - model_name: "heartcode-embed"      # 1 dedicated GPU, heavy multimodal
+    - model_name: "heartcode-embed"      # SHELVED — BiQwen2.5 not deployed (see docker-compose); dead until revived
       tpm: 20000
       rpm: 20
+    - model_name: "heartcode-embed-vision"  # 1 dedicated GPU (GPU 7), light CLIP pair
+      tpm: 30000
+      rpm: 40
 
   # Model aliases - map public API names to internal model names
   model_group_alias:

@@ -4,7 +4,7 @@
 # Layout (1-indexed GPU numbering):
 #   GPU 1-3: SFW Chat (Stheno v3.4 Q5_K_M) + text Embeddings
 #   GPU 4-6: NSFW Chat (Lumimaid v0.2 8B Q5_K_M) + text Embeddings
-#   GPU 7:   Multimodal Embeddings (nomic-embed-multimodal-3b / BiQwen2.5) — dedicated
+#   GPU 7:   Vision Embeddings (nomic-embed-vision-v1.5 + nomic-embed-text-v1.5) — dedicated
 #   GPU 8:   Image generation (Segmind SSD-1B via LocalAI)
 #
 # GPU UUIDs (from nvidia-smi -L):
@@ -23,7 +23,7 @@
 # Memory Budget (32GB total):
 #   - 6x chat containers: 2GB each = 12GB max
 #   - 6x text-embed containers: 768MB each = 4.5GB max
-#   - 1x multimodal-embed container: 8GB max (PyTorch + 3B model load)
+#   - 1x vision-embed container: 4GB max (PyTorch + nomic ViT/BERT pair, ~1.1GB used)
 #   - 1x image container: 4GB max
 #   - Note: mem_limit is per-container max, not reserved. Actual use much lower.
 #   - Swap available for spikes
@@ -346,57 +346,45 @@ services:
               capabilities: [gpu]
 
   # =============================================================================
-  # MULTIMODAL EMBEDDING SERVER (dedicated GPU-f417c539 / 1-indexed GPU 7)
-  # nomic-embed-multimodal-3b (BiQwen2.5) via PyTorch + colpali-engine.
-  # Serves text + image embeddings (3584-d) behind the heartcode-embed name.
-  #
-  # PRECISION/GPU-count: started on fp16 / 1 GPU (migration plan: "try fp16/1-GPU
-  # first"). If the benchmark (change tasks 4.x) selects fp32, it needs ~15GB =>
-  # 2 GPUs: also reassign GPU-fe0fc635 (gpu-server-6), add it to NVIDIA_VISIBLE_
-  # DEVICES + device_ids, and set PRECISION=float32 (device_map auto-shards).
+  # VISION EMBEDDING SERVER (dedicated GPU-f417c539 / 1-indexed GPU 7)
+  # nomic-embed-vision-v1.5 (images) + nomic-embed-text-v1.5 (text) — natural-
+  # photo embeddings in one shared 768-d space, behind heartcode-embed-vision
+  # (openspec change serve-photo-embeddings). REPLACES BiQwen2.5 on GPU 7.
+  # Verified on hardware 2026-05-28: fp32, dim 768, ~1.1GB VRAM.
   # =============================================================================
 
-  multimodal-embed:
-    image: local-ai-embed-mm:latest
+  vision-embed:
+    image: local-ai-vision-embed:latest
     build:
-      context: ./multimodal-embed
+      context: ./vision-embed
       dockerfile: Dockerfile
-    container_name: pea-embed-mm-1
+    container_name: pea-embed-vision-1
     restart: unless-stopped
     runtime: nvidia
     environment:
       NVIDIA_VISIBLE_DEVICES: GPU-f417c539-26db-94e9-4c8f-c5a775291988
-      SERVER_ID: embed-mm-1
+      SERVER_ID: embed-vision-1
       PORT: 8080
       METRICS_PORT: 9091
-      PRECISION: float16          # float32|float16 (never bf16); benchmark finalizes
-      ATTN_IMPLEMENTATION: eager  # no flash-attn on Pascal
-      MAX_IMAGE_EDGE: 1024
-      MAX_BATCH_SIZE: 4
-      MODEL_ID: nomic-ai/nomic-embed-multimodal-3b
-      BASE_MODEL_ID: Qwen/Qwen2.5-VL-3B-Instruct
+      PRECISION: float32          # Pascal: small ViT/BERT towers run fine in fp32
+      VISION_MODEL_ID: nomic-ai/nomic-embed-vision-v1.5
+      TEXT_MODEL_ID: nomic-ai/nomic-embed-text-v1.5
       HF_HOME: /models
       HF_HUB_CACHE: /models
     volumes:
-      - ./models:/models                                   # rw: HF cache (adapter + base)
-      - ./multimodal-embed/server.py:/app/server.py:ro
-      - ./multimodal-embed/routes.py:/app/routes.py:ro
-      - ./multimodal-embed/metrics.py:/app/metrics.py:ro
-      - ./multimodal-embed/config.py:/app/config.py:ro
-      - ./multimodal-embed/embed_model.py:/app/embed_model.py:ro
-      - ./multimodal-embed/image_input.py:/app/image_input.py:ro
+      - ./models:/models          # rw: HF cache (vision + text snapshots)
     ports:
-      - "8100:8080"
+      - "8101:8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 900s   # first run resolves the Qwen2.5-VL-3B base
+      start_period: 300s
     networks:
       - gpu-network
-    mem_limit: 8192m
-    memswap_limit: 12288m
+    mem_limit: 4096m
+    memswap_limit: 6144m
     deploy:
       resources:
         reservations:
@@ -404,6 +392,13 @@ services:
             - driver: nvidia
               device_ids: ['GPU-f417c539-26db-94e9-4c8f-c5a775291988']
               capabilities: [gpu]
+
+  # =============================================================================
+  # SHELVED — multimodal-embed (nomic-embed-multimodal-3b / BiQwen2.5, document
+  # retrieval). Superseded on GPU 7 by vision-embed above for the natural-photo
+  # use case. Service code kept in ./multimodal-embed and the
+  # switch-to-nomic-multimodal-embed openspec change; to revive, restore its
+  # service block from git history and assign it a free GPU UUID.
 
   # =============================================================================
   # IMAGE GENERATION SERVER (GPU 8)

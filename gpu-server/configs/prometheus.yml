@@ -33,13 +33,13 @@ scrape_configs:
           gpu_id: '6'
           model_type: 'nsfw'
 
-  # Multimodal Embedding Server (nomic-embed-multimodal-3b, dedicated GPU 7)
-  - job_name: 'multimodal-embed'
+  # Vision Embedding Server (nomic-embed-vision-v1.5 + text-v1.5, dedicated GPU 7)
+  - job_name: 'vision-embed'
     static_configs:
-      - targets: ['pea-embed-mm-1:9091']
+      - targets: ['pea-embed-vision-1:9091']
         labels:
           gpu_id: '7'
-          model_type: 'embed-multimodal'
+          model_type: 'embed-vision'
 
   # Image Server (LocalAI metrics, GPU 8)
   - job_name: 'image-server'
