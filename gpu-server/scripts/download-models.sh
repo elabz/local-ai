@@ -45,6 +45,29 @@ download_hf() {
   fi
 }
 
+# Snapshot a full HuggingFace repo into the HF cache rooted at $MODELS_DIR. The
+# multimodal-embed container runs with HF_HOME=/models, so a cache built here is
+# found offline at runtime (no first-request download).
+download_hf_snapshot() {
+  local repo="$1"
+  export HF_HOME="$MODELS_DIR"
+  export HF_HUB_CACHE="$MODELS_DIR"
+  echo "  [SNAPSHOT] $repo -> $MODELS_DIR (HF cache)"
+
+  if command -v huggingface-cli &> /dev/null; then
+    huggingface-cli download "$repo" >/dev/null || return 1
+  elif python3 -c "import huggingface_hub" &> /dev/null; then
+    python3 - "$repo" <<'PY'
+import sys
+from huggingface_hub import snapshot_download
+snapshot_download(sys.argv[1])
+PY
+  else
+    echo "  ERROR: huggingface_hub not found. Install with: pip install -U 'huggingface_hub[cli]'"
+    return 1
+  fi
+}
+
 # --- SFW Chat Model ---
 echo ""
 echo "1/3: SFW Chat Model (Stheno v3.4 8B)"
@@ -67,10 +90,14 @@ else
   download_hf "Lewdiculous/Lumimaid-v0.2-8B-GGUF-IQ-Imatrix" "Lumimaid-v0.2-8B-Q5_K_M-imat.gguf" "Lumimaid-v0.2-8B-Q5_K_M-imat.gguf"
 fi
 
-# --- Embedding Model ---
+# --- Multimodal Embedding Model ---
 echo ""
-echo "3/3: Embedding Model (nomic-embed-text-v1.5)"
-download_hf "nomic-ai/nomic-embed-text-v1.5-GGUF" "nomic-embed-text-v1.5.Q8_0.gguf" "nomic-embed-text-v1.5.Q8_0.gguf"
+echo "3/3: Multimodal Embedding Model (nomic-embed-multimodal-3b + Qwen2.5-VL-3B base)"
+echo "  License: Qwen RESEARCH LICENSE (non-commercial / research & eval only)."
+echo "  Note: nomic-embed-multimodal-3b is a LoRA adapter (~230MB); the base"
+echo "        Qwen/Qwen2.5-VL-3B-Instruct (~7GB) is required and snapshotted too."
+download_hf_snapshot "nomic-ai/nomic-embed-multimodal-3b"
+download_hf_snapshot "Qwen/Qwen2.5-VL-3B-Instruct"
 
 # --- Image Model ---
 echo ""
@@ -80,6 +107,9 @@ echo ""
 echo "=== Download Complete ==="
 echo ""
 ls -lh "$MODELS_DIR"/*.gguf 2>/dev/null || echo "No .gguf files found"
+echo ""
+echo "HF snapshots (multimodal embed):"
+ls -d "$MODELS_DIR"/hub/models--* 2>/dev/null || echo "  (none — multimodal embed not snapshotted)"
 echo ""
 echo "Total disk usage:"
 du -sh "$MODELS_DIR"
