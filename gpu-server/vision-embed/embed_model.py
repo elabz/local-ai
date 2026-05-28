@@ -5,13 +5,12 @@ via transformers (``trust_remote_code``). Both produce L2-normalized 768-d
 vectors in ONE shared space, so a text query and an image are directly
 comparable (cosine) downstream.
 
-!!! BEST-EFFORT / VERIFY ON GPU (openspec serve-photo-embeddings task 2.1) !!!
-This follows Nomic's documented usage, but the exact post-processing of each
-tower (image = L2-normalized CLS token; text = mean-pool -> layer_norm ->
-L2-normalize, with a `search_query:` prefix) has NOT been run on a P104-100.
-Confirm on hardware: (a) torch.cuda is available, (b) both towers load in fp32,
-(c) dim == 768 for text AND image, (d) a text/image pair of the same concept
-scores high cosine. Adjust pooling/normalization here if the smoke test fails.
+VERIFIED on a P104-100 (2026-05-28, openspec serve-photo-embeddings task 3.3):
+loads in fp32 on cuda, both towers land in one 768-d space, vectors are
+L2-normalized, and cross-modal ordering is sane (a solid-red image scores higher
+cosine vs "red" text than vs "blue", and vice-versa); ~1.1 GB VRAM. Post-
+processing: image = L2-normalized CLS token; text = mean-pool -> layer_norm ->
+L2-normalize, with a `search_query:` prefix.
 """
 
 from __future__ import annotations

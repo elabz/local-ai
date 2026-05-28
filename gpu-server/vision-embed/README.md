@@ -9,13 +9,13 @@ search. Exposed via LiteLLM as `heartcode-embed-vision`.
 > Implements openspec change `serve-photo-embeddings` tasks 2.1–2.4. **Serving
 > only** — this service stores nothing; indexing/retrieval live downstream.
 
-## ⚠️ Best-effort — verify on GPU
+## ✅ Verified on GPU
 
-`embed_model.py` follows Nomic's documented usage but has **not** been run on a
-P104-100. Before relying on it, smoke-test on hardware (openspec task 3.3):
-`torch.cuda` available, both towers load in fp32, text dim == image dim == 768,
-and a matching text/image pair scores high cosine. The model is config-driven,
-so the eval (tasks 1.x) may swap it.
+Smoke-tested on a P104-100 (2026-05-28, task 3.3): loads in fp32 on cuda, both
+towers in one 768-d space, vectors L2-normalized, cross-modal ordering sane
+(red image scores higher cosine vs "red" text than "blue", and vice-versa),
+~1.1 GB VRAM. The model is config-driven; the offline quality eval (tasks 1.x)
+can still swap it for a higher-ranked alternative.
 
 ## Why this model (vs the BiQwen2.5 multimodal-embed service)
 

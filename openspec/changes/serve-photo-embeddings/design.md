@@ -49,5 +49,5 @@ Build the server like `gpu-server/multimodal-embed/` (FastAPI, in-process model 
 
 ## Open Questions
 
-- **Model**: does `nomic-embed-vision-v1.5` (768-d) win the offline photo eval, or does a higher-quality alternative (`jina-clip-v2`, SigLIP2) justify its extra cost?
-- **GPU placement**: coexist with BiQwen2.5 or replace it on GPU 7 (VRAM/card budget)?
+- **GPU placement** — RESOLVED: **replace** BiQwen2.5 on GPU 7 (`GPU-f417c539`). Verified 2026-05-28: vision-embed uses only ~1.1 GB VRAM there (fp32), so no card-sharing needed. NSFW chat drops from 4 GPUs to 3 (4-6).
+- **Model** — `nomic-embed-vision-v1.5` (768-d) is verified working on hardware (loads, shared space, cross-modal ordering sane). The offline quality eval (tasks 1.x) is still open for final ranking vs `jina-clip-v2` / SigLIP2, but the default is confirmed deployable.
