@@ -9,14 +9,15 @@ Local AI is a shared GPU inference infrastructure for local network projects. It
 ```
 local-ai/
 ├── gpu-server/           # llama.cpp + LocalAI inference servers (PEA)
-│   ├── docker-compose.yml  # 6 chat + 6 text-embed + 1 vision-embed + 1 image + monitoring
+│   ├── docker-compose.yml  # 6 chat + 3 text-embed + 3 vision-embed + 2 image + monitoring
 │   ├── server.py           # FastAPI wrapper with metrics
 │   ├── llama_client.py     # Async client proxying to llama.cpp native API
 │   ├── routes.py           # OpenAI-compatible API routes
 │   ├── config.py           # Pydantic settings from env vars
 │   ├── metrics.py          # Prometheus metrics collection
 │   ├── Dockerfile          # CUDA build for Pascal GPUs (no AVX)
-│   ├── multimodal-embed/   # PyTorch + colpali-engine multimodal embed service (nomic-embed-multimodal-3b)
+│   ├── vision-embed/       # PyTorch + transformers nomic-embed-vision-v1.5 + text-v1.5 (deployed)
+│   ├── multimodal-embed/   # SHELVED — colpali-engine BiQwen2.5 (nomic-embed-multimodal-3b)
 │   ├── configs/            # prometheus.yml, entrypoint-wrapper.sh
 │   ├── scripts/            # setup-pea.sh, download-models.sh, watchdog, diagnostics
 │   └── models/             # heartcode-image.yaml (GGUF files excluded via .gitignore)
@@ -39,7 +40,7 @@ local-ai/
 
 ## Deployment Topology
 
-- **PEA (192.168.0.144)**: All GPU servers — 3 SFW + 3 NSFW + 6 text-embed + 1 vision-embed + 1 image — `gpu-server/docker-compose.yml`
+- **PEA (192.168.0.144)**: All GPU servers — 3 SFW + 3 NSFW chat (each co-located with an embed server: vision on 1-3, text on 4-6) + 2 image — `gpu-server/docker-compose.yml`
 - **Prod (192.168.0.152)**: LiteLLM proxy + monitoring — `litellm/docker-compose.yml`
 
 ## Common Commands
@@ -82,10 +83,11 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 |----------|------|------|-------|-------|---------------|
 | `heartcode-chat-sfw` | Chat | 1-3 | Llama-3.1-8B-Stheno-v3.4 | Q5_K_M | Llama3 |
 | `heartcode-chat-nsfw` | Chat | 4-6 | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M | Llama3 |
-| `heartcode-embed-vision` | Embedding (text + image) | 7 | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | fp32¹ | — |
-| `heartcode-image` | Image | 8 | Segmind SSD-1B (SDXL distilled) | FP16 | — |
+| `heartcode-embed-vision` | Embedding (text + image) | 1-3 | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | fp32¹ | — |
+| `heartcode-embed` | Embedding (text) | 4-6 | nomic-embed-text-v1.5 | Q8_0 | — |
+| `heartcode-image` | Image | 7-8 | Segmind SSD-1B (SDXL distilled) | FP16 | — |
 
-¹ Vision embeddings are **768-d** in a shared text+image space (nomic-embed-vision-v1.5 ↔ nomic-embed-text-v1.5). fp32 on 1 GPU, ~1.1GB VRAM (verified 2026-05-28). **Apache-2.0.** Serving only — vector storage/search live in the downstream app. See `gpu-server/vision-embed/` and the openspec change `serve-photo-embeddings`. The earlier BiQwen2.5 multimodal model (3584-d, Qwen RESEARCH LICENSE) is **shelved** (code in `gpu-server/multimodal-embed/`, change `switch-to-nomic-multimodal-embed`; revivable on a free GPU). `heartcode-embed` now routes to the legacy text-embed servers (`:8090-8093`, nomic-embed-text 768-d).
+¹ Vision embeddings are **768-d** in a shared text+image space (nomic-embed-vision-v1.5 ↔ nomic-embed-text-v1.5). fp32, ~1.1GB VRAM each, **co-located on the SFW chat GPUs 1-3** (3 instances, load-balanced); text query gets the `search_query:` prefix. **Apache-2.0.** Serving only — vector storage/search live in the downstream app. See `gpu-server/vision-embed/`, the openspec changes `serve-photo-embeddings` + `rebalance-embed-image-gpus`, and `docs/embedding-model-eval.md`. `heartcode-embed` (text-only) is the legacy `nomic-embed-text-v1.5` GGUF co-located on NSFW chat GPUs 4-6. The BiQwen2.5 multimodal model (3584-d, Qwen RESEARCH LICENSE) is **shelved** (code in `gpu-server/multimodal-embed/`, change `switch-to-nomic-multimodal-embed`; revivable on a free GPU).
 
 **Aliases**: `heartcode-default`, `heartcode-sfw`, `heartcode-chat` → `heartcode-chat-sfw` | `heartcode-nsfw` → `heartcode-chat-nsfw`
 
@@ -95,16 +97,16 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 |-------|---------|-----|
 | 8080-8082 | SFW chat servers | GPU 1-3 |
 | 8083-8085 | NSFW chat servers | GPU 4-6 |
-| 8090-8095 | Text-embed servers (legacy `nomic-embed-text`, kept for rollback until decommission) | GPU 1-6 |
-| 8101 | Vision embedding server (`nomic-embed-vision-v1.5` + `nomic-embed-text-v1.5`) | GPU 7 |
-| 5100 | Image generation (LocalAI) | GPU 8 |
+| 8101-8103 | Vision embedding servers (`nomic-embed-vision-v1.5` + `nomic-embed-text-v1.5`), co-located with SFW chat | GPU 1-3 |
+| 8093-8095 | Text-embed servers (`nomic-embed-text-v1.5`), co-located with NSFW chat | GPU 4-6 |
+| 5100, 5101 | Image generation (LocalAI), 2x load-balanced | GPU 8, 7 |
 | 9099 | Prometheus | — |
 | 9100 | Node Exporter | — |
 
 ## Key Configuration
 
 ### GPU Server (`gpu-server/docker-compose.yml`)
-- Memory limit: 2048m per chat server, 512m per text-embed server, 4096m for vision-embed, 4096m for image server
+- Memory limit: 2048m per chat server, 512m per text-embed server, 2560m per vision-embed server, 4096m per image server
 - `N_GPU_LAYERS=33`, `N_CTX=16384`, `N_BATCH=128`, `N_UBATCH=64`, `N_THREADS=2`
 - KV cache: `q8_0` quantization for both keys and values
 - `EXTRA_ARGS: "--jinja"` — enables Jinja chat templates for Llama 3.1 models
@@ -113,24 +115,27 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 
 ### Vision Embedding Server (`gpu-server/vision-embed/`)
 - PyTorch + `transformers` (`trust_remote_code`) FastAPI service loading the nomic v1.5 pair — NOT llama.cpp
-- Dedicated GPU 7 (`GPU-f417c539`); **fp32** (small ViT/BERT towers), `PRECISION` env; ~1.1GB VRAM
+- **3 instances co-located on SFW chat GPUs 1-3** (`vision-embed-1/2/3`, ports 8101-8103); **fp32**, ~1.1GB VRAM each, `MAX_BATCH_SIZE=4` to bound activation memory on the shared 8GB cards
 - OpenAI `/v1/embeddings` accepts text strings, `data:` image URIs, and `{"image": ...}` objects → **768-d** shared-space vectors (text query gets the `search_query:` prefix; see `vision-embed/README.md`)
 - `nomic-embed-vision-v1.5` + `nomic-embed-text-v1.5` snapshotted into `/models` HF cache by `download-models.sh`
 - **Serving only** — no vector storage/search in this repo (downstream app owns that)
+- ⚠️ GPU 1-3 run ~7.4GB/8GB (chat + vision) — watch for OOM under peak chat-context + image load
+- Model choice is provisional pending the on-corpus eval — see `docs/embedding-model-eval.md`
 - Shelved alternative: `gpu-server/multimodal-embed/` (BiQwen2.5, document retrieval) — see change `switch-to-nomic-multimodal-embed`
 
 ### LiteLLM Config (`litellm/config.yaml`)
 - All endpoints point to PEA (192.168.0.144)
 - Routing: `least-busy` strategy with 2 retries
-- Rate limits: 35 RPM SFW (3 GPUs), 34 RPM NSFW (3 GPUs), 40 RPM vision embed (1 GPU)
-- `heartcode-embed-vision` → single deployment (`:8101`), `mode: embedding`, `timeout: 60`; `heartcode-embed` → 4 text-embed backends (`:8090-8093`); BiQwen2.5 (`:8100`) shelved
+- Rate limits: 35 RPM SFW, 34 RPM NSFW, 60 RPM vision embed (3 backends), 40 RPM text embed (3 backends)
+- `heartcode-embed-vision` → 3 deployments (`:8101-8103`, GPU 1-3); `heartcode-embed` → 3 (`:8093-8095`, GPU 4-6); `heartcode-image` → 2 (`:5100`,`:5101`, GPU 7-8); BiQwen2.5 (`:8100`) shelved
 - Health checks every 15s, 2 allowed fails before 60s cooldown
 - Max 7 parallel requests per model, 13 global
 
 ### Image Server (`gpu-server/models/heartcode-image.yaml`)
+- **2 instances** (`image-server` GPU 8 `:5100`, `image-server-2` GPU 7 `:5101`), load-balanced behind `heartcode-image`
 - Backend: `diffusers` (auto-installed from LocalAI gallery on first start)
 - Pipeline: `StableDiffusionXLPipeline` with `k_dpmpp_2m` scheduler
-- Persistent backend volume: `image_backends` mounted at `/backends`
+- Persistent backend volume: `image_backends` mounted at `/backends` — **shared** by both servers (2nd reuses the installed backend + model, no re-download)
 - Generation time: ~48s per 512x512 image
 
 ## Architecture Notes
@@ -160,8 +165,8 @@ The GPU chat servers use a FastAPI wrapper around llama.cpp's `llama-server`:
 - **RAM**: 32GB DDR4
 - **GPUs**: 8x P104-100 (8GB VRAM, Pascal, compute 6.1)
 - **GPU numbering**: 1-indexed in configs (GPU 1-8), 0-indexed physical (`NVIDIA_VISIBLE_DEVICES=0-7`)
-- **Safe limits**: 35 RPM SFW (3 GPUs), 34 RPM NSFW (3 GPUs), 40 RPM vision embed (1 GPU)
-- **GPU allocation**: GPU 1-3 SFW chat, GPU 4-6 NSFW chat, GPU 7 vision embed (dedicated), GPU 8 image. Text-embed (`nomic-embed-text`) co-located on GPU 1-6 until decommission.
+- **Safe limits**: 35 RPM SFW (3 GPUs), 34 RPM NSFW (3 GPUs), 60 RPM vision embed (3 co-located), 40 RPM text embed (3 co-located)
+- **GPU allocation**: GPU 1-3 SFW chat + co-located **vision-embed** (`nomic-embed-vision-v1.5`), GPU 4-6 NSFW chat + co-located **text-embed** (`nomic-embed-text-v1.5`), GPU 7-8 **image** (2x load-balanced). GPU 1-3 run ~7.4GB/8GB — monitor under peak load.
 
 ### Prod (192.168.0.152)
 - Runs LiteLLM proxy, PostgreSQL, optional monitoring stack

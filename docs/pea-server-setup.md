@@ -112,7 +112,7 @@ cd local-ai/gpu-server
 # Downloads:
 #   - Stheno v3.4 8B Q5_K_M (SFW chat, ~5.7GB)
 #   - Lumimaid v0.2 8B Q5_K_M imatrix (NSFW chat, ~5.73GB)
-#   - nomic-embed-multimodal-3b adapter + Qwen2.5-VL-3B base (multimodal embed, ~7GB)
+#   - nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 (vision/text embed, ~3.2GB)
 #     into the HF cache under models/ (requires huggingface_hub)
 
 # For lower VRAM GPUs (6GB), use Q4 quantization for the chat models:
@@ -130,9 +130,9 @@ wget "https://huggingface.co/bartowski/Llama-3.1-8B-Stheno-v3.4-GGUF/resolve/mai
 # NSFW Chat Model
 wget "https://huggingface.co/Lewdiculous/Lumimaid-v0.2-8B-GGUF-IQ-Imatrix/resolve/main/Lumimaid-v0.2-8B-Q5_K_M-imat.gguf"
 
-# Multimodal Embedding Model (adapter + base) into the HF cache under models/
-HF_HOME="$(pwd)" huggingface-cli download nomic-ai/nomic-embed-multimodal-3b
-HF_HOME="$(pwd)" huggingface-cli download Qwen/Qwen2.5-VL-3B-Instruct
+# Vision + Text Embedding Models into the HF cache under models/
+HF_HOME="$(pwd)" huggingface-cli download nomic-ai/nomic-embed-vision-v1.5
+HF_HOME="$(pwd)" huggingface-cli download nomic-ai/nomic-embed-text-v1.5
 ```
 
 ### 3.3 Image Model
@@ -146,9 +146,9 @@ ls -lh models/*.gguf
 # Expected:
 # Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf     ~5.7GB
 # Lumimaid-v0.2-8B-Q5_K_M-imat.gguf               ~5.73GB
-ls -d models/hub/models--*                  # multimodal embed HF snapshots
-# models--nomic-ai--nomic-embed-multimodal-3b
-# models--Qwen--Qwen2.5-VL-3B-Instruct
+ls -d models/models--*                       # vision/text embed HF snapshots
+# models--nomic-ai--nomic-embed-vision-v1.5
+# models--nomic-ai--nomic-embed-text-v1.5
 ```
 
 ## Step 4: Configure Environment
@@ -212,24 +212,26 @@ If your CPU supports AVX, you can enable those flags for better CPU-side perform
 Start services in stages to avoid overwhelming the system:
 
 ```bash
-# Chat servers first (GPU 1-6; GPU 7 is now the multimodal embed service)
+# Chat servers first (SFW GPU 1-3, NSFW GPU 4-6)
 docker compose up -d gpu-server-1 gpu-server-2 gpu-server-3 \
   gpu-server-4 gpu-server-5 gpu-server-6
 sleep 30  # Wait for models to load into VRAM
 
-# Text-embed servers (GPU 1-6, share GPUs with chat) — legacy tier, kept for
-# rollback until decommission
-docker compose up -d embedding-server-1 embedding-server-2 embedding-server-3 \
-  embedding-server-4 embedding-server-5 embedding-server-6
+# Text-embed servers, co-located with NSFW chat (GPU 4-6, :8093-8095)
+docker compose up -d embedding-server-4 embedding-server-5 embedding-server-6
 sleep 15
 
-# Multimodal embedding server (dedicated GPU 7) — first start resolves the
-# Qwen2.5-VL-3B base from the HF cache; allow several minutes to become healthy
-docker compose up -d multimodal-embed
+# Vision-embed servers, co-located with SFW chat (GPU 1-3, :8101-8103) — first
+# start resolves nomic-embed-vision/text from the HF cache; allow ~1 min each.
+# GPU 1-3 run ~7.4GB/8GB once chat + vision are both up — watch nvidia-smi.
+docker compose up -d vision-embed-1 vision-embed-2 vision-embed-3
 
-# Image server (GPU 8)
+# Image servers (GPU 8 + GPU 7, load-balanced). First start of image-server
+# installs the diffusers backend (~3 min); image-server-2 reuses the shared
+# image_backends volume (fast), so start image-server first.
 docker compose up -d image-server
-sleep 30  # First start installs diffusers backend (~3 min)
+sleep 30
+docker compose up -d image-server-2
 
 # Monitoring
 docker compose up -d prometheus node-exporter
@@ -240,7 +242,7 @@ docker compose up -d prometheus node-exporter
 ```bash
 docker compose ps
 # All containers should show "healthy"
-# Expect: 6 chat + 6 text-embed + 1 multimodal-embed + 1 image + prometheus + node-exporter = 16 containers
+# Expect: 6 chat + 3 text-embed + 3 vision-embed + 2 image + prometheus + node-exporter = 16 containers
 ```
 
 ## Step 7: Verify Endpoints
@@ -261,21 +263,25 @@ curl -s http://localhost:8083/v1/chat/completions \
   | python3 -m json.tool
 ```
 
-### Embeddings — multimodal (GPU 7, port 8100)
+### Embeddings — vision (text + image, GPU 1-3, ports 8101-8103)
 ```bash
 # Text
-curl -s http://localhost:8100/v1/embeddings \
+curl -s http://localhost:8101/v1/embeddings \
   -H "Content-Type: application/json" \
-  -d '{"model":"heartcode-embed","input":"Hello world"}' \
+  -d '{"model":"heartcode-embed-vision","input":"Hello world"}' \
   | python3 -m json.tool | head -10
 
-# Image + text smoke test + dimension + latency + VRAM:
-python3 multimodal-embed/bench.py --base http://localhost:8100 --runs 5
+# Image (data: URI or {"image": "<url|base64>"}); returns a 768-d vector too:
+curl -s http://localhost:8101/v1/embeddings \
+  -H "Content-Type: application/json" \
+  -d '{"model":"heartcode-embed-vision","input":{"image":"https://example.com/cat.jpg"}}' \
+  | python3 -c 'import sys,json; print("dim", len(json.load(sys.stdin)["data"][0]["embedding"]))'
 ```
 
-Legacy text-embed tier (kept for rollback until decommission) is on GPU 1-6,
-ports 8090-8095 (`{"input":"Hello world"}`). See
-`gpu-server/multimodal-embed/README.md` for the image-input convention.
+Text-embed tier (`nomic-embed-text-v1.5`, 768-d) is co-located with NSFW chat on
+GPU 4-6, ports 8093-8095 (`{"model":"heartcode-embed","input":"Hello world"}`). See
+`gpu-server/vision-embed/README.md` for the image-input convention, and
+`docs/embedding-model-eval.md` for choosing the vision model.
 
 ### Image Generation (GPU 8, port 5100)
 ```bash
@@ -368,10 +374,10 @@ curl -X POST http://localhost:4000/key/generate \
 |------------|---------|-----|
 | 8080-8082 | SFW chat | GPU 1-3 |
 | 8083-8085 | NSFW chat | GPU 4-6 |
-| 8090-8095 | Text-embed (legacy, rollback only) | GPU 1-6 |
-| 8100 | Multimodal embed (`nomic-embed-multimodal-3b`) | GPU 7 |
-| 5100 | Image generation | GPU 8 |
-| 9091 (internal) | Prometheus metrics per GPU | GPU 1-7 |
+| 8101-8103 | Vision embed (`nomic-embed-vision-v1.5` + text), co-located w/ SFW chat | GPU 1-3 |
+| 8093-8095 | Text embed (`nomic-embed-text-v1.5`), co-located w/ NSFW chat | GPU 4-6 |
+| 5100, 5101 | Image generation (2x, load-balanced) | GPU 8, 7 |
+| 9091 (internal) | Prometheus metrics per service | GPU 1-8 |
 | 9099 | Prometheus | - |
 | 9100 | Node Exporter | - |
 
@@ -385,7 +391,8 @@ curl -X POST http://localhost:4000/key/generate \
 | `cooldown_time` | 60s | Cooldown after failures |
 | `rpm` (SFW) | 35 | Requests per minute across 3 GPUs |
 | `rpm` (NSFW) | 34 | Requests per minute across 3 GPUs |
-| `rpm` (embed) | 20 | Multimodal embed, 1 dedicated GPU |
+| `rpm` (embed-vision) | 60 | Vision embed, 3 co-located backends (GPU 1-3) |
+| `rpm` (embed) | 40 | Text embed, 3 co-located backends (GPU 4-6) |
 
 ## Model Details
 
@@ -406,16 +413,28 @@ curl -X POST http://localhost:4000/key/generate \
 - **VRAM usage**: ~6.5GB with 16K context
 - **HuggingFace**: `Lewdiculous/Lumimaid-v0.2-8B-GGUF-IQ-Imatrix`
 
-### Embeddings: nomic-embed-multimodal-3b (current)
+### Vision embeddings: nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 (current)
 
 - **Modality**: text **and** image, embedded into one shared space
-- **Dimensions**: 3584 (was 768 for the legacy text model — breaking; re-index stored vectors)
-- **Backend**: PyTorch + `colpali-engine` (`BiQwen2_5`), NOT llama.cpp (no GGUF path)
-- **Precision**: `float16`/`float32` (never bf16 on Pascal), `attn=eager`
-- **Base model**: `Qwen/Qwen2.5-VL-3B-Instruct` (the nomic repo is a ~230MB LoRA adapter)
-- **License**: Qwen RESEARCH LICENSE — **non-commercial / research & eval only**
-- **HuggingFace**: `nomic-ai/nomic-embed-multimodal-3b`
-- **Service**: `gpu-server/multimodal-embed/` (see its README for the image-input convention)
+- **Dimensions**: 768
+- **Backend**: PyTorch + `transformers` (`trust_remote_code`), NOT llama.cpp
+- **Precision**: `float32` on Pascal (small ViT/BERT towers; never bf16), `attn=eager`
+- **Deployment**: 3 instances co-located on SFW chat GPU 1-3 (`:8101-8103`), ~1.1GB each; text query uses the `search_query:` prefix
+- **License**: **Apache-2.0** (commercial OK)
+- **HuggingFace**: `nomic-ai/nomic-embed-vision-v1.5`, `nomic-ai/nomic-embed-text-v1.5`
+- **Service**: `gpu-server/vision-embed/` (image-input convention in its README)
+- **Model choice** is provisional pending the on-corpus eval — see `docs/embedding-model-eval.md`
+
+### Text embeddings: nomic-embed-text-v1.5 (`heartcode-embed`)
+
+- **Modality**: text only; **Dimensions**: 768; **Quant**: Q8_0 GGUF (llama.cpp)
+- **Deployment**: 3 instances co-located on NSFW chat GPU 4-6 (`:8093-8095`)
+- **License**: Apache-2.0 · **HuggingFace**: `nomic-ai/nomic-embed-text-v1.5-GGUF`
+
+### Shelved: nomic-embed-multimodal-3b (BiQwen2.5)
+
+- Document-retrieval multimodal model, 3584-d, 3B (`Qwen/Qwen2.5-VL-3B-Instruct` base + LoRA)
+- **Qwen RESEARCH LICENSE** (non-commercial). Code in `gpu-server/multimodal-embed/`; revivable on a free GPU. See change `switch-to-nomic-multimodal-embed`.
 
 ### Embeddings: nomic-embed-text-v1.5 (legacy — rollback only)
 
