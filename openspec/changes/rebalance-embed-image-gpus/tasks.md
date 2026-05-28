@@ -22,5 +22,5 @@
 ## 4. Monitoring & docs
 
 - [x] 4.1 Update `prometheus.yml` (3 vision + 2 image targets) + `gpu-watchdog.sh` GPU→container map (corrected to `pea-*` names + new layout)
-- [ ] 4.2 Update `CLAUDE.md` + `docs/pea-server-setup.md` for the rebalanced layout — **pending**: both still describe GPU 7 = dedicated vision + 1 image server; need: vision co-located GPU 1-3, text-embed GPU 4-6, 2 image servers (GPU 7-8)
+- [x] 4.2 Update `CLAUDE.md` + `docs/pea-server-setup.md` for the rebalanced layout (Models table, port/GPU layout, config, bring-up, model details, rate limits). Added `docs/embedding-model-eval.md` (candidate ranking methodology + jina-clip access) for the pending on-corpus eval.
 - [x] 4.3 Run `openspec validate rebalance-embed-image-gpus --strict` — valid
