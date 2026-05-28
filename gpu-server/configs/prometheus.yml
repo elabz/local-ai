@@ -5,7 +5,7 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  # GPU Chat Servers (6 instances, GPU 1-6; GPU 7 reassigned to multimodal embed)
+  # GPU Chat Servers (6 instances, GPU 1-6; embeds co-located, image on GPU 7-8)
   - job_name: 'gpu-chat-servers'
     static_configs:
       - targets: ['pea-gpu-1:9091']
@@ -33,20 +33,32 @@ scrape_configs:
           gpu_id: '6'
           model_type: 'nsfw'
 
-  # Vision Embedding Server (nomic-embed-vision-v1.5 + text-v1.5, dedicated GPU 7)
+  # Vision Embedding Servers (nomic-embed-vision-v1.5 + text-v1.5), co-located on SFW chat GPU 1-3
   - job_name: 'vision-embed'
     static_configs:
       - targets: ['pea-embed-vision-1:9091']
         labels:
-          gpu_id: '7'
+          gpu_id: '1'
+          model_type: 'embed-vision'
+      - targets: ['pea-embed-vision-2:9091']
+        labels:
+          gpu_id: '2'
+          model_type: 'embed-vision'
+      - targets: ['pea-embed-vision-3:9091']
+        labels:
+          gpu_id: '3'
           model_type: 'embed-vision'
 
-  # Image Server (LocalAI metrics, GPU 8)
+  # Image Servers (LocalAI metrics, GPU 7-8, load-balanced)
   - job_name: 'image-server'
     static_configs:
       - targets: ['pea-image-1:8080']
         labels:
           gpu_id: '8'
+          model_type: 'image'
+      - targets: ['pea-image-2:8080']
+        labels:
+          gpu_id: '7'
           model_type: 'image'
     metrics_path: '/metrics'
 
