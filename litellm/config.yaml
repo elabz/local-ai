@@ -50,7 +50,7 @@ model_list:
       mode: "chat"
 
   # =============================================================================
-  # NSFW MODELS - 4x GPU load balancing (GPU 4-7)
+  # NSFW MODELS - 3x GPU load balancing (GPU 4-6)
   # Public API name: heartcode-nsfw
   # Internal name: heartcode-chat-nsfw
   # =============================================================================
@@ -88,38 +88,57 @@ model_list:
       id: "heartcode-gpu6"
       mode: "chat"
 
-  - model_name: "heartcode-chat-nsfw"
-    litellm_params:
-      model: "openai/Lumimaid-v0.2-8B-Q5_K_M-imat.gguf"
-      api_base: "http://192.168.0.144:8086/v1"
-      api_key: "sk-local"
-      max_tokens: 512
-      temperature: 0.8
-    model_info:
-      id: "heartcode-gpu7"
-      mode: "chat"
-
   # =============================================================================
-  # EMBEDDING MODEL - multimodal, 1x dedicated GPU (GPU 7, port 8100)
-  # nomic-embed-multimodal-3b (BiQwen2.5) — text + image, 3584-d shared space.
-  # Replaces the old 7x nomic-embed-text-v1.5 deployments (ports 8090-8096).
-  # Heavier/lower-throughput: 1 GPU, serialized inference, higher latency.
-  #
-  # ROLLBACK: `git checkout HEAD~1 -- litellm/config.yaml` restores the 7
-  # text-embed deployments. Their containers (embed-1..6, ports 8090-8095)
-  # remain up until decommission (change task 7.2).
+  # TEXT EMBEDDING MODEL - nomic-embed-text-v1.5 (768-d), 4 backends (GPU 1-4)
+  # Legacy text-embed tier, kept live. BiQwen2.5 (:8100) was shelved in favor of
+  # vision-embed (heartcode-embed-vision below), so heartcode-embed stays on the
+  # original text-embed servers. Routed across 4 of the 6 running backends
+  # (pea-embed-1..4 / :8090-8093) per the planned 4-text-embed layout;
+  # pea-embed-5/6 (:8094-8095) remain up but unrouted pending GPU re-allocation.
   # =============================================================================
 
   - model_name: "heartcode-embed"
     litellm_params:
-      model: "openai/nomic-embed-multimodal-3b"
-      api_base: "http://192.168.0.144:8100/v1"
+      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
+      api_base: "http://192.168.0.144:8090/v1"
       api_key: "sk-local"
-      timeout: 120          # Pascal multimodal embeds are slow (esp. images)
       extra_body:
         encoding_format: "float"
     model_info:
-      id: "heartcode-embed-mm"
+      id: "heartcode-embed1"
+      mode: "embedding"
+
+  - model_name: "heartcode-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
+      api_base: "http://192.168.0.144:8091/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "heartcode-embed2"
+      mode: "embedding"
+
+  - model_name: "heartcode-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
+      api_base: "http://192.168.0.144:8092/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "heartcode-embed3"
+      mode: "embedding"
+
+  - model_name: "heartcode-embed"
+    litellm_params:
+      model: "openai/nomic-embed-text-v1.5.Q8_0.gguf"
+      api_base: "http://192.168.0.144:8093/v1"
+      api_key: "sk-local"
+      extra_body:
+        encoding_format: "float"
+    model_info:
+      id: "heartcode-embed4"
       mode: "embedding"
 
   # =============================================================================
@@ -174,9 +193,9 @@ router_settings:
     - model_name: "heartcode-chat-nsfw"  # now 3 GPUs (GPU 4-6), was 4
       tpm: 38000
       rpm: 34
-    - model_name: "heartcode-embed"      # SHELVED — BiQwen2.5 not deployed (see docker-compose); dead until revived
-      tpm: 20000
-      rpm: 20
+    - model_name: "heartcode-embed"      # 4 text-embed backends (GPU 1-4), fast GGUF text embeds
+      tpm: 40000
+      rpm: 40
     - model_name: "heartcode-embed-vision"  # 1 dedicated GPU (GPU 7), light CLIP pair
       tpm: 30000
       rpm: 40

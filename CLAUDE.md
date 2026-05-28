@@ -85,7 +85,7 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 | `heartcode-embed-vision` | Embedding (text + image) | 7 | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | fp32¹ | — |
 | `heartcode-image` | Image | 8 | Segmind SSD-1B (SDXL distilled) | FP16 | — |
 
-¹ Vision embeddings are **768-d** in a shared text+image space (nomic-embed-vision-v1.5 ↔ nomic-embed-text-v1.5). fp32 on 1 GPU, ~1.1GB VRAM (verified 2026-05-28). **Apache-2.0.** Serving only — vector storage/search live in the downstream app. See `gpu-server/vision-embed/` and the openspec change `serve-photo-embeddings`. The earlier BiQwen2.5 multimodal model (`heartcode-embed`, 3584-d, Qwen RESEARCH LICENSE) is **shelved** on GPU 7 (code in `gpu-server/multimodal-embed/`, change `switch-to-nomic-multimodal-embed`; revivable on a free GPU).
+¹ Vision embeddings are **768-d** in a shared text+image space (nomic-embed-vision-v1.5 ↔ nomic-embed-text-v1.5). fp32 on 1 GPU, ~1.1GB VRAM (verified 2026-05-28). **Apache-2.0.** Serving only — vector storage/search live in the downstream app. See `gpu-server/vision-embed/` and the openspec change `serve-photo-embeddings`. The earlier BiQwen2.5 multimodal model (3584-d, Qwen RESEARCH LICENSE) is **shelved** (code in `gpu-server/multimodal-embed/`, change `switch-to-nomic-multimodal-embed`; revivable on a free GPU). `heartcode-embed` now routes to the legacy text-embed servers (`:8090-8093`, nomic-embed-text 768-d).
 
 **Aliases**: `heartcode-default`, `heartcode-sfw`, `heartcode-chat` → `heartcode-chat-sfw` | `heartcode-nsfw` → `heartcode-chat-nsfw`
 
@@ -123,7 +123,7 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 - All endpoints point to PEA (192.168.0.144)
 - Routing: `least-busy` strategy with 2 retries
 - Rate limits: 35 RPM SFW (3 GPUs), 34 RPM NSFW (3 GPUs), 40 RPM vision embed (1 GPU)
-- `heartcode-embed-vision` → single deployment (`:8101`), `mode: embedding`, `timeout: 60` (`heartcode-embed`/BiQwen2.5 `:8100` shelved)
+- `heartcode-embed-vision` → single deployment (`:8101`), `mode: embedding`, `timeout: 60`; `heartcode-embed` → 4 text-embed backends (`:8090-8093`); BiQwen2.5 (`:8100`) shelved
 - Health checks every 15s, 2 allowed fails before 60s cooldown
 - Max 7 parallel requests per model, 13 global
 
