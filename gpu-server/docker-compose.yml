@@ -284,21 +284,9 @@ services:
               device_ids: ['GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b']
               capabilities: [gpu]
 
-  embedding-server-6:
-    <<: *embedding-server-common
-    container_name: pea-embed-6
-    runtime: nvidia
-    environment:
-      NVIDIA_VISIBLE_DEVICES: GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9
-    ports:
-      - "8095:8090"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ['GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9']
-              capabilities: [gpu]
+  # embedding-server-6 (text-embed, GPU-fe0fc635) REMOVED — GPU 6 now hosts
+  # dino-embed-2 (DINOv2 visual). Text-embed reduced 3->2 (GPU 4-5, :8093-8094).
+  # openspec: serve-dinov2-visual-embed
 
   # =============================================================================
   # VISION EMBEDDING SERVERS (co-located on SFW chat GPU 1-3)
@@ -390,29 +378,37 @@ services:
               device_ids: ['GPU-f1fa6009-d240-3810-d6ca-4c65ecc22dcf']
               capabilities: [gpu]
 
-  vision-embed-3:
-    image: local-ai-vision-embed:latest
+  # =============================================================================
+  # DINOv2 VISUAL EMBEDDING SERVERS (image-only, co-located on chat GPU 3 + 6)
+  # facebook/dinov2-with-registers-large (1024-d) — fine-grained visual / same-
+  # object similarity behind heartcode-embed-visual. Replaces vision-embed-3
+  # (GPU 3) + embedding-server-6 (GPU 6) for the 2+2+2 embed layout.
+  # ⚠️ ~7.5GB/8GB co-located with chat — if OOM, set MODEL_ID=...-base (768-d).
+  # openspec: serve-dinov2-visual-embed
+  # =============================================================================
+
+  dino-embed-1:
+    image: local-ai-dino-embed:latest
     build:
-      context: ./vision-embed
+      context: ./dino-embed
       dockerfile: Dockerfile
-    container_name: pea-embed-vision-3
+    container_name: pea-embed-dino-1
     restart: unless-stopped
     runtime: nvidia
     environment:
       NVIDIA_VISIBLE_DEVICES: GPU-1f2ba781-081b-56cf-da1a-802759aea70b
-      SERVER_ID: embed-vision-3
+      SERVER_ID: embed-dino-1
       PORT: 8080
       METRICS_PORT: 9091
       PRECISION: float32
-      VISION_MODEL_ID: nomic-ai/nomic-embed-vision-v1.5
-      TEXT_MODEL_ID: nomic-ai/nomic-embed-text-v1.5
+      MODEL_ID: facebook/dinov2-with-registers-large
       MAX_BATCH_SIZE: 4
       HF_HOME: /models
       HF_HUB_CACHE: /models
     volumes:
       - ./models:/models
     ports:
-      - "8103:8080"
+      - "8104:8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -421,7 +417,7 @@ services:
       start_period: 300s
     networks:
       - gpu-network
-    mem_limit: 2560m
+    mem_limit: 3072m
     memswap_limit: 4096m
     deploy:
       resources:
@@ -429,6 +425,46 @@ services:
           devices:
             - driver: nvidia
               device_ids: ['GPU-1f2ba781-081b-56cf-da1a-802759aea70b']
+              capabilities: [gpu]
+
+  dino-embed-2:
+    image: local-ai-dino-embed:latest
+    build:
+      context: ./dino-embed
+      dockerfile: Dockerfile
+    container_name: pea-embed-dino-2
+    restart: unless-stopped
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9
+      SERVER_ID: embed-dino-2
+      PORT: 8080
+      METRICS_PORT: 9091
+      PRECISION: float32
+      MODEL_ID: facebook/dinov2-with-registers-large
+      MAX_BATCH_SIZE: 4
+      HF_HOME: /models
+      HF_HUB_CACHE: /models
+    volumes:
+      - ./models:/models
+    ports:
+      - "8105:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    networks:
+      - gpu-network
+    mem_limit: 3072m
+    memswap_limit: 4096m
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9']
               capabilities: [gpu]
 
   # =============================================================================

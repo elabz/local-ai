@@ -90,14 +90,16 @@ else
   download_hf "Lewdiculous/Lumimaid-v0.2-8B-GGUF-IQ-Imatrix" "Lumimaid-v0.2-8B-Q5_K_M-imat.gguf" "Lumimaid-v0.2-8B-Q5_K_M-imat.gguf"
 fi
 
-# --- Multimodal Embedding Model ---
+# --- Embedding Models (all Apache-2.0) ---
 echo ""
-echo "3/3: Multimodal Embedding Model (nomic-embed-multimodal-3b + Qwen2.5-VL-3B base)"
-echo "  License: Qwen RESEARCH LICENSE (non-commercial / research & eval only)."
-echo "  Note: nomic-embed-multimodal-3b is a LoRA adapter (~230MB); the base"
-echo "        Qwen/Qwen2.5-VL-3B-Instruct (~7GB) is required and snapshotted too."
-download_hf_snapshot "nomic-ai/nomic-embed-multimodal-3b"
-download_hf_snapshot "Qwen/Qwen2.5-VL-3B-Instruct"
+echo "3/3: Embedding models"
+echo "  - nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 (vision-embed, shared 768-d)"
+echo "  - facebook/dinov2-with-registers-large (dino-embed, visual similarity, 1024-d)"
+download_hf_snapshot "nomic-ai/nomic-embed-vision-v1.5"
+download_hf_snapshot "nomic-ai/nomic-embed-text-v1.5"
+download_hf_snapshot "facebook/dinov2-with-registers-large"
+# (Shelved BiQwen2.5 models — nomic-embed-multimodal-3b + Qwen2.5-VL-3B — are no
+#  longer downloaded; restore from change switch-to-nomic-multimodal-embed if revived.)
 
 # --- Image Model ---
 echo ""

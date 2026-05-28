@@ -9,7 +9,7 @@ Local AI is a shared GPU inference infrastructure for local network projects. It
 ```
 local-ai/
 ├── gpu-server/           # llama.cpp + LocalAI inference servers (PEA)
-│   ├── docker-compose.yml  # 6 chat + 3 text-embed + 3 vision-embed + 2 image + monitoring
+│   ├── docker-compose.yml  # 6 chat + 2 text + 2 vision + 2 DINOv2-visual embed + 2 image + monitoring
 │   ├── server.py           # FastAPI wrapper with metrics
 │   ├── llama_client.py     # Async client proxying to llama.cpp native API
 │   ├── routes.py           # OpenAI-compatible API routes
@@ -17,6 +17,7 @@ local-ai/
 │   ├── metrics.py          # Prometheus metrics collection
 │   ├── Dockerfile          # CUDA build for Pascal GPUs (no AVX)
 │   ├── vision-embed/       # PyTorch + transformers nomic-embed-vision-v1.5 + text-v1.5 (deployed)
+│   ├── dino-embed/         # PyTorch + transformers DINOv2 ViT-L/14, image-only visual similarity (deployed)
 │   ├── multimodal-embed/   # SHELVED — colpali-engine BiQwen2.5 (nomic-embed-multimodal-3b)
 │   ├── configs/            # prometheus.yml, entrypoint-wrapper.sh
 │   ├── scripts/            # setup-pea.sh, download-models.sh, watchdog, diagnostics
@@ -40,7 +41,7 @@ local-ai/
 
 ## Deployment Topology
 
-- **PEA (192.168.0.144)**: All GPU servers — 3 SFW + 3 NSFW chat (each co-located with an embed server: vision on 1-3, text on 4-6) + 2 image — `gpu-server/docker-compose.yml`
+- **PEA (192.168.0.144)**: All GPU servers — 3 SFW + 3 NSFW chat, each co-located with one embed server (vision on 1-2, DINOv2-visual on 3+6, text on 4-5) + 2 image — `gpu-server/docker-compose.yml`
 - **Prod (192.168.0.152)**: LiteLLM proxy + monitoring — `litellm/docker-compose.yml`
 
 ## Common Commands
@@ -83,11 +84,16 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 |----------|------|------|-------|-------|---------------|
 | `heartcode-chat-sfw` | Chat | 1-3 | Llama-3.1-8B-Stheno-v3.4 | Q5_K_M | Llama3 |
 | `heartcode-chat-nsfw` | Chat | 4-6 | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M | Llama3 |
-| `heartcode-embed-vision` | Embedding (text + image) | 1-3 | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | fp32¹ | — |
-| `heartcode-embed` | Embedding (text) | 4-6 | nomic-embed-text-v1.5 | Q8_0 | — |
+| `heartcode-embed-vision` | Embedding (text + image) | 1-2 | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | fp32¹ | — |
+| `heartcode-embed` | Embedding (text) | 4-5 | nomic-embed-text-v1.5 | Q8_0 | — |
+| `heartcode-embed-visual` | Embedding (image-only) | 3, 6 | DINOv2 ViT-L/14 (with registers) | fp32² | — |
 | `heartcode-image` | Image | 7-8 | Segmind SSD-1B (SDXL distilled) | FP16 | — |
 
-¹ Vision embeddings are **768-d** in a shared text+image space (nomic-embed-vision-v1.5 ↔ nomic-embed-text-v1.5). fp32, ~1.1GB VRAM each, **co-located on the SFW chat GPUs 1-3** (3 instances, load-balanced); text query gets the `search_query:` prefix. **Apache-2.0.** Serving only — vector storage/search live in the downstream app. See `gpu-server/vision-embed/`, the openspec changes `serve-photo-embeddings` + `rebalance-embed-image-gpus`, and `docs/embedding-model-eval.md`. `heartcode-embed` (text-only) is the legacy `nomic-embed-text-v1.5` GGUF co-located on NSFW chat GPUs 4-6. The BiQwen2.5 multimodal model (3584-d, Qwen RESEARCH LICENSE) is **shelved** (code in `gpu-server/multimodal-embed/`, change `switch-to-nomic-multimodal-embed`; revivable on a free GPU).
+Embed tier is **2 of each type**, co-located one-per-chat-GPU (`rebalance-embed-image-gpus` → `serve-dinov2-visual-embed`).
+
+¹ Vision embeddings are **768-d** in a shared text+image space (nomic-embed-vision-v1.5 ↔ nomic-embed-text-v1.5). fp32, ~1.1GB VRAM each, co-located on SFW chat GPU 1-2; text query gets the `search_query:` prefix. **Apache-2.0.** `heartcode-embed` (text-only) is the legacy `nomic-embed-text-v1.5` GGUF co-located on NSFW chat GPU 4-5.
+
+² **`heartcode-embed-visual`** = **DINOv2 ViT-L/14 +registers, 1024-d, image-only** — fine-grained visual / same-object similarity (image→image). **Separate vector space** from the CLIP `heartcode-embed-vision` (downstream keeps its own index); text input → 400. ~1.3GB VRAM, co-located on chat GPU 3 + 6 (~7.5GB/8GB — ViT-B fallback if OOM). **Apache-2.0.** See `gpu-server/dino-embed/`, change `serve-dinov2-visual-embed`, and `docs/embedding-model-eval.md`. All embeddings are **serving-only** (storage/search downstream). The BiQwen2.5 multimodal model is **shelved** (`gpu-server/multimodal-embed/`, change `switch-to-nomic-multimodal-embed`).
 
 **Aliases**: `heartcode-default`, `heartcode-sfw`, `heartcode-chat` → `heartcode-chat-sfw` | `heartcode-nsfw` → `heartcode-chat-nsfw`
 
@@ -97,8 +103,9 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 |-------|---------|-----|
 | 8080-8082 | SFW chat servers | GPU 1-3 |
 | 8083-8085 | NSFW chat servers | GPU 4-6 |
-| 8101-8103 | Vision embedding servers (`nomic-embed-vision-v1.5` + `nomic-embed-text-v1.5`), co-located with SFW chat | GPU 1-3 |
-| 8093-8095 | Text-embed servers (`nomic-embed-text-v1.5`), co-located with NSFW chat | GPU 4-6 |
+| 8101-8102 | Vision embedding servers (`nomic-embed-vision-v1.5` + text), co-located w/ SFW chat | GPU 1-2 |
+| 8093-8094 | Text-embed servers (`nomic-embed-text-v1.5`), co-located w/ NSFW chat | GPU 4-5 |
+| 8104-8105 | Visual embedding servers (DINOv2 ViT-L/14, image-only), co-located w/ chat | GPU 3, 6 |
 | 5100, 5101 | Image generation (LocalAI), 2x load-balanced | GPU 8, 7 |
 | 9099 | Prometheus | — |
 | 9100 | Node Exporter | — |
@@ -165,8 +172,8 @@ The GPU chat servers use a FastAPI wrapper around llama.cpp's `llama-server`:
 - **RAM**: 32GB DDR4
 - **GPUs**: 8x P104-100 (8GB VRAM, Pascal, compute 6.1)
 - **GPU numbering**: 1-indexed in configs (GPU 1-8), 0-indexed physical (`NVIDIA_VISIBLE_DEVICES=0-7`)
-- **Safe limits**: 35 RPM SFW (3 GPUs), 34 RPM NSFW (3 GPUs), 60 RPM vision embed (3 co-located), 40 RPM text embed (3 co-located)
-- **GPU allocation**: GPU 1-3 SFW chat + co-located **vision-embed** (`nomic-embed-vision-v1.5`), GPU 4-6 NSFW chat + co-located **text-embed** (`nomic-embed-text-v1.5`), GPU 7-8 **image** (2x load-balanced). GPU 1-3 run ~7.4GB/8GB — monitor under peak load.
+- **Safe limits**: 35 RPM SFW, 34 RPM NSFW, 40 RPM vision embed (2), 28 RPM text embed (2), 40 RPM visual/DINOv2 (2)
+- **GPU allocation**: 1 embed server co-located per chat GPU — GPU 1-2 SFW chat + **vision-embed**, GPU 3 SFW chat + **DINOv2-visual**, GPU 4-5 NSFW chat + **text-embed**, GPU 6 NSFW chat + **DINOv2-visual**, GPU 7-8 **image** (2x). GPU 1-2 ~7.4GB, GPU 3/6 ~7.5GB (chat+DINOv2) — monitor under peak load.
 
 ### Prod (192.168.0.152)
 - Runs LiteLLM proxy, PostgreSQL, optional monitoring stack
