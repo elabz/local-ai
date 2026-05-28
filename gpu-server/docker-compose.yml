@@ -2,10 +2,9 @@
 # 8x NVIDIA P104-100 (8GB each), 32GB RAM, 2-core Celeron
 #
 # Layout (1-indexed GPU numbering):
-#   GPU 1-3: SFW Chat (Stheno v3.4 Q5_K_M) + text Embeddings
-#   GPU 4-6: NSFW Chat (Lumimaid v0.2 8B Q5_K_M) + text Embeddings
-#   GPU 7:   Vision Embeddings (nomic-embed-vision-v1.5 + nomic-embed-text-v1.5) — dedicated
-#   GPU 8:   Image generation (Segmind SSD-1B via LocalAI)
+#   GPU 1-3: SFW Chat (Stheno v3.4 Q5_K_M) + Vision Embeddings (nomic-embed-vision-v1.5)
+#   GPU 4-6: NSFW Chat (Lumimaid v0.2 8B Q5_K_M) + Text Embeddings (nomic-embed-text-v1.5)
+#   GPU 7-8: Image generation (Segmind SSD-1B via LocalAI) — 2x, load-balanced
 #
 # GPU UUIDs (from nvidia-smi -L):
 #   GPU 0: GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8
@@ -22,9 +21,9 @@
 #
 # Memory Budget (32GB total):
 #   - 6x chat containers: 2GB each = 12GB max
-#   - 6x text-embed containers: 768MB each = 4.5GB max
-#   - 1x vision-embed container: 4GB max (PyTorch + nomic ViT/BERT pair, ~1.1GB used)
-#   - 1x image container: 4GB max
+#   - 3x text-embed containers (GPU 4-6): 768MB each = 2.25GB max
+#   - 3x vision-embed containers (GPU 1-3): 2.5GB each = 7.5GB max (~1.1GB used each)
+#   - 2x image containers (GPU 7-8): 4GB each = 8GB max
 #   - Note: mem_limit is per-container max, not reserved. Actual use much lower.
 #   - Swap available for spikes
 #
@@ -249,53 +248,9 @@ services:
   # to multimodal-embed). Decommissioned in change task 7.2 after re-indexing.
   # =============================================================================
 
-  embedding-server-1:
-    <<: *embedding-server-common
-    container_name: pea-embed-1
-    runtime: nvidia
-    environment:
-      NVIDIA_VISIBLE_DEVICES: GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8
-    ports:
-      - "8090:8090"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ['GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8']
-              capabilities: [gpu]
-
-  embedding-server-2:
-    <<: *embedding-server-common
-    container_name: pea-embed-2
-    runtime: nvidia
-    environment:
-      NVIDIA_VISIBLE_DEVICES: GPU-f1fa6009-d240-3810-d6ca-4c65ecc22dcf
-    ports:
-      - "8091:8090"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ['GPU-f1fa6009-d240-3810-d6ca-4c65ecc22dcf']
-              capabilities: [gpu]
-
-  embedding-server-3:
-    <<: *embedding-server-common
-    container_name: pea-embed-3
-    runtime: nvidia
-    environment:
-      NVIDIA_VISIBLE_DEVICES: GPU-1f2ba781-081b-56cf-da1a-802759aea70b
-    ports:
-      - "8092:8090"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ['GPU-1f2ba781-081b-56cf-da1a-802759aea70b']
-              capabilities: [gpu]
+  # GPU 1-3 text-embed (embedding-server-1/2/3) REMOVED — these SFW chat GPUs now
+  # co-locate vision-embed instead (see vision-embed-1/2/3 below). Text-embed
+  # remains on GPU 4-6 (embedding-server-4/5/6). openspec: rebalance-embed-image-gpus
 
   embedding-server-4:
     <<: *embedding-server-common
@@ -346,14 +301,14 @@ services:
               capabilities: [gpu]
 
   # =============================================================================
-  # VISION EMBEDDING SERVER (dedicated GPU-f417c539 / 1-indexed GPU 7)
-  # nomic-embed-vision-v1.5 (images) + nomic-embed-text-v1.5 (text) — natural-
-  # photo embeddings in one shared 768-d space, behind heartcode-embed-vision
-  # (openspec change serve-photo-embeddings). REPLACES BiQwen2.5 on GPU 7.
-  # Verified on hardware 2026-05-28: fp32, dim 768, ~1.1GB VRAM.
+  # VISION EMBEDDING SERVERS (co-located on SFW chat GPU 1-3)
+  # nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 — shared 768-d space, behind
+  # heartcode-embed-vision. 3 instances co-located with SFW chat (like text-embed),
+  # ~1.1GB VRAM each. MAX_BATCH_SIZE bounded to limit activation memory on the
+  # shared 8GB cards. openspec: rebalance-embed-image-gpus.
   # =============================================================================
 
-  vision-embed:
+  vision-embed-1:
     image: local-ai-vision-embed:latest
     build:
       context: ./vision-embed
@@ -362,17 +317,18 @@ services:
     restart: unless-stopped
     runtime: nvidia
     environment:
-      NVIDIA_VISIBLE_DEVICES: GPU-f417c539-26db-94e9-4c8f-c5a775291988
+      NVIDIA_VISIBLE_DEVICES: GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8
       SERVER_ID: embed-vision-1
       PORT: 8080
       METRICS_PORT: 9091
-      PRECISION: float32          # Pascal: small ViT/BERT towers run fine in fp32
+      PRECISION: float32
       VISION_MODEL_ID: nomic-ai/nomic-embed-vision-v1.5
       TEXT_MODEL_ID: nomic-ai/nomic-embed-text-v1.5
+      MAX_BATCH_SIZE: 4
       HF_HOME: /models
       HF_HUB_CACHE: /models
     volumes:
-      - ./models:/models          # rw: HF cache (vision + text snapshots)
+      - ./models:/models
     ports:
       - "8101:8080"
     healthcheck:
@@ -383,14 +339,96 @@ services:
       start_period: 300s
     networks:
       - gpu-network
-    mem_limit: 4096m
-    memswap_limit: 6144m
+    mem_limit: 2560m
+    memswap_limit: 4096m
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['GPU-f417c539-26db-94e9-4c8f-c5a775291988']
+              device_ids: ['GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8']
+              capabilities: [gpu]
+
+  vision-embed-2:
+    image: local-ai-vision-embed:latest
+    build:
+      context: ./vision-embed
+      dockerfile: Dockerfile
+    container_name: pea-embed-vision-2
+    restart: unless-stopped
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: GPU-f1fa6009-d240-3810-d6ca-4c65ecc22dcf
+      SERVER_ID: embed-vision-2
+      PORT: 8080
+      METRICS_PORT: 9091
+      PRECISION: float32
+      VISION_MODEL_ID: nomic-ai/nomic-embed-vision-v1.5
+      TEXT_MODEL_ID: nomic-ai/nomic-embed-text-v1.5
+      MAX_BATCH_SIZE: 4
+      HF_HOME: /models
+      HF_HUB_CACHE: /models
+    volumes:
+      - ./models:/models
+    ports:
+      - "8102:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    networks:
+      - gpu-network
+    mem_limit: 2560m
+    memswap_limit: 4096m
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['GPU-f1fa6009-d240-3810-d6ca-4c65ecc22dcf']
+              capabilities: [gpu]
+
+  vision-embed-3:
+    image: local-ai-vision-embed:latest
+    build:
+      context: ./vision-embed
+      dockerfile: Dockerfile
+    container_name: pea-embed-vision-3
+    restart: unless-stopped
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: GPU-1f2ba781-081b-56cf-da1a-802759aea70b
+      SERVER_ID: embed-vision-3
+      PORT: 8080
+      METRICS_PORT: 9091
+      PRECISION: float32
+      VISION_MODEL_ID: nomic-ai/nomic-embed-vision-v1.5
+      TEXT_MODEL_ID: nomic-ai/nomic-embed-text-v1.5
+      MAX_BATCH_SIZE: 4
+      HF_HOME: /models
+      HF_HUB_CACHE: /models
+    volumes:
+      - ./models:/models
+    ports:
+      - "8103:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    networks:
+      - gpu-network
+    mem_limit: 2560m
+    memswap_limit: 4096m
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['GPU-1f2ba781-081b-56cf-da1a-802759aea70b']
               capabilities: [gpu]
 
   # =============================================================================
@@ -442,6 +480,48 @@ services:
           devices:
             - driver: nvidia
               device_ids: ['GPU-c710b68a-493d-0d55-9b1a-f48d8ad71978']
+              capabilities: [gpu]
+
+  # 2nd image server on GPU 7 (GPU-f417c539, freed from vision-embed) for image
+  # load balancing. Shares image_backends + models volumes so the cuda12-diffusers
+  # backend + SSD-1B are NOT re-downloaded. openspec: rebalance-embed-image-gpus.
+  image-server-2:
+    image: localai/localai:latest-gpu-nvidia-cuda-12
+    container_name: pea-image-2
+    restart: unless-stopped
+    runtime: nvidia
+    entrypoint: ["/config/entrypoint-wrapper.sh"]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=GPU-f417c539-26db-94e9-4c8f-c5a775291988
+      - DEBUG=true
+      - THREADS=2
+      - MODELS_PATH=/models
+      - IMAGE_PATH=/tmp/generated
+      - SINGLE_ACTIVE_BACKEND=true
+      - BACKENDS_PATH=/backends
+    volumes:
+      - ./models:/models
+      - ./configs:/config:ro
+      - image_cache:/tmp/generated
+      - image_backends:/backends
+    ports:
+      - "5101:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
+    networks:
+      - gpu-network
+    mem_limit: 4096m
+    memswap_limit: 6144m
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['GPU-f417c539-26db-94e9-4c8f-c5a775291988']
               capabilities: [gpu]
 
   # =============================================================================
