@@ -512,9 +512,58 @@ Enable AVX flags in the Dockerfile for better CPU-side performance:
 ```
 Remove `-march=x86-64` and `-mno-bmi2` overrides.
 
-### Different Models
-1. Download the new GGUF model to `models/`
-2. Update `.env` with the new model path
-3. If the model uses a different chat template, ensure `--jinja` is in `EXTRA_ARGS`
-4. Update `litellm/config.yaml` with the new model filename
-5. Restart: `docker compose restart gpu-server-N`
+### Different Models / changing tenancy
+Model and routing config is generated from a single manifest — **edit
+`gpu-server/models.yaml`, not the generated files**.
+1. Edit `gpu-server/models.yaml` (change a `source`, GPU/port, rate limit, etc.).
+2. Regenerate: `cd gpu-server && python3 scripts/render-config.py`
+   (writes `models.generated.env`, `litellm/config.yaml`, `models.download.tsv`).
+3. Fetch any new weights: `python3 scripts/download-models.sh` (use `--dry-run` first).
+4. If the model uses a different chat template, ensure `--jinja` is in `EXTRA_ARGS`.
+5. Commit (CI's `model-manifest-validate` fails if generated files drifted), then
+   deploy via the `Deploy` workflow or manually (below).
+
+Note: changing a GPU's *service kind* (e.g. chat → embed) still requires a manual
+`docker-compose.yml` edit — the manifest owns model + routing, not service topology.
+
+## CI/CD and Deployment Automation
+
+CI (`.github/workflows/gpu-build.yml`) runs on GitHub-hosted runners and only
+**validates** (compose config, LiteLLM config, model manifest drift, Python lint,
+build-only image). It cannot deploy — GitHub-hosted runners cannot reach the
+192.168.0.x LAN. Deploys run from `deploy.yml` on a **self-hosted runner**.
+
+### One-time: register the self-hosted runner (on Prod, 192.168.0.152)
+Prod has no GPU contention and can SSH to PEA over the LAN, so host the runner there.
+```bash
+# GitHub → repo → Settings → Actions → Runners → New self-hosted runner (Linux x64)
+mkdir -p ~/actions-runner && cd ~/actions-runner
+curl -o runner.tar.gz -L <url-from-github>     # version shown on that page
+tar xzf runner.tar.gz
+./config.sh --url https://github.com/elabz/local-ai --token <token> --labels homelab
+sudo ./svc.sh install && sudo ./svc.sh start   # run as a service
+```
+Then in GitHub repo settings:
+- **Environments → New environment `production`**; add required reviewer(s).
+- **Variables**: `DEPLOY_DIR` (the git checkout the stacks run from, e.g. `/opt/heartcode`),
+  `LITELLM_HEALTH_URL` (default `http://localhost:4000/health/readiness`).
+- **Secrets**: `GPU_SERVER_HOST`, `GPU_SERVER_USER`, `GPU_SERVER_SSH_KEY` (PEA SSH; the
+  runner uses these to reach PEA over the LAN).
+
+Confirm the runner can reach PEA: `ssh <GPU_SERVER_USER>@192.168.0.144 docker ps`.
+
+### Deploying
+GitHub → Actions → **Deploy** → *Run workflow* → pick `target` (`litellm` /
+`gpu-server` / `both`). It validates, rolls out, health-checks, and waits for
+`production` approval.
+
+### Manual fallback (runner down)
+```bash
+# Prod (LiteLLM config change):
+cd "$DEPLOY_DIR" && git pull && docker compose -f litellm/docker-compose.yml up -d litellm
+# PEA (GPU model/tenancy change):
+cd "$DEPLOY_DIR" && git pull && cd gpu-server \
+  && python3 scripts/render-config.py \
+  && docker build -t local-ai-llama:latest . \
+  && docker compose --env-file .env --env-file models.generated.env up -d
+```
