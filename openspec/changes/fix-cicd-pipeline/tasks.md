@@ -7,7 +7,7 @@
 - [x] 1.5 Add `python-lint` job: `ruff check` (real-errors gate `E9,F63,F7,F82` + advisory full pass) + `python -m py_compile` over `gpu-server/*.py`, `vision-embed/*.py`, `dino-embed/*.py`.
 - [x] 1.6 Convert the image build to a path-filtered **build-only** `gpu-build` job (`push: false`, `cache-from/to: gha`), gated via a `changes` job (`dorny/paths-filter`) on `gpu-server/Dockerfile`, `gpu-server/requirements.txt`, or wrapper `*.py` changes.
 - [x] 1.7 Add `concurrency` (cancel-in-progress per ref) so rapid pushes don't queue duplicate 13-min builds.
-- [ ] 1.8 Verify: push a no-op change → run is green; confirm no GHCR/SSH steps and no Node-20 deprecation warning (`gh run view`). _(Needs a push to main / PR — awaiting user go-ahead.)_
+- [x] 1.8 Verified on PR #11: run is **green** (all 5 validation jobs pass, `gpu-build` path-skipped), no GHCR/SSH steps, and **no Node-20 deprecation annotation** (bumped to `setup-python@v6` + `paths-filter@v4`).
 
 ## 2. Model manifest + generator (zero-diff cutover)
 
