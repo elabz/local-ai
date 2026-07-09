@@ -108,8 +108,15 @@ models:
       - {gpu: 3, port: 8104}
       - {gpu: 6, port: 8105}
 
-  # --- Image generation, Segmind SSD-1B via LocalAI (GPU 8, 7) ------------------
+  # --- Image generation, Segmind SSD-1B via LocalAI (GPU 8) ---------------------
   # LocalAI auto-downloads the model on first request — nothing to pre-fetch.
+  #
+  # SINGLE instance as of 2026-07-09. PEA now enumerates only 7 GPUs — the card
+  # with UUID GPU-f1fa6009 dropped off the bus — so there is no longer a free
+  # GPU for a second image server. The old GPU-7 deployment (:5101) sat on the
+  # same physical card as the Lumimaid NSFW chat server and OOMed on model load,
+  # failing every request LiteLLM routed to it. Restore the second deployment
+  # once the missing GPU is back.
   - api_name: heartcode-image
     kind: image
     mode: image_generation
@@ -119,7 +126,6 @@ models:
       type: localai
     deployments:
       - {gpu: 8, port: 5100}
-      - {gpu: 7, port: 5101}
 
 # Hand-maintained LiteLLM router/general/litellm settings live in
 # litellm/config.base.yaml; the generator merges the model_list + model_rate_limits
