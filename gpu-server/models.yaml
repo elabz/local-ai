@@ -1,0 +1,126 @@
+# =============================================================================
+# models.yaml — SOURCE OF TRUTH for which model runs where and how it's routed.
+#
+# Edit THIS file to change a model or its tenancy, then regenerate:
+#     python3 scripts/render-config.py            # writes the derived files
+#     python3 scripts/render-config.py --check    # CI: fail if anything drifted
+#
+# It renders (all committed + drift-checked in CI, except the gitignored .env):
+#   - gpu-server/models.generated.env   GPU_N_MODEL_* for the chat services
+#   - litellm/config.yaml                merged from litellm/config.base.yaml + model_list
+#   - gpu-server/models.download.tsv     the fetch list for scripts/download-models.sh
+#
+# Do NOT hand-edit those generated files. Structural changes (turning a chat GPU
+# into an embed GPU — a different service image/command) are still manual edits in
+# docker-compose.yml; this manifest owns model + routing, not service topology.
+# =============================================================================
+
+# PEA GPU host — used to build every LiteLLM api_base (http://<host>:<port>/v1).
+host: 192.168.0.144
+
+models:
+  # --- SFW chat (GPU 1-3) ------------------------------------------------------
+  - api_name: heartcode-chat-sfw
+    kind: chat
+    mode: chat
+    litellm_model: Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf
+    model_type: sfw
+    env_model_name: Sao10K/Llama-3.1-8B-Stheno-v3.4
+    aliases: [heartcode-default, heartcode-sfw, heartcode-chat]
+    rate_limit: {rpm: 35, tpm: 50000}
+    params: {max_tokens: 512, temperature: 0.8}
+    source:
+      type: gguf
+      repo: bartowski/Llama-3.1-8B-Stheno-v3.4-GGUF
+      file: Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf
+      fallback_file: Llama-3.1-8B-Stheno-v3.4-Q4_K_M.gguf
+    deployments:
+      - {gpu: 1, port: 8080}
+      - {gpu: 2, port: 8081}
+      - {gpu: 3, port: 8082}
+
+  # --- NSFW chat (GPU 4-6) -----------------------------------------------------
+  - api_name: heartcode-chat-nsfw
+    kind: chat
+    mode: chat
+    litellm_model: Lumimaid-v0.2-8B-Q5_K_M-imat.gguf
+    model_type: nsfw
+    env_model_name: NeverSleep/Lumimaid-v0.2-8B
+    aliases: [heartcode-nsfw]
+    rate_limit: {rpm: 34, tpm: 38000}
+    params: {max_tokens: 512, temperature: 0.8}
+    source:
+      type: gguf
+      repo: Lewdiculous/Lumimaid-v0.2-8B-GGUF-IQ-Imatrix
+      file: Lumimaid-v0.2-8B-Q5_K_M-imat.gguf
+      fallback_file: Lumimaid-v0.2-8B-Q4_K_M-imat.gguf
+    deployments:
+      - {gpu: 4, port: 8083}
+      - {gpu: 5, port: 8084}
+      - {gpu: 6, port: 8085}
+
+  # --- Text embeddings, nomic-embed-text-v1.5 GGUF (GPU 4-5, co-located) --------
+  - api_name: heartcode-embed
+    kind: text-embed
+    mode: embedding
+    litellm_model: nomic-embed-text-v1.5.Q8_0.gguf
+    id_prefix: heartcode-embed
+    rate_limit: {rpm: 28, tpm: 28000}
+    params: {extra_body: {encoding_format: float}}
+    source:
+      type: gguf
+      repo: nomic-ai/nomic-embed-text-v1.5-GGUF
+      file: nomic-embed-text-v1.5.Q8_0.gguf
+    deployments:
+      - {gpu: 4, port: 8093}
+      - {gpu: 5, port: 8094}
+
+  # --- Vision embeddings, nomic CLIP pair, 768-d (GPU 1-2, co-located) ----------
+  - api_name: heartcode-embed-vision
+    kind: vision-embed
+    mode: embedding
+    litellm_model: heartcode-embed-vision
+    id_prefix: heartcode-embed-vision
+    rate_limit: {rpm: 40, tpm: 30000}
+    params: {timeout: 60, extra_body: {encoding_format: float}}
+    source:
+      type: snapshot
+      repos:
+        - nomic-ai/nomic-embed-vision-v1.5
+        - nomic-ai/nomic-embed-text-v1.5
+    deployments:
+      - {gpu: 1, port: 8101}
+      - {gpu: 2, port: 8102}
+
+  # --- Visual embeddings, DINOv2 ViT-L/14, 1024-d image-only (GPU 3, 6) ---------
+  - api_name: heartcode-embed-visual
+    kind: visual-embed
+    mode: embedding
+    litellm_model: heartcode-embed-visual
+    id_prefix: heartcode-embed-visual
+    rate_limit: {rpm: 40, tpm: 30000}
+    params: {timeout: 60, extra_body: {encoding_format: float}}
+    source:
+      type: snapshot
+      repos:
+        - facebook/dinov2-with-registers-large
+    deployments:
+      - {gpu: 3, port: 8104}
+      - {gpu: 6, port: 8105}
+
+  # --- Image generation, Segmind SSD-1B via LocalAI (GPU 8, 7) ------------------
+  # LocalAI auto-downloads the model on first request — nothing to pre-fetch.
+  - api_name: heartcode-image
+    kind: image
+    mode: image_generation
+    litellm_model: heartcode-image
+    id_prefix: heartcode-image
+    source:
+      type: localai
+    deployments:
+      - {gpu: 8, port: 5100}
+      - {gpu: 7, port: 5101}
+
+# Hand-maintained LiteLLM router/general/litellm settings live in
+# litellm/config.base.yaml; the generator merges the model_list + model_rate_limits
+# + model_group_alias derived from the models above into it.
