@@ -4,6 +4,22 @@ Complete instructions for setting up a GPU inference server from scratch using P
 
 ## Prerequisites
 
+### GPU numbering convention
+
+PEA runtime placement is pinned by immutable GPU UUID. Human-facing "GPU N"
+slots are one-based; `nvidia-smi` and CUDA physical indices are zero-based and
+may change when hardware or drivers change. Speech currently uses:
+
+| Identity | Value |
+|---|---|
+| GPU UUID | `GPU-f417c539-26db-94e9-4c8f-c5a775291988` |
+| Physical index (zero-based, discovered) | `6` |
+| Display slot (one-based) | `7` |
+
+Never route by the numeric index alone. Run
+`gpu-server/speech/check_gpu_inventory.sh` after driver/hardware changes; a
+non-zero exit indicates missing UUID or inventory mismatch.
+
 ### Hardware Requirements
 - **CPU**: x86-64 processor (AVX not required — Celeron/Pentium work fine)
 - **RAM**: 32GB minimum (16GB possible with reduced container memory limits)
@@ -158,6 +174,16 @@ cp .env.example .env
 ```
 
 Edit `.env` to set model paths per GPU. The default `.env.example` is pre-configured for the standard layout:
+
+Generate the required direct speech gateway key and store it only in `.env` or
+the deployment secret manager:
+
+```bash
+openssl rand -hex 32
+# Set the result as SPEECH_DIRECT_API_KEY in gpu-server/.env.
+```
+
+Do not commit the key, place it in compose arguments, or include it in logs.
 
 | GPU | Type | Model Path |
 |-----|------|------------|

@@ -1,26 +1,24 @@
 # HeartCode GPU Server - PEA Configuration
 # 8x NVIDIA P104-100 (8GB each), 32GB RAM, 2-core Celeron
 #
-# Layout (1-indexed GPU numbering):
+# Layout uses one-based display slots. Runtime placement always uses GPU UUIDs;
+# discovered CUDA/nvidia-smi indices are zero-based and may change after reboot.
 #   GPU 1-3: SFW Chat (Stheno v3.4 Q5_K_M) + Vision Embeddings (nomic-embed-vision-v1.5)
 #   GPU 4-6: NSFW Chat (Lumimaid v0.2 8B Q5_K_M) + Text Embeddings (nomic-embed-text-v1.5)
-#   GPU 7:   Image generation (Segmind SSD-1B via LocalAI) — 1x, see below
+#   GPU 7:   Speech STT/TTS (dedicated; Speaches + Kokoro)
+#   GPU 8:   Image generation (Segmind SSD-1B via LocalAI)
 #
-# !! Only 7 of the 8 cards are usable. GPU-f1fa6009 (PCI 04:00.0) is on the bus
-# !! but the driver cannot initialize it ("Failed to copy vbios to system
-# !! memory", RmInitAdapter 0x30:0xffff:1129); this survives a reboot, so the
-# !! card is faulty. Its two tenants (pea-gpu-2 + pea-embed-vision-2) were moved
-# !! onto GPU-f417c539, which was freed by retiring the 2nd image server.
-# !! When the card is replaced, move them back and restore image-server-2.
+# All 8 cards are healthy as of 2026-07-13. pea-gpu-2 + pea-embed-vision-2 are
+# back on GPU 2, leaving GPU 7 dedicated to speech.
 #
 # GPU UUIDs (from nvidia-smi -L):
 #   GPU 0: GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8   (pea-gpu-1, vision-1)
-#   GPU -: GPU-f1fa6009-d240-3810-d6ca-4c65ecc22dcf   FAULTY — not enumerated
+#   GPU 1: GPU-8d0782cb-a2e0-dcbb-da61-63e16d950e77   (pea-gpu-2, vision-2)
 #   GPU 2: GPU-1f2ba781-081b-56cf-da1a-802759aea70b   (pea-gpu-3, dino-1)
 #   GPU 3: GPU-48054f5b-0660-6e89-ec5b-9ac85db7b7b1   (pea-gpu-4, embed-4)
 #   GPU 4: GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b   (pea-gpu-5, embed-5)
 #   GPU 5: GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9   (pea-gpu-6, dino-2)
-#   GPU 6: GPU-f417c539-26db-94e9-4c8f-c5a775291988   (pea-gpu-2, vision-2)
+#   GPU 6: GPU-f417c539-26db-94e9-4c8f-c5a775291988   (speech STT/TTS)
 #   GPU 7: GPU-c710b68a-493d-0d55-9b1a-f48d8ad71978   (pea-image-1)
 #
 # Context: 16K tokens (N_CTX=16384) — uses ~1GB KV cache at q8_0
@@ -139,11 +137,7 @@ services:
     runtime: nvidia
     environment:
       <<: *gpu-env-common
-      # Was GPU-f1fa6009 (04:00.0), which the driver can no longer initialize
-      # ("Failed to copy vbios to system memory", RmInitAdapter 0x30:0xffff:1129
-      # — survives a reboot, so the card is faulty). Moved onto GPU-f417c539,
-      # freed by retiring image-server-2. Co-tenant: pea-embed-vision-2.
-      NVIDIA_VISIBLE_DEVICES: GPU-f417c539-26db-94e9-4c8f-c5a775291988
+      NVIDIA_VISIBLE_DEVICES: GPU-8d0782cb-a2e0-dcbb-da61-63e16d950e77
       SERVER_ID: gpu-2
       MODEL_PATH: ${GPU_2_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_2_MODEL_TYPE:-sfw}
@@ -155,7 +149,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['GPU-f417c539-26db-94e9-4c8f-c5a775291988']
+              device_ids: ['GPU-8d0782cb-a2e0-dcbb-da61-63e16d950e77']
               capabilities: [gpu]
 
   gpu-server-3:
@@ -357,10 +351,7 @@ services:
     restart: unless-stopped
     runtime: nvidia
     environment:
-      # Moved off the faulty GPU-f1fa6009 (04:00.0) onto GPU-f417c539, alongside
-      # its paired SFW chat server pea-gpu-2. ~6.3GB (chat) + ~1.1GB (fp32
-      # vision embed) fits the 8GB card, matching the gpu-1/vision-1 pairing.
-      NVIDIA_VISIBLE_DEVICES: GPU-f417c539-26db-94e9-4c8f-c5a775291988
+      NVIDIA_VISIBLE_DEVICES: GPU-8d0782cb-a2e0-dcbb-da61-63e16d950e77
       SERVER_ID: embed-vision-2
       PORT: 8080
       METRICS_PORT: 9091
@@ -389,7 +380,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['GPU-f417c539-26db-94e9-4c8f-c5a775291988']
+              device_ids: ['GPU-8d0782cb-a2e0-dcbb-da61-63e16d950e77']
               capabilities: [gpu]
 
   # =============================================================================
@@ -533,17 +524,93 @@ services:
               capabilities: [gpu]
 
   # =============================================================================
-  # RETIRED — image-server-2 (pea-image-2, :5101, GPU-f417c539).
-  #
-  # PEA lost a GPU: it now enumerates 7 cards (indices 0-6) and GPU-f1fa6009 is
-  # absent. GPU-f417c539 is therefore occupied by the Lumimaid NSFW chat server,
-  # which holds ~6.35GB of its 8GB, so SSD-1B could no longer load there —
-  # /v1/images/generations returned a CUDA OOM on every request LiteLLM routed
-  # to :5101. Its models.yaml deployment was dropped alongside this block.
-  #
-  # To revive when the missing GPU returns: restore this service block from git
-  # history, give it a free GPU UUID, and re-add `- {gpu: 7, port: 5101}` to the
-  # heartcode-image deployments in models.yaml, then re-run render-config.py.
+  # SPEECH SERVERS (DEDICATED GPU 7)
+  # =============================================================================
+
+  speech-stt:
+    image: ghcr.io/speaches-ai/speaches:latest-cuda@sha256:6ec12ebf890a17e0d4b242a8ba9e0eb1fb836e60e8a3c857aea9838d541579ac
+    container_name: pea-speech-stt
+    restart: unless-stopped
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: GPU-f417c539-26db-94e9-4c8f-c5a775291988
+      STT_MODEL_ID: guillaumekln/faster-whisper-small.en
+      PRELOAD_MODELS: '["guillaumekln/faster-whisper-small.en"]'
+      WHISPER__INFERENCE_DEVICE: cuda
+      WHISPER__DEVICE_INDEX: 0
+      WHISPER__COMPUTE_TYPE: int8
+      WHISPER__TTL: -1
+      ENABLE_UI: "false"
+      LOG_LEVEL: info
+    volumes:
+      - speech_model_cache:/home/ubuntu/.cache/huggingface/hub
+      - ./speech/ensure_stt_loaded.py:/opt/heartcode/ensure_stt_loaded.py:ro
+    ports:
+      - "8200:8000"
+    healthcheck:
+      test: ["CMD", "python", "/opt/heartcode/ensure_stt_loaded.py"]
+      interval: 30s
+      timeout: 60s
+      retries: 3
+      start_period: 300s
+    networks:
+      - gpu-network
+    mem_limit: 4096m
+    memswap_limit: 6144m
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['GPU-f417c539-26db-94e9-4c8f-c5a775291988']
+              capabilities: [gpu]
+
+  speech-tts:
+    image: ghcr.io/remsky/kokoro-fastapi-gpu:v0.6.0@sha256:560e5ba33e78597cf35d266a5591c3ce7558dce318b3019fb6d94e28b466080b
+    container_name: pea-speech-tts
+    restart: unless-stopped
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: GPU-f417c539-26db-94e9-4c8f-c5a775291988
+    expose:
+      - "8880"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8880/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
+    networks:
+      - gpu-network
+    mem_limit: 3072m
+    memswap_limit: 4096m
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['GPU-f417c539-26db-94e9-4c8f-c5a775291988']
+              capabilities: [gpu]
+
+  speech-stream-gateway:
+    image: caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    container_name: pea-speech-stream-gateway
+    restart: unless-stopped
+    environment:
+      SPEECH_DIRECT_API_KEY: ${SPEECH_DIRECT_API_KEY:?set SPEECH_DIRECT_API_KEY in .env}
+    volumes:
+      - ./speech/Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "8201:8080"
+    depends_on:
+      speech-tts:
+        condition: service_healthy
+    networks:
+      - gpu-network
+
+  # =============================================================================
+  # RETIRED — image-server-2 (pea-image-2, :5101). The restored eighth card is
+  # reserved for speech rather than restoring a second SSD-1B replica.
   # =============================================================================
 
   # =============================================================================
@@ -556,6 +623,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./configs/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
       - prometheus_data:/prometheus
     ports:
       - "9099:9090"
@@ -564,6 +632,17 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.enable-lifecycle'
       - '--storage.tsdb.retention.time=30d'
+    networks:
+      - gpu-network
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:latest@sha256:e753ff9f3fc458d02cca5eddab5a77e1c175eee484a8925ac7d524f04366c2fc
+    container_name: pea-blackbox-exporter
+    restart: unless-stopped
+    volumes:
+      - ./configs/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
     networks:
       - gpu-network
 
@@ -592,3 +671,5 @@ volumes:
   prometheus_data:
   image_cache:
   image_backends:
+  speech_model_cache:
+    name: speech-model-cache

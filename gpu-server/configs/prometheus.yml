@@ -4,6 +4,9 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+rule_files:
+  - /etc/prometheus/alert_rules.yml
+
 scrape_configs:
   # GPU Chat Servers (6 instances, GPU 1-6; embeds co-located, image on GPU 7-8)
   - job_name: 'gpu-chat-servers'
@@ -61,6 +64,35 @@ scrape_configs:
           gpu_id: '7'
           model_type: 'image'
     metrics_path: '/metrics'
+
+  # Speech services expose JSON health endpoints; blackbox-exporter translates
+  # their HTTP status into Prometheus probe_success/probe_duration metrics.
+  - job_name: 'speech-health'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://pea-speech-stt:8000/health
+        labels:
+          model_type: 'speech-stt'
+          gpu_uuid: 'GPU-f417c539-26db-94e9-4c8f-c5a775291988'
+          physical_index_zero_based: '6'
+          display_slot_one_based: '7'
+      - targets:
+          - http://pea-speech-tts:8880/health
+        labels:
+          model_type: 'speech-tts'
+          gpu_uuid: 'GPU-f417c539-26db-94e9-4c8f-c5a775291988'
+          physical_index_zero_based: '6'
+          display_slot_one_based: '7'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: pea-blackbox-exporter:9115
 
   # Prometheus itself
   - job_name: 'prometheus'
