@@ -76,12 +76,16 @@ scrape_configs:
           - http://pea-speech-stt:8000/health
         labels:
           model_type: 'speech-stt'
-          gpu_id: '7'
+          gpu_uuid: 'GPU-f417c539-26db-94e9-4c8f-c5a775291988'
+          physical_index_zero_based: '6'
+          display_slot_one_based: '7'
       - targets:
           - http://pea-speech-tts:8880/health
         labels:
           model_type: 'speech-tts'
-          gpu_id: '7'
+          gpu_uuid: 'GPU-f417c539-26db-94e9-4c8f-c5a775291988'
+          physical_index_zero_based: '6'
+          display_slot_one_based: '7'
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
