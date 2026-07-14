@@ -1,0 +1,16 @@
+{
+	auto_https off
+	log {
+		output stdout
+		format json
+	}
+}
+
+:8080 {
+	@unauthorized not header Authorization "Bearer {$SPEECH_DIRECT_API_KEY}"
+	respond @unauthorized "Unauthorized" 401
+
+	reverse_proxy speech-tts:8880 {
+		flush_interval -1
+	}
+}

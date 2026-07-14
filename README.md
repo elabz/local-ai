@@ -1,6 +1,6 @@
 # Local AI
 
-Shared GPU inference infrastructure for local network projects. Provides OpenAI-compatible API endpoints for chat completion, embeddings, and image generation.
+Shared GPU inference infrastructure for local network projects. Provides OpenAI-compatible API endpoints for chat completion, embeddings, image generation, speech-to-text, and text-to-speech.
 
 ## Architecture
 
@@ -9,8 +9,9 @@ Shared GPU inference infrastructure for local network projects. Provides OpenAI-
 │  PEA Server (192.168.0.144) - gpu-server/                    │
 │                                                              │
 │  GPU 1-3: llama.cpp SFW chat     (ports 8080-8082)          │
-│  GPU 4-7: llama.cpp NSFW chat    (ports 8083-8086)          │
-│  GPU 1-7: llama.cpp embeddings   (ports 8090-8096)          │
+│  GPU 4-6: llama.cpp NSFW chat    (ports 8083-8085)          │
+│  GPU 1-6: embedding services     (ports 8093-8105)          │
+│  GPU 7:   STT + TTS              (ports 8200-8201)          │
 │  GPU 8:   LocalAI image gen      (port 5100)                │
 │  8x NVIDIA P104-100 (8GB VRAM each), 32GB RAM               │
 └───────────────────────┬──────────────────────────────────────┘
@@ -18,7 +19,7 @@ Shared GPU inference infrastructure for local network projects. Provides OpenAI-
 ┌───────────────────────▼──────────────────────────────────────┐
 │  Prod Server (192.168.0.152) - litellm/                      │
 │                                                              │
-│  LiteLLM Proxy      (port 4000)  ──→ PEA:8080-8096,5100    │
+│  LiteLLM Proxy      (port 4000)  ──→ PEA inference APIs     │
 │  PostgreSQL          (port 5432)  (API key storage)          │
 │  Langfuse            (port 3002)  (LLM observability)        │
 │  Prometheus/Grafana  (ports 9090/3001)                       │
@@ -28,6 +29,7 @@ Shared GPU inference infrastructure for local network projects. Provides OpenAI-
 │  → http://192.168.0.152:4000/v1/chat/completions             │
 │  → http://192.168.0.152:4000/v1/embeddings                   │
 │  → http://192.168.0.152:4000/v1/images/generations           │
+│  → http://192.168.0.152:4000/v1/audio/*                      │
 ```
 
 ## Components
@@ -45,8 +47,12 @@ Shared GPU inference infrastructure for local network projects. Provides OpenAI-
 | API Name | Type | GPUs | Model | Quantization |
 |----------|------|------|-------|--------------|
 | `heartcode-chat-sfw` | Chat | 1-3 (3x P104-100) | Llama-3.1-8B-Stheno-v3.4 | Q5_K_M |
-| `heartcode-chat-nsfw` | Chat | 4-7 (4x P104-100) | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M |
-| `heartcode-embed` | Embedding | 1-7 (7x P104-100) | nomic-embed-text-v1.5 | Q8_0 |
+| `heartcode-chat-nsfw` | Chat | 4-6 (3x P104-100) | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M |
+| `heartcode-embed` | Text embedding | 4-5 (co-located) | nomic-embed-text-v1.5 | Q8_0 |
+| `heartcode-embed-vision` | Vision embedding | 1-2 (co-located) | nomic-embed-vision-v1.5 | FP32 |
+| `heartcode-embed-visual` | Visual embedding | 3, 6 (co-located) | DINOv2 with registers, large | FP32 |
+| `heartcode-stt` | Speech-to-text | 7 | faster-whisper small.en | INT8 |
+| `heartcode-tts` | Text-to-speech | 7 | Kokoro-82M | FP32 |
 | `heartcode-image` | Image | 8 (1x P104-100) | Segmind SSD-1B (SDXL distilled) | FP16 |
 
 **Aliases:** `heartcode-chat` and `heartcode-default` → `heartcode-chat-sfw`, `heartcode-sfw` → `heartcode-chat-sfw`, `heartcode-nsfw` → `heartcode-chat-nsfw`
@@ -77,7 +83,7 @@ docker compose up -d    # Start LiteLLM + PostgreSQL
 curl -X POST http://192.168.0.152:4000/key/generate \
   -H "Authorization: Bearer $LITELLM_MASTER_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"models": ["heartcode-chat-sfw", "heartcode-chat-nsfw", "heartcode-embed", "heartcode-image"],
+  -d '{"models": ["heartcode-chat-sfw", "heartcode-chat-nsfw", "heartcode-embed", "heartcode-image", "heartcode-stt", "heartcode-tts"],
        "key_alias": "my-project"}'
 ```
 
@@ -124,6 +130,8 @@ curl http://192.168.0.152:4000/v1/images/generations \
 | NSFW Chat | Throughput | ~45 RPM across 4 GPUs |
 | Embeddings | Throughput | High (lightweight model) |
 | Image Gen | Latency | ~48s per 512x512 image (20 steps) |
+| STT small.en | 15/60/120s audio | 1.67 / 3.55 / 6.45s |
+| TTS Kokoro | ~10.9s audio | 0.81s total, ~73ms first bytes direct |
 
 ## API Key Management
 

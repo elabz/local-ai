@@ -226,15 +226,14 @@ sleep 15
 # GPU 1-3 run ~7.4GB/8GB once chat + vision are both up — watch nvidia-smi.
 docker compose up -d vision-embed-1 vision-embed-2 vision-embed-3
 
-# Image servers (GPU 8 + GPU 7, load-balanced). First start of image-server
-# installs the diffusers backend (~3 min); image-server-2 reuses the shared
-# image_backends volume (fast), so start image-server first.
+# Image server (GPU 8). First start installs the diffusers backend (~3 min).
 docker compose up -d image-server
-sleep 30
-docker compose up -d image-server-2
+
+# GPU-only speech on dedicated GPU 7 plus its authenticated stream gateway.
+docker compose up -d speech-stt speech-tts speech-stream-gateway
 
 # Monitoring
-docker compose up -d prometheus node-exporter
+docker compose up -d prometheus blackbox-exporter node-exporter
 ```
 
 ### 6.3 Verify All Services
@@ -242,7 +241,7 @@ docker compose up -d prometheus node-exporter
 ```bash
 docker compose ps
 # All containers should show "healthy"
-# Expect: 6 chat + 3 text-embed + 3 vision-embed + 2 image + prometheus + node-exporter = 16 containers
+# All configured containers should be running; model services should become healthy.
 ```
 
 ## Step 7: Verify Endpoints
@@ -292,6 +291,12 @@ curl -s http://localhost:5100/v1/images/generations \
 # First request downloads the Segmind SSD-1B model (~2.5GB) and takes several minutes
 # Subsequent requests take ~48 seconds for 512x512
 ```
+
+### Speech (GPU 7)
+
+STT is exposed directly on `:8200` for infrastructure checks and through LiteLLM as
+`heartcode-stt`. Interactive TTS streams through the authenticated `:8201` gateway;
+accounted buffered TTS is available through LiteLLM as `heartcode-tts`.
 
 ## Step 8: LiteLLM Proxy Setup (Prod Server)
 
@@ -376,7 +381,9 @@ curl -X POST http://localhost:4000/key/generate \
 | 8083-8085 | NSFW chat | GPU 4-6 |
 | 8101-8103 | Vision embed (`nomic-embed-vision-v1.5` + text), co-located w/ SFW chat | GPU 1-3 |
 | 8093-8095 | Text embed (`nomic-embed-text-v1.5`), co-located w/ NSFW chat | GPU 4-6 |
-| 5100, 5101 | Image generation (2x, load-balanced) | GPU 8, 7 |
+| 5100 | Image generation | GPU 8 |
+| 8200 | Speaches STT | GPU 7 |
+| 8201 | Authenticated non-buffering Kokoro TTS gateway | GPU 7 |
 | 9091 (internal) | Prometheus metrics per service | GPU 1-8 |
 | 9099 | Prometheus | - |
 | 9100 | Node Exporter | - |

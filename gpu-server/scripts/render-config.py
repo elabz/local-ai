@@ -21,7 +21,7 @@ from pathlib import Path
 
 import yaml
 
-KINDS = {"chat", "text-embed", "vision-embed", "visual-embed", "image"}
+KINDS = {"chat", "text-embed", "vision-embed", "visual-embed", "image", "stt", "tts"}
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "gpu-server" / "models.yaml"

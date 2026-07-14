@@ -111,12 +111,8 @@ models:
   # --- Image generation, Segmind SSD-1B via LocalAI (GPU 8) ---------------------
   # LocalAI auto-downloads the model on first request — nothing to pre-fetch.
   #
-  # SINGLE instance as of 2026-07-09. PEA now enumerates only 7 GPUs — the card
-  # with UUID GPU-f1fa6009 dropped off the bus — so there is no longer a free
-  # GPU for a second image server. The old GPU-7 deployment (:5101) sat on the
-  # same physical card as the Lumimaid NSFW chat server and OOMed on model load,
-  # failing every request LiteLLM routed to it. Restore the second deployment
-  # once the missing GPU is back.
+  # Single instance: restored GPU 7 is reserved for speech instead of reviving
+  # the former second SSD-1B replica.
   - api_name: heartcode-image
     kind: image
     mode: image_generation
@@ -126,6 +122,30 @@ models:
       type: localai
     deployments:
       - {gpu: 8, port: 5100}
+
+  # --- Speech-to-text, faster-whisper on dedicated GPU 7 -----------------------
+  - api_name: heartcode-stt
+    kind: stt
+    mode: audio_transcription
+    litellm_model: guillaumekln/faster-whisper-small.en
+    id_prefix: heartcode-stt
+    rate_limit: {rpm: 60}
+    params: {timeout: 180}
+    source: {type: container}
+    deployments:
+      - {gpu: 7, port: 8200}
+
+  # --- Text-to-speech, Kokoro-82M on dedicated GPU 7 --------------------------
+  - api_name: heartcode-tts
+    kind: tts
+    mode: audio_speech
+    litellm_model: kokoro
+    id_prefix: heartcode-tts
+    rate_limit: {rpm: 60}
+    params: {timeout: 180, api_key: os.environ/SPEECH_DIRECT_API_KEY}
+    source: {type: container}
+    deployments:
+      - {gpu: 7, port: 8201}
 
 # Hand-maintained LiteLLM router/general/litellm settings live in
 # litellm/config.base.yaml; the generator merges the model_list + model_rate_limits
