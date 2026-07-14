@@ -22,7 +22,10 @@
 	log_append call_id {http.request.header.X-Call-ID}
 	log_append turn_id {http.request.header.X-Turn-ID}
 
-	reverse_proxy speech-tts:8880 {
+	@not_speech not path /v1/audio/speech
+	respond @not_speech "Not Found" 404
+
+	reverse_proxy speech-meter:8080 {
 		flush_interval -1
 		header_up -Authorization
 		header_up X-Speech-Request-ID {http.request.header.X-Speech-Request-ID}

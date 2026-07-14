@@ -73,6 +73,8 @@ headers or determined locally; arbitrary client values never become labels.
 
 An operator probe generates fresh secret-free request/call/turn IDs, performs STT and TTS through the supported HeartCode route, and records timestamps. It verifies gateway/container receipt, expected accounting, process placement on the target UUID, non-zero model memory, and a utilization or execution-counter change during the sampling window.
 
+LiteLLM's deployed audio adapters bypass the generic pre-call header hook and drop `extra_headers` during OpenAI-compatible STT/TTS normalization. The `speech_correlation.py` callback therefore installs a version-scoped startup shim at the Router/OpenAI audio-adapter boundary. It reads the original `proxy_server_request`, activates only for `heartcode-stt` and `heartcode-tts`, validates values against a bounded identifier grammar, and injects only `X-Speech-Request-ID`, `X-Call-ID`, and `X-Turn-ID`. This shim must be regression-tested whenever LiteLLM is upgraded and can be removed when the upstream audio adapters natively honor the model-group header allowlist.
+
 ### 5. Alerts distinguish availability, routing, inventory, and performance
 
 Alerts cover unavailable models, missing correlation in controlled probes, UUID/index inventory mismatch, unexpected CPU fallback, sustained request errors, and sustained latency. Thresholds must use measured baselines and `for` windows to avoid alerting on single short requests.

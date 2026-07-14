@@ -40,6 +40,7 @@ services:
       - "4000:4000"
     volumes:
       - ./config.yaml:/app/config.yaml:ro
+      - ./speech_correlation.py:/app/speech_correlation.py:ro
     env_file:
       - .env
     environment:

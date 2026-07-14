@@ -103,6 +103,66 @@ groups:
         annotations:
           summary: "{{$labels.model_type}} is unavailable"
           description: "Speech health probe failed for {{$labels.instance}}"
+
+      - alert: SpeechControlledProbeCorrelationMissing
+        expr: speech_controlled_probe_success == 0 or (time() - speech_controlled_probe_timestamp_seconds) > 86400
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Speech controlled-probe correlation is missing"
+          description: "No fully correlated controlled probe has been retained in the last 24 hours."
+
+      - alert: SpeechGPUInventoryMismatch
+        expr: speech_gpu_inventory_match == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Speech GPU UUID/index inventory mismatch"
+          description: "{{$labels.gpu_uuid}} was discovered at physical index {{$labels.physical_index_zero_based}}."
+
+      - alert: SpeechUnexpectedCPUFallback
+        expr: sum(speech_gpu_process_memory_bytes) == 0 and sum(increase(speech_requests_total[10m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Speech inference lacks GPU memory residency"
+          description: "Speech traffic occurred without a resident process on the configured GPU."
+
+      - alert: SpeechModelUnavailable
+        expr: probe_success{job="speech-health"} == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{$labels.model_type}} model is unavailable"
+          description: "The model-aware health endpoint failed continuously for {{$labels.instance}}."
+
+      - alert: SpeechLatencyP95High
+        expr: |
+          histogram_quantile(0.95, sum by (le, operation) (rate(speech_request_duration_seconds_bucket{operation="stt"}[15m]))) > 4
+          or
+          histogram_quantile(0.95, sum by (le, operation) (rate(speech_request_duration_seconds_bucket{operation="tts"}[15m]))) > 2
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{$labels.operation}} speech p95 latency is sustained above baseline"
+          description: "Measured baseline thresholds are 4s for STT and 2s for TTS; the breach persisted for 15 minutes."
+
+      - alert: SpeechErrorRateHigh
+        expr: |
+          (sum by (operation) (rate(speech_failures_total[10m]))
+          / clamp_min(sum by (operation) (rate(speech_requests_total[10m])), 0.001)) > 0.05
+          and on (operation) sum by (operation) (increase(speech_requests_total[10m])) >= 10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{$labels.operation}} speech error rate exceeds 5%"
+          description: "At least ten requests occurred and the error ratio remained above 5% for 10 minutes."
       
       # Inference Latency Alert
       - alert: InferenceLatencyHigh

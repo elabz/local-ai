@@ -94,6 +94,15 @@ scrape_configs:
       - target_label: __address__
         replacement: pea-blackbox-exporter:9115
 
+  - job_name: 'speech-requests'
+    static_configs:
+      - targets: ['pea-speech-meter:8080']
+
+  - job_name: 'speech-gpu'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['pea-speech-gpu-exporter:9400']
+
   # Prometheus itself
   - job_name: 'prometheus'
     static_configs:

@@ -32,6 +32,10 @@ The system SHALL expose secret-free request telemetry for STT and TTS including 
 - **WHEN** HeartCode sends an allowlisted speech request ID with call and turn context
 - **THEN** operators can correlate gateway and container handling without recording audio, transcript content, or authorization credentials
 
+#### Scenario: LiteLLM audio correlation is forwarded
+- **WHEN** HeartCode sends STT or TTS through the LiteLLM model groups with request, call, and turn correlation headers
+- **THEN** a scoped LiteLLM audio adapter shim forwards only those three validated headers to the PEA data plane and does not forward authorization, cookies, or arbitrary client headers
+
 #### Scenario: Metrics are collected
 - **WHEN** speech requests are processed
 - **THEN** Prometheus records request counts, failures, latency, STT seconds, TTS characters/bytes, and health without using request/call/turn IDs as labels

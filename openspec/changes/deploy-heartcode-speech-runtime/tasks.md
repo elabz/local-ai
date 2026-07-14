@@ -15,18 +15,18 @@
 ## 3. Add route and runtime observability
 
 - [x] 3.1 Forward allowlisted speech request/call/turn correlation headers through the direct gateway and emit them in sanitized structured access logs
-- [ ] 3.2 Export STT/TTS request totals, failures, latency, workload units, requested/actual model, provider path, and fallback without high-cardinality metric labels
-- [ ] 3.3 Export speech process GPU UUID, discovered physical index, model memory residency, and sampled execution/utilization metrics
-- [ ] 3.4 Add operations dashboard panels for health, traffic, latency, errors, process placement, memory, and utilization
+- [x] 3.2 Export STT/TTS request totals, failures, latency, workload units, requested/actual model, provider path, and fallback without high-cardinality metric labels
+- [x] 3.3 Export speech process GPU UUID, discovered physical index, model memory residency, and sampled execution/utilization metrics
+- [x] 3.4 Add operations dashboard panels for health, traffic, latency, errors, process placement, memory, and utilization
 
 ## 4. Controlled verification and alerting
 
-- [ ] 4.1 Add a controlled end-to-end probe correlating HeartCode, LiteLLM/direct gateway, PEA containers, accounting rows, and GPU evidence
-- [ ] 4.2 Add alerts for missing controlled-probe correlation, UUID/index mismatch, unexpected CPU fallback, and unavailable speech models
-- [ ] 4.3 Establish measured p95 latency/error baselines and add sustained-threshold alerts with non-flapping `for` windows
-- [ ] 4.4 Validate direct and LiteLLM routes, model loading, request accounting, and GPU execution; retain sanitized evidence
+- [x] 4.1 Add a controlled end-to-end probe correlating HeartCode, LiteLLM/direct gateway, PEA containers, accounting rows, and GPU evidence
+- [x] 4.2 Add alerts for missing controlled-probe correlation, UUID/index mismatch, unexpected CPU fallback, and unavailable speech models
+- [x] 4.3 Establish measured p95 latency/error baselines and add sustained-threshold alerts with non-flapping `for` windows
+- [x] 4.4 Validate direct and LiteLLM routes, model loading, request accounting, and GPU execution; retain sanitized evidence
 
 ## 5. Rollout and documentation
 
-- [ ] 5.1 Document deployment order, health gates, HeartCode enablement, rollback, data retention, and secret rotation
+- [x] 5.1 Document deployment order, health gates, HeartCode enablement, rollback, data retention, and secret rotation
 - [x] 5.2 Run `openspec validate deploy-heartcode-speech-runtime --strict` from a workstation with the OpenSpec CLI

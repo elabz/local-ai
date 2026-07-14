@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-07-14T04:33:07Z",
+  "request_id": "speech-probe-20260714T043307Z-9841",
+  "call_id": "controlled-27716",
+  "litellm_call_id": "7712371a-349c-41c8-9f94-8534feeb1086",
+  "status": {
+    "stt": 200,
+    "tts": 200
+  },
+  "correlation": {
+    "meter_log_hits": 2,
+    "accounting_rows": 1
+  },
+  "metrics": {
+    "requests_before": 15,
+    "requests_after": 17,
+    "gpu_memory_bytes": 438304768,
+    "gpu_utilization_before": 0,
+    "gpu_utilization_after": 0
+  },
+  "gpu_query": {
+    "status": "success",
+    "data": {
+      "resultType": "vector",
+      "result": [
+        {
+          "metric": {
+            "__name__": "speech_gpu_inventory_info",
+            "display_slot_one_based": "7",
+            "gpu_uuid": "GPU-f417c539-26db-94e9-4c8f-c5a775291988",
+            "instance": "pea-speech-gpu-exporter:9400",
+            "job": "speech-gpu",
+            "physical_index_zero_based": "6"
+          },
+          "value": [
+            1784003594.048,
+            "1"
+          ]
+        }
+      ]
+    }
+  }
+}

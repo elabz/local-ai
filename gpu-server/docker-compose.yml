@@ -545,8 +545,8 @@ services:
     volumes:
       - speech_model_cache:/home/ubuntu/.cache/huggingface/hub
       - ./speech/ensure_stt_loaded.py:/opt/heartcode/ensure_stt_loaded.py:ro
-    ports:
-      - "8200:8000"
+    expose:
+      - "8000"
     healthcheck:
       test: ["CMD", "python", "/opt/heartcode/ensure_stt_loaded.py"]
       interval: 30s
@@ -603,10 +603,59 @@ services:
     ports:
       - "8201:8080"
     depends_on:
-      speech-tts:
+      speech-meter:
         condition: service_healthy
     networks:
       - gpu-network
+
+  speech-meter:
+    build: ./speech
+    image: local-ai-speech-observability:1
+    container_name: pea-speech-meter
+    restart: unless-stopped
+    command: ["metering_proxy.py"]
+    environment:
+      STT_UPSTREAM: http://speech-stt:8000
+      TTS_UPSTREAM: http://speech-tts:8880
+      STT_MODEL: guillaumekln/faster-whisper-small.en
+      TTS_MODEL: kokoro
+    volumes:
+      - ./speech/evidence:/evidence:ro
+    ports:
+      - "8200:8080"
+    depends_on:
+      speech-stt:
+        condition: service_healthy
+      speech-tts:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - gpu-network
+
+  speech-gpu-exporter:
+    build: ./speech
+    image: local-ai-speech-observability:1
+    container_name: pea-speech-gpu-exporter
+    restart: unless-stopped
+    runtime: nvidia
+    command: ["gpu_exporter.py"]
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      SPEECH_GPU_UUID: GPU-f417c539-26db-94e9-4c8f-c5a775291988
+      SPEECH_GPU_PHYSICAL_INDEX: "6"
+      SPEECH_GPU_DISPLAY_SLOT: "7"
+    networks:
+      - gpu-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
 
   # =============================================================================
   # RETIRED — image-server-2 (pea-image-2, :5101). The restored eighth card is
@@ -632,6 +681,19 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.enable-lifecycle'
       - '--storage.tsdb.retention.time=30d'
+    networks:
+      - gpu-network
+
+  grafana:
+    image: grafana/grafana:11.6.2
+    container_name: pea-grafana
+    restart: unless-stopped
+    volumes:
+      - ./configs/grafana-datasources.yml:/etc/grafana/provisioning/datasources/pea.yml:ro
+      - ./configs/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/pea.yml:ro
+      - ./configs/speech-dashboard.json:/var/lib/grafana/dashboards/speech.json:ro
+    ports:
+      - "3001:3000"
     networks:
       - gpu-network
 
