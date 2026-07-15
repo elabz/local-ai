@@ -11,6 +11,11 @@ from config import settings
 logger = logging.getLogger(__name__)
 
 
+def _optional_sampling_params(**values: Any) -> Dict[str, Any]:
+    """Return explicitly supplied sampler values without inventing defaults."""
+    return {name: value for name, value in values.items() if value is not None}
+
+
 class LlamaClient:
     """Async client for llama.cpp server API."""
 
@@ -42,6 +47,13 @@ class LlamaClient:
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
         repeat_penalty: Optional[float] = None,
+        min_p: Optional[float] = None,
+        dry_multiplier: Optional[float] = None,
+        dry_base: Optional[float] = None,
+        dry_allowed_length: Optional[int] = None,
+        dry_penalty_last_n: Optional[int] = None,
+        xtc_threshold: Optional[float] = None,
+        xtc_probability: Optional[float] = None,
         stop: Optional[List[str]] = None,
         stream: bool = False,
     ) -> Dict[str, Any]:
@@ -55,6 +67,17 @@ class LlamaClient:
             "repeat_penalty": repeat_penalty or settings.default_repeat_penalty,
             "stream": False,
         }
+        payload.update(
+            _optional_sampling_params(
+                min_p=min_p,
+                dry_multiplier=dry_multiplier,
+                dry_base=dry_base,
+                dry_allowed_length=dry_allowed_length,
+                dry_penalty_last_n=dry_penalty_last_n,
+                xtc_threshold=xtc_threshold,
+                xtc_probability=xtc_probability,
+            )
+        )
 
         if stop:
             payload["stop"] = stop
@@ -75,6 +98,13 @@ class LlamaClient:
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
         repeat_penalty: Optional[float] = None,
+        min_p: Optional[float] = None,
+        dry_multiplier: Optional[float] = None,
+        dry_base: Optional[float] = None,
+        dry_allowed_length: Optional[int] = None,
+        dry_penalty_last_n: Optional[int] = None,
+        xtc_threshold: Optional[float] = None,
+        xtc_probability: Optional[float] = None,
         stop: Optional[List[str]] = None,
     ) -> AsyncGenerator[str, None]:
         """Generate completion with streaming."""
@@ -87,6 +117,17 @@ class LlamaClient:
             "repeat_penalty": repeat_penalty or settings.default_repeat_penalty,
             "stream": True,
         }
+        payload.update(
+            _optional_sampling_params(
+                min_p=min_p,
+                dry_multiplier=dry_multiplier,
+                dry_base=dry_base,
+                dry_allowed_length=dry_allowed_length,
+                dry_penalty_last_n=dry_penalty_last_n,
+                xtc_threshold=xtc_threshold,
+                xtc_probability=xtc_probability,
+            )
+        )
 
         if stop:
             payload["stop"] = stop
@@ -135,6 +176,15 @@ class LlamaClient:
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
+        top_k: Optional[int] = None,
+        repeat_penalty: Optional[float] = None,
+        min_p: Optional[float] = None,
+        dry_multiplier: Optional[float] = None,
+        dry_base: Optional[float] = None,
+        dry_allowed_length: Optional[int] = None,
+        dry_penalty_last_n: Optional[int] = None,
+        xtc_threshold: Optional[float] = None,
+        xtc_probability: Optional[float] = None,
         stream: bool = False,
     ) -> Dict[str, Any]:
         """
@@ -148,6 +198,19 @@ class LlamaClient:
             "top_p": top_p or settings.default_top_p,
             "stream": False,
         }
+        payload.update(
+            _optional_sampling_params(
+                top_k=top_k,
+                repeat_penalty=repeat_penalty,
+                min_p=min_p,
+                dry_multiplier=dry_multiplier,
+                dry_base=dry_base,
+                dry_allowed_length=dry_allowed_length,
+                dry_penalty_last_n=dry_penalty_last_n,
+                xtc_threshold=xtc_threshold,
+                xtc_probability=xtc_probability,
+            )
+        )
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.post(
@@ -163,6 +226,15 @@ class LlamaClient:
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
+        top_k: Optional[int] = None,
+        repeat_penalty: Optional[float] = None,
+        min_p: Optional[float] = None,
+        dry_multiplier: Optional[float] = None,
+        dry_base: Optional[float] = None,
+        dry_allowed_length: Optional[int] = None,
+        dry_penalty_last_n: Optional[int] = None,
+        xtc_threshold: Optional[float] = None,
+        xtc_probability: Optional[float] = None,
     ) -> AsyncGenerator[str, None]:
         """
         Stream chat completion via llama.cpp's native /v1/chat/completions.
@@ -177,6 +249,19 @@ class LlamaClient:
             "top_p": top_p or settings.default_top_p,
             "stream": True,
         }
+        payload.update(
+            _optional_sampling_params(
+                top_k=top_k,
+                repeat_penalty=repeat_penalty,
+                min_p=min_p,
+                dry_multiplier=dry_multiplier,
+                dry_base=dry_base,
+                dry_allowed_length=dry_allowed_length,
+                dry_penalty_last_n=dry_penalty_last_n,
+                xtc_threshold=xtc_threshold,
+                xtc_probability=xtc_probability,
+            )
+        )
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             async with client.stream(

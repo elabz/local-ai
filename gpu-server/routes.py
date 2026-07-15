@@ -34,6 +34,13 @@ class CompletionRequest(BaseModel):
     top_p: Optional[float] = None
     top_k: Optional[int] = None
     repeat_penalty: Optional[float] = None
+    min_p: Optional[float] = None
+    dry_multiplier: Optional[float] = None
+    dry_base: Optional[float] = None
+    dry_allowed_length: Optional[int] = None
+    dry_penalty_last_n: Optional[int] = None
+    xtc_threshold: Optional[float] = None
+    xtc_probability: Optional[float] = None
     stop: Optional[List[str]] = None
     stream: bool = False
 
@@ -43,6 +50,15 @@ class ChatCompletionRequest(BaseModel):
     max_tokens: Optional[int] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
+    top_k: Optional[int] = None
+    repeat_penalty: Optional[float] = None
+    min_p: Optional[float] = None
+    dry_multiplier: Optional[float] = None
+    dry_base: Optional[float] = None
+    dry_allowed_length: Optional[int] = None
+    dry_penalty_last_n: Optional[int] = None
+    xtc_threshold: Optional[float] = None
+    xtc_probability: Optional[float] = None
     stream: bool = False
     model: Optional[str] = None  # Ignored, for OpenAI compatibility
 
@@ -120,6 +136,13 @@ async def create_completion(request: Request, body: CompletionRequest):
             top_p=body.top_p,
             top_k=body.top_k,
             repeat_penalty=body.repeat_penalty,
+            min_p=body.min_p,
+            dry_multiplier=body.dry_multiplier,
+            dry_base=body.dry_base,
+            dry_allowed_length=body.dry_allowed_length,
+            dry_penalty_last_n=body.dry_penalty_last_n,
+            xtc_threshold=body.xtc_threshold,
+            xtc_probability=body.xtc_probability,
             stop=body.stop,
         )
 
@@ -181,6 +204,15 @@ async def create_chat_completion(request: Request, body: ChatCompletionRequest):
             max_tokens=body.max_tokens,
             temperature=body.temperature,
             top_p=body.top_p,
+            top_k=body.top_k,
+            repeat_penalty=body.repeat_penalty,
+            min_p=body.min_p,
+            dry_multiplier=body.dry_multiplier,
+            dry_base=body.dry_base,
+            dry_allowed_length=body.dry_allowed_length,
+            dry_penalty_last_n=body.dry_penalty_last_n,
+            xtc_threshold=body.xtc_threshold,
+            xtc_probability=body.xtc_probability,
             stream=False,
         )
 
@@ -212,6 +244,13 @@ async def _stream_completion(llama_client, body: CompletionRequest):
             top_p=body.top_p,
             top_k=body.top_k,
             repeat_penalty=body.repeat_penalty,
+            min_p=body.min_p,
+            dry_multiplier=body.dry_multiplier,
+            dry_base=body.dry_base,
+            dry_allowed_length=body.dry_allowed_length,
+            dry_penalty_last_n=body.dry_penalty_last_n,
+            xtc_threshold=body.xtc_threshold,
+            xtc_probability=body.xtc_probability,
             stop=body.stop,
         ):
             yield {
@@ -237,6 +276,15 @@ async def _stream_chat_completion(llama_client, messages: list, body: ChatComple
             max_tokens=body.max_tokens,
             temperature=body.temperature,
             top_p=body.top_p,
+            top_k=body.top_k,
+            repeat_penalty=body.repeat_penalty,
+            min_p=body.min_p,
+            dry_multiplier=body.dry_multiplier,
+            dry_base=body.dry_base,
+            dry_allowed_length=body.dry_allowed_length,
+            dry_penalty_last_n=body.dry_penalty_last_n,
+            xtc_threshold=body.xtc_threshold,
+            xtc_probability=body.xtc_probability,
         ):
             chunk = {
                 "id": f"chatcmpl-{settings.server_id}",
