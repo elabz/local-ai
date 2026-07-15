@@ -619,6 +619,7 @@ services:
       TTS_UPSTREAM: http://speech-tts:8880
       STT_MODEL: guillaumekln/faster-whisper-small.en
       TTS_MODEL: kokoro
+      SPEECH_TTS_ENCODING_PROFILE: ${SPEECH_TTS_ENCODING_PROFILE:-opus-40k}
     volumes:
       - ./speech/evidence:/evidence:ro
     ports:

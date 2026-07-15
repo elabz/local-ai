@@ -10,6 +10,7 @@ set -euo pipefail
 PROMETHEUS_URL=${PROMETHEUS_URL:-http://localhost:9099}
 EXPECTED_GPU_UUID=${EXPECTED_GPU_UUID:-GPU-f417c539-26db-94e9-4c8f-c5a775291988}
 EVIDENCE_DIR=${EVIDENCE_DIR:-./speech/evidence}
+SPEECH_TTS_ENCODING_PROFILE=${SPEECH_TTS_ENCODING_PROFILE:-opus-40k}
 mkdir -p "$EVIDENCE_DIR"
 
 request_id="speech-probe-$(date -u +%Y%m%dT%H%M%SZ)-$RANDOM"
@@ -30,10 +31,14 @@ stt_status=$(curl -sS -D "$tmp/stt.headers" -o "$tmp/stt.json" -w '%{http_code}'
 tts_status=$(curl -sS -o "$tmp/tts.audio" -w '%{http_code}' "$SPEECH_DIRECT_URL/v1/audio/speech" \
   -H "Authorization: Bearer $SPEECH_DIRECT_API_KEY" -H 'Content-Type: application/json' \
   -H "X-Speech-Request-ID: $request_id-tts" -H "X-Call-ID: $call_id" -H "X-Turn-ID: $turn_id" \
-  --data '{"model":"kokoro","voice":"af_heart","input":"Controlled operations probe."}')
-sleep 6
-
-after=$(prom 'sum(speech_requests_total)' | jq -r '.data.result[0].value[1] // "0"')
+  --data "{\"model\":\"kokoro\",\"voice\":\"af_heart\",\"input\":\"Controlled operations probe.\",\"response_format\":\"opus\",\"encoding_profile\":\"$SPEECH_TTS_ENCODING_PROFILE\"}")
+tts_magic=$(od -An -N4 -tx1 "$tmp/tts.audio" | tr -d ' \n')
+after=$before
+for _ in 1 2 3 4 5 6; do
+  after=$(prom 'sum(speech_requests_total)' | jq -r '.data.result[0].value[1] // "0"')
+  awk "BEGIN { exit !($after > $before) }" && break
+  sleep 5
+done
 gpu=$(prom "speech_gpu_inventory_info{gpu_uuid=\"$EXPECTED_GPU_UUID\"}")
 memory=$(prom "sum(speech_gpu_process_memory_bytes{gpu_uuid=\"$EXPECTED_GPU_UUID\"})" | jq -r '.data.result[0].value[1] // "0"')
 util_after=$(prom "speech_gpu_utilization_percent{gpu_uuid=\"$EXPECTED_GPU_UUID\"}" | jq -r '.data.result[0].value[1] // "0"')
@@ -50,9 +55,9 @@ done
 jq -n --arg timestamp "$started" --arg request_id "$request_id" --arg call_id "$call_id" \
   --arg stt_status "$stt_status" --arg tts_status "$tts_status" --arg before "$before" --arg after "$after" \
   --arg memory "$memory" --arg util_before "$util_before" --arg util_after "$util_after" \
-  --arg litellm_call_id "$litellm_call_id" --argjson log_hits "$log_hits" --argjson accounting_hits "$accounting_hits" --argjson gpu "$gpu" \
-  '{timestamp:$timestamp,request_id:$request_id,call_id:$call_id,litellm_call_id:$litellm_call_id,status:{stt:($stt_status|tonumber),tts:($tts_status|tonumber)},correlation:{meter_log_hits:$log_hits,accounting_rows:$accounting_hits},metrics:{requests_before:($before|tonumber),requests_after:($after|tonumber),gpu_memory_bytes:($memory|tonumber),gpu_utilization_before:($util_before|tonumber),gpu_utilization_after:($util_after|tonumber)},gpu_query:$gpu}' \
+  --arg litellm_call_id "$litellm_call_id" --arg tts_profile "$SPEECH_TTS_ENCODING_PROFILE" --arg tts_magic "$tts_magic" --argjson log_hits "$log_hits" --argjson accounting_hits "$accounting_hits" --argjson gpu "$gpu" \
+  '{timestamp:$timestamp,request_id:$request_id,call_id:$call_id,litellm_call_id:$litellm_call_id,status:{stt:($stt_status|tonumber),tts:($tts_status|tonumber)},tts:{encoding_profile:$tts_profile,ogg_signature_valid:($tts_magic=="4f676753")},correlation:{meter_log_hits:$log_hits,accounting_rows:$accounting_hits},metrics:{requests_before:($before|tonumber),requests_after:($after|tonumber),gpu_memory_bytes:($memory|tonumber),gpu_utilization_before:($util_before|tonumber),gpu_utilization_after:($util_after|tonumber)},gpu_query:$gpu}' \
   > "$EVIDENCE_DIR/$request_id.json"
 
-jq -e '.status.stt < 300 and .status.tts < 300 and .correlation.meter_log_hits >= 2 and .correlation.accounting_rows >= 1 and .metrics.requests_after > .metrics.requests_before and .metrics.gpu_memory_bytes > 0 and (.gpu_query.data.result|length) > 0' "$EVIDENCE_DIR/$request_id.json" >/dev/null
+jq -e '.status.stt < 300 and .status.tts < 300 and .tts.ogg_signature_valid and .correlation.meter_log_hits >= 2 and .correlation.accounting_rows >= 1 and .metrics.requests_after > .metrics.requests_before and .metrics.gpu_memory_bytes > 0 and (.gpu_query.data.result|length) > 0' "$EVIDENCE_DIR/$request_id.json" >/dev/null
 echo "controlled speech probe passed; sanitized evidence: $EVIDENCE_DIR/$request_id.json"

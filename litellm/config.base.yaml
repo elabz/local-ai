@@ -15,7 +15,9 @@ router_settings:
   num_retries: 2
   retry_after: 3
   timeout: 90
-  allowed_fails: 2
+  # A chat group has multiple replicas. Cool down a failed deployment after
+  # its first connection error so request retries move to a healthy sibling.
+  allowed_fails: 1
   cooldown_time: 60
 
   # Health check settings
