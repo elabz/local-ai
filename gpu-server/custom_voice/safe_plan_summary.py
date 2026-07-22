@@ -29,17 +29,25 @@ SAFE_FIELDS = (
 def summarize(path: Path) -> dict[str, object]:
     raw = path.read_bytes()
     plan = json.loads(raw)
-    references = plan.get("references", [])
+    samples = plan.get("samples", [])
+    excluded = set(plan.get("excluded_adaptation_sample_ids", []))
     return {
         "plan_sha256": hashlib.sha256(raw).hexdigest(),
         "fields": {field: plan.get(field, "missing") for field in SAFE_FIELDS},
         "construction_reference_ids": sorted(
             item.get("sample_id", "")
-            for item in references
-            if isinstance(item, dict) and item.get("sample_id")
+            for item in samples
+            if isinstance(item, dict)
+            and item.get("role") == "adaptation"
+            and item.get("sample_id") not in excluded
         ),
         "heldout_reference_count": sum(
-            1 for item in references if "heldout" in str(item).lower()
+            1
+            for item in samples
+            if isinstance(item, dict)
+            and item.get("role") == "heldout"
+            and item.get("sample_id") not in excluded
+            and item.get("construction_reference")
         ),
     }
 

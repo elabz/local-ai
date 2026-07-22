@@ -14,7 +14,7 @@ def test_summary_is_content_free_and_allow_listed(tmp_path):
             {"sample_id": "adapt-002", "role": "adaptation", "path": "private.wav"},
             {"sample_id": "heldout-001", "role": "heldout", "path": "secret.wav"},
         ],
-        "references": [{"sample_id": "adapt-002"}],
+        "excluded_adaptation_sample_ids": [],
         "transcript": "must not be emitted",
     }
     raw = json.dumps(payload).encode()
