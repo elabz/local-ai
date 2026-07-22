@@ -20,7 +20,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from routes import router
 from embed_model import MultimodalEmbedder
-from metrics import start_metrics_server, model_loaded_gauge
+from metrics import start_metrics_server, model_loaded_gauge, record_gpu_readiness
+from gpu_health import GPUHealthMonitor, GPUReadiness, configured_gpu_health_enabled, probe_torch_gpu
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level),
@@ -56,6 +57,13 @@ async def lifespan(app: FastAPI):
 
     model_loaded_gauge.set(1)
     app.state.embedder = embedder
+    expected_uuid = os.getenv("EXPECTED_GPU_UUID", os.getenv("NVIDIA_VISIBLE_DEVICES", ""))
+    readiness = GPUReadiness(enabled=configured_gpu_health_enabled(), on_transition=record_gpu_readiness)
+    monitor = GPUHealthMonitor(readiness, lambda: probe_torch_gpu(expected_uuid, lock=embedder._lock))
+    app.state.gpu_readiness = readiness
+    app.state.gpu_health_monitor = monitor
+    if readiness.enabled:
+        monitor.check(); monitor.check(); monitor.start()
     logger.info(
         f"Embedding server {settings.server_id} ready "
         f"(dim={embedder.dimension}, precision={settings.precision})"
@@ -65,6 +73,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("Shutting down embedding server...")
     model_loaded_gauge.set(0)
+    monitor.stop()
 
 
 app = FastAPI(

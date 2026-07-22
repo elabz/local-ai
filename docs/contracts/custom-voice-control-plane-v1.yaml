@@ -1,0 +1,345 @@
+openapi: 3.1.0
+info:
+  title: HeartCode Custom Voice Control Plane
+  version: 1.0.0
+  description: Private digest-bound contract coordinated with add-admin-custom-voices.
+x-heartcode-change: add-admin-custom-voices
+x-routing:
+  visibility: private
+  litellm: forbidden
+  public-speech-gateway: forbidden
+servers:
+  - url: https://pea.internal.example/internal/v1
+security:
+  - CustomVoiceSignature: []
+paths:
+  /custom-voice-builds:
+    post:
+      operationId: createCustomVoiceBuild
+      x-required-scope: custom_voice.build
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateBuildRequest'}
+      responses:
+        '202':
+          description: New or idempotently recovered asynchronous build.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BuildJob'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        default: {$ref: '#/components/responses/SafeError'}
+  /custom-voice-builds/{job_id}:
+    get:
+      operationId: getCustomVoiceBuild
+      x-required-scope: custom_voice.read
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Authoritative job state and safe result.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BuildJob'}
+        default: {$ref: '#/components/responses/SafeError'}
+  /custom-voice-builds/{job_id}/cancel:
+    post:
+      operationId: cancelCustomVoiceBuild
+      x-required-scope: custom_voice.build
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '202':
+          description: Cooperative cancellation requested.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BuildJob'}
+        default: {$ref: '#/components/responses/SafeError'}
+  /custom-voice-previews/{preview_id}:
+    get:
+      operationId: readCustomVoicePreview
+      x-required-scope: custom_voice.preview.read
+      parameters:
+        - name: preview_id
+          in: path
+          required: true
+          schema: {$ref: '#/components/schemas/PreviewId'}
+        - name: expected_sha256
+          in: query
+          required: true
+          schema: {$ref: '#/components/schemas/Sha256'}
+      responses:
+        '200':
+          description: Digest-verified protected WAV preview.
+          content:
+            audio/wav:
+              schema: {type: string, contentEncoding: binary}
+        default: {$ref: '#/components/responses/SafeError'}
+  /custom-voice-registry/stage:
+    post:
+      operationId: stageCustomVoice
+      x-required-scope: custom_voice.activate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ArtifactMutation'}
+      responses:
+        '200':
+          description: Immutable version staged but not published.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RegistryVersion'}
+        default: {$ref: '#/components/responses/SafeError'}
+  /custom-voice-registry/activate:
+    post:
+      operationId: activateCustomVoice
+      x-required-scope: custom_voice.activate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ActivationRequest'}
+      responses:
+        '200':
+          description: Exact healthy version atomically activated.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RegistryVersion'}
+        default: {$ref: '#/components/responses/SafeError'}
+  /custom-voice-registry/rollback:
+    post:
+      operationId: rollbackCustomVoice
+      x-required-scope: custom_voice.activate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ActivationRequest'}
+      responses:
+        '200':
+          description: Prior exact version health-probed and activated.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RegistryVersion'}
+        default: {$ref: '#/components/responses/SafeError'}
+  /custom-voice-registry/retire:
+    post:
+      operationId: retireCustomVoice
+      x-required-scope: custom_voice.activate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ArtifactMutation'}
+      responses:
+        '200':
+          description: Inactive exact version retired.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RegistryVersion'}
+        default: {$ref: '#/components/responses/SafeError'}
+  /custom-voice-deletions:
+    post:
+      operationId: deleteCustomVoiceVersion
+      x-required-scope: custom_voice.delete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ArtifactMutation'}
+      responses:
+        '202':
+          description: Reference-aware deletion queued.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DeletionRequest'}
+        default: {$ref: '#/components/responses/SafeError'}
+components:
+  securitySchemes:
+    CustomVoiceSignature:
+      type: apiKey
+      in: header
+      name: X-Custom-Voice-Signature
+      description: HMAC-SHA256 over timestamp, nonce, method, path, and body digest. X-Custom-Voice-Key-Id, X-Custom-Voice-Timestamp, and X-Custom-Voice-Nonce are also required.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: {type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{7,127}$'}
+    JobId:
+      name: job_id
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/JobId'}
+  responses:
+    Conflict:
+      description: Idempotency or immutable-version conflict.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/SafeError'}
+    SafeError:
+      description: Content-free error.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/SafeError'}
+  schemas:
+    Sha256:
+      type: string
+      pattern: '^[0-9a-f]{64}$'
+    JobId:
+      type: string
+      pattern: '^cvj_[0-9a-f]{32}$'
+    IntakeId:
+      type: string
+      pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,126}[A-Za-z0-9]$'
+    StableVoiceId:
+      type: string
+      pattern: '^custom-[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'
+    Version:
+      type: string
+      pattern: '^v[1-9][0-9]{0,8}$'
+    PreviewId:
+      type: string
+      pattern: '^[0-9a-f]{32}$'
+    CreateBuildRequest:
+      type: object
+      additionalProperties: false
+      required: [schema_version, intake_id, manifest_sha256, stable_voice_id, version, builder_profile, callback]
+      properties:
+        schema_version: {const: custom-voice-build-request.v1}
+        intake_id: {$ref: '#/components/schemas/IntakeId'}
+        manifest_sha256: {$ref: '#/components/schemas/Sha256'}
+        stable_voice_id: {$ref: '#/components/schemas/StableVoiceId'}
+        version: {$ref: '#/components/schemas/Version'}
+        builder_profile: {const: kvoicewalk-multireference.v1}
+        callback:
+          oneOf:
+            - {type: 'null'}
+            - $ref: '#/components/schemas/Callback'
+    Callback:
+      type: object
+      additionalProperties: false
+      required: [callback_id]
+      properties:
+        callback_id: {type: string, pattern: '^[A-Za-z0-9._-]{8,128}$'}
+      description: Resolves only through an operator-configured allow-list; clients cannot submit a URL.
+    BuildJob:
+      type: object
+      additionalProperties: false
+      required: [schema_version, job_id, state, intake_id, manifest_sha256, builder_profile, created_at, updated_at]
+      properties:
+        schema_version: {const: custom-voice-build-job.v1}
+        job_id: {$ref: '#/components/schemas/JobId'}
+        state:
+          enum: [queued, validating, preprocessing, building, evaluating, succeeded, failed, cancelling, cancelled, deleting]
+        intake_id: {$ref: '#/components/schemas/IntakeId'}
+        manifest_sha256: {$ref: '#/components/schemas/Sha256'}
+        builder_profile: {const: kvoicewalk-multireference.v1}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+        result:
+          oneOf:
+            - {type: 'null'}
+            - $ref: '#/components/schemas/BuildResult'
+        error:
+          oneOf:
+            - {type: 'null'}
+            - $ref: '#/components/schemas/SafeError'
+    BuildResult:
+      type: object
+      additionalProperties: false
+      required: [artifact, evaluation, compatibility, previews]
+      properties:
+        artifact: {$ref: '#/components/schemas/ArtifactIdentity'}
+        evaluation:
+          type: object
+          additionalProperties: false
+          required: [objective_outcome, mean_word_error_rate, mean_speaker_similarity, human_naturalness_outcome]
+          properties:
+            objective_outcome: {enum: [pass, reject]}
+            mean_word_error_rate: {type: number, minimum: 0}
+            mean_speaker_similarity: {type: number, minimum: -1, maximum: 1}
+            human_naturalness_outcome: {enum: [pending, approved, rejected]}
+        compatibility: {enum: [pass, reject]}
+        previews:
+          type: array
+          maxItems: 16
+          items: {$ref: '#/components/schemas/PreviewReference'}
+    ArtifactIdentity:
+      type: object
+      additionalProperties: false
+      required: [stable_voice_id, version, artifact_sha256, artifact_size, artifact_manifest_sha256]
+      properties:
+        stable_voice_id: {$ref: '#/components/schemas/StableVoiceId'}
+        version: {$ref: '#/components/schemas/Version'}
+        artifact_sha256: {$ref: '#/components/schemas/Sha256'}
+        artifact_size: {type: integer, minimum: 1}
+        artifact_manifest_sha256: {$ref: '#/components/schemas/Sha256'}
+    PreviewReference:
+      type: object
+      additionalProperties: false
+      required: [preview_id, sha256]
+      properties:
+        preview_id: {$ref: '#/components/schemas/PreviewId'}
+        sha256: {$ref: '#/components/schemas/Sha256'}
+    ArtifactMutation:
+      type: object
+      additionalProperties: false
+      required: [stable_voice_id, version, artifact_sha256]
+      properties:
+        stable_voice_id: {$ref: '#/components/schemas/StableVoiceId'}
+        version: {$ref: '#/components/schemas/Version'}
+        artifact_sha256: {$ref: '#/components/schemas/Sha256'}
+    ActivationRequest:
+      allOf:
+        - $ref: '#/components/schemas/ArtifactMutation'
+        - type: object
+          additionalProperties: false
+          required: [sbom_sha256, admin_attestation_id]
+          properties:
+            stable_voice_id: {$ref: '#/components/schemas/StableVoiceId'}
+            version: {$ref: '#/components/schemas/Version'}
+            artifact_sha256: {$ref: '#/components/schemas/Sha256'}
+            sbom_sha256: {$ref: '#/components/schemas/Sha256'}
+            admin_attestation_id: {type: string, pattern: '^[A-Za-z0-9._-]{8,128}$'}
+    RegistryVersion:
+      type: object
+      additionalProperties: false
+      required: [stable_voice_id, version, artifact_sha256, state]
+      properties:
+        stable_voice_id: {$ref: '#/components/schemas/StableVoiceId'}
+        version: {$ref: '#/components/schemas/Version'}
+        artifact_sha256: {$ref: '#/components/schemas/Sha256'}
+        state: {enum: [staged, active, unhealthy, retired, deleted]}
+    DeletionRequest:
+      type: object
+      additionalProperties: false
+      required: [request_id, state]
+      properties:
+        request_id: {type: string, pattern: '^[0-9a-f]{32}$'}
+        state: {enum: [queued, verified_deleted, failed]}
+    CallbackEvent:
+      type: object
+      additionalProperties: false
+      required: [schema_version, callback_id, event_id, job_id, state, occurred_at]
+      properties:
+        schema_version: {const: custom-voice-callback.v1}
+        callback_id: {type: string}
+        event_id: {type: integer, minimum: 1}
+        job_id: {$ref: '#/components/schemas/JobId'}
+        state: {type: string}
+        occurred_at: {type: string, format: date-time}
+        reason: {type: string, pattern: '^[a-z][a-z0-9_]{2,63}$'}
+    SafeError:
+      type: object
+      additionalProperties: false
+      required: [type, code, status]
+      properties:
+        type: {const: about:blank}
+        code: {type: string, pattern: '^[a-z][a-z0-9_]{2,63}$'}
+        status: {type: integer, minimum: 400, maximum: 599}

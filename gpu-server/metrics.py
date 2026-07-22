@@ -70,6 +70,28 @@ gpu_temperature_celsius = Gauge(
     ["gpu_id"],
 )
 
+gpu_readiness = Gauge(
+    "gpu_readiness",
+    "Whether configured GPU readiness is ready (1=yes)",
+)
+gpu_readiness_transitions_total = Counter(
+    "gpu_readiness_transitions_total",
+    "GPU readiness transitions by bounded state and reason",
+    ["state", "reason"],
+)
+
+
+def record_gpu_readiness(state: str, reason: str) -> None:
+    if state not in {"starting", "ready", "unavailable"}:
+        state = "unavailable"
+    if reason not in {
+        "disabled", "starting", "ready", "model_unavailable", "gpu_query_failed",
+        "gpu_identity_mismatch", "gpu_memory_failed", "gpu_execution_failed",
+    }:
+        reason = "gpu_query_failed"
+    gpu_readiness.set(1 if state == "ready" else 0)
+    gpu_readiness_transitions_total.labels(state=state, reason=reason).inc()
+
 
 class GPUMetricsCollector:
     """Collect GPU metrics using pynvml."""

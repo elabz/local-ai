@@ -16,7 +16,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from routes import router
 from llama_client import LlamaClient
-from metrics import start_metrics_server, model_loaded_gauge
+from metrics import start_metrics_server, model_loaded_gauge, record_gpu_readiness
+from gpu_health import GPUHealthMonitor, GPUReadiness, configured_gpu_health_enabled, probe_nvidia_smi
 
 # Configure logging
 logging.basicConfig(
@@ -120,6 +121,14 @@ async def lifespan(app: FastAPI):
 
     # Store client in app state
     app.state.llama_client = llama_client
+    expected_uuid = os.getenv("EXPECTED_GPU_UUID", os.getenv("NVIDIA_VISIBLE_DEVICES", ""))
+    readiness = GPUReadiness(enabled=configured_gpu_health_enabled(), on_transition=record_gpu_readiness)
+    monitor = GPUHealthMonitor(readiness, lambda: probe_nvidia_smi(expected_uuid))
+    app.state.gpu_readiness = readiness
+    app.state.gpu_health_monitor = monitor
+    if readiness.enabled:
+        monitor.check()
+        monitor.check()
 
     logger.info(f"GPU Server {settings.server_id} started successfully")
 
@@ -128,9 +137,20 @@ async def lifespan(app: FastAPI):
         """Monitor llama.cpp process and exit if it dies or model unloads."""
         consecutive_failures = 0
         max_failures = 3  # Exit after 3 consecutive health check failures
+        last_gpu_reason = None
 
         while True:
             await asyncio.sleep(15)
+
+            # GPU query/identity failures withdraw readiness but do not trigger
+            # process exit: a persistent PCI fault would otherwise create an
+            # unbounded Docker restart loop. Child failure retains the bounded
+            # three-strike recreation behavior below.
+            if readiness.enabled:
+                gpu_snapshot = monitor.check()
+                if gpu_snapshot.state != "ready" and gpu_snapshot.reason != last_gpu_reason:
+                    logger.warning("GPU readiness unavailable: %s", gpu_snapshot.reason)
+                last_gpu_reason = None if gpu_snapshot.state == "ready" else gpu_snapshot.reason
 
             # Check if the process itself is dead
             if llama_process and llama_process.poll() is not None:
@@ -171,6 +191,7 @@ async def lifespan(app: FastAPI):
     yield
 
     watchdog_task.cancel()
+    monitor.stop()
 
     # Cleanup
     logger.info("Shutting down GPU server...")
