@@ -57,3 +57,14 @@ samples, attestation bodies, and unrestricted inspection output.
   112770 bytes on the corrected frame-count probe
 - Immediate pre-launch TTS model health: healthy
 - Temporary diagnostic container: removed
+
+## Production rerun launch — 2026-07-21
+
+- Worker: running under the isolated rerun identity
+- Image/runtime: exact pinned r3 image with NVIDIA runtime
+- Limits: 2 CPUs, 4 GiB memory, read-only root filesystem
+- Failed-attempt checkpoint digest after launch: unchanged
+- Persistent content-free watch: active at 60-second intervals
+- Initial watch state: worker running, checkpoint/result/artifact absent, TTS healthy
+- Safe reconnect command:
+  `ssh boss@192.168.0.144 /home/boss/local-ai/gpu-server/custom_voice/status_build_watch.sh bench-speaker-001-dima-v2-seed-137-rerun-1`

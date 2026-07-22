@@ -26,10 +26,10 @@
 
 ## 4. Launch and Durable Watch
 
-- [ ] 4.1 Launch exactly one detached rerun worker under the new identity with live-health/activity yielding, cancellation, and resource guardrails enabled.
-- [ ] 4.2 Verify the worker is running, using the expected pinned image and GPU, consuming bounded resources, and has not modified the failed attempt.
-- [ ] 4.3 Start a persistent restricted watch on Pea that records UTC time, worker state, checkpoint freshness, bounded CPU/memory activity, result/artifact presence, safe terminal reason, and TTS health.
-- [ ] 4.4 Document the safe reconnect/status command in the change or project operations memory so a fresh session can inspect the existing watch without launching a duplicate.
+- [x] 4.1 Launch exactly one detached rerun worker under the new identity with live-health/activity yielding, cancellation, and resource guardrails enabled.
+- [x] 4.2 Verify the worker is running, using the expected pinned image and GPU, consuming bounded resources, and has not modified the failed attempt.
+- [x] 4.3 Start a persistent restricted watch on Pea that records UTC time, worker state, checkpoint freshness, bounded CPU/memory activity, result/artifact presence, safe terminal reason, and TTS health.
+- [x] 4.4 Document the safe reconnect/status command in the change or project operations memory so a fresh session can inspect the existing watch without launching a duplicate.
 - [ ] 4.5 Track checkpoint freshness and TTS health through terminal completion while avoiding restarts based only on temporary low utilization.
 
 ## 5. Validate Construction Result
