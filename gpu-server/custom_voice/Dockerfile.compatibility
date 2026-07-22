@@ -1,0 +1,8 @@
+FROM ghcr.io/remsky/kokoro-fastapi-gpu:v0.6.0@sha256:560e5ba33e78597cf35d266a5591c3ce7558dce318b3019fb6d94e28b466080b
+
+COPY --chmod=0555 compatibility_runner.py /opt/custom-voice/compatibility_runner.py
+ENV COMPAT_RUNTIME_IMAGE="ghcr.io/remsky/kokoro-fastapi-gpu:v0.6.0@sha256:560e5ba33e78597cf35d266a5591c3ce7558dce318b3019fb6d94e28b466080b" \
+    HF_HUB_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1
+USER 65532:65532
+ENTRYPOINT ["python3", "/opt/custom-voice/compatibility_runner.py"]

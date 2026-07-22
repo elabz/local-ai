@@ -20,6 +20,7 @@ from metrics import (
     inference_duration_seconds,
     inference_requests_total,
 )
+from gpu_health import GPUUnavailable, is_cuda_device_error
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -38,6 +39,9 @@ async def health_check(request: Request):
     embedder = getattr(request.app.state, "embedder", None)
     if embedder is None or not embedder.loaded:
         raise HTTPException(status_code=503, detail="Model not ready: loading")
+    readiness = getattr(request.app.state, "gpu_readiness", None)
+    if readiness is not None and not readiness.ready:
+        raise HTTPException(status_code=503, detail={"code": "GPU_UNAVAILABLE", "reason": readiness.snapshot().reason})
     return {
         "status": "healthy",
         "server_id": settings.server_id,
@@ -45,6 +49,11 @@ async def health_check(request: Request):
         "precision": settings.precision,
         "dimension": embedder.dimension,
     }
+
+
+@router.get("/live")
+async def liveness():
+    return {"status": "live"}
 
 
 @router.get("/v1/models")
@@ -78,6 +87,12 @@ async def create_embeddings(request: Request, body: EmbeddingRequest):
     embedder = getattr(request.app.state, "embedder", None)
     if embedder is None or not embedder.loaded:
         raise HTTPException(status_code=503, detail="Model not ready")
+    readiness = getattr(request.app.state, "gpu_readiness", None)
+    try:
+        if readiness is not None:
+            readiness.require_ready()
+    except GPUUnavailable as error:
+        raise HTTPException(status_code=503, detail={"code": "GPU_UNAVAILABLE", "reason": error.reason}) from None
 
     inference_requests_total.labels(endpoint="embeddings", status="started").inc()
     active_requests_gauge.inc()
@@ -140,10 +155,15 @@ async def create_embeddings(request: Request, body: EmbeddingRequest):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as error:
+        if readiness is not None and is_cuda_device_error(error):
+            readiness.fail("gpu_execution_failed")
+            inference_requests_total.labels(endpoint="embeddings", status="error").inc()
+            logger.error("Embedding error: gpu_execution_failed")
+            raise HTTPException(status_code=503, detail={"code": "GPU_UNAVAILABLE", "reason": "gpu_execution_failed"}) from None
         inference_requests_total.labels(endpoint="embeddings", status="error").inc()
-        logger.error(f"Embedding error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Embedding error: internal_error")
+        raise HTTPException(status_code=500, detail={"code": "INTERNAL_ERROR"}) from None
     finally:
         active_requests_gauge.dec()
 

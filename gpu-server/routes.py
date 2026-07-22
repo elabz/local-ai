@@ -16,6 +16,7 @@ from metrics import (
     inference_tokens_total,
     active_requests_gauge,
 )
+from gpu_health import GPUUnavailable
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -73,6 +74,9 @@ async def health_check(request: Request):
     """Health check endpoint. Returns 503 unless llama.cpp reports status 'ok'."""
     try:
         llama_client = request.app.state.llama_client
+        readiness = getattr(request.app.state, "gpu_readiness", None)
+        if readiness is not None and not readiness.ready:
+            raise HTTPException(status_code=503, detail={"code": "GPU_UNAVAILABLE", "reason": readiness.snapshot().reason})
         health = await llama_client.health_check()
         llama_status = health.get("status")
 
@@ -97,6 +101,20 @@ async def health_check(request: Request):
         raise HTTPException(status_code=503, detail="Server unhealthy")
 
 
+@router.get("/live")
+async def liveness():
+    return {"status": "live"}
+
+
+def require_gpu_ready(request: Request) -> None:
+    readiness = getattr(request.app.state, "gpu_readiness", None)
+    try:
+        if readiness is not None:
+            readiness.require_ready()
+    except GPUUnavailable as error:
+        raise HTTPException(status_code=503, detail={"code": "GPU_UNAVAILABLE", "reason": error.reason}) from None
+
+
 @router.get("/v1/models")
 async def list_models():
     """List available models (OpenAI compatible)."""
@@ -116,6 +134,7 @@ async def list_models():
 @router.post("/v1/completions")
 async def create_completion(request: Request, body: CompletionRequest):
     """Create completion (OpenAI compatible)."""
+    require_gpu_ready(request)
     llama_client = request.app.state.llama_client
 
     inference_requests_total.labels(endpoint="completions", status="started").inc()
@@ -184,6 +203,7 @@ async def create_completion(request: Request, body: CompletionRequest):
 @router.post("/v1/chat/completions")
 async def create_chat_completion(request: Request, body: ChatCompletionRequest):
     """Create chat completion (OpenAI compatible)."""
+    require_gpu_ready(request)
     llama_client = request.app.state.llama_client
 
     inference_requests_total.labels(endpoint="chat", status="started").inc()
@@ -317,6 +337,7 @@ async def _stream_chat_completion(llama_client, messages: list, body: ChatComple
 @router.post("/tokenize")
 async def tokenize(request: Request, body: TokenizeRequest):
     """Tokenize text."""
+    require_gpu_ready(request)
     llama_client = request.app.state.llama_client
     result = await llama_client.tokenize(body.content)
     return result

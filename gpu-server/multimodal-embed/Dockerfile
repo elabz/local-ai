@@ -26,7 +26,8 @@ WORKDIR /app
 # Keeping torch in its own layer avoids the resolver downgrading it for
 # colpali-engine.
 RUN pip3 install --upgrade pip && \
-    pip3 install torch==2.4.1 --index-url https://download.pytorch.org/whl/cu121
+    pip3 install torch==2.4.1 torchvision==0.19.1 \
+        --index-url https://download.pytorch.org/whl/cu121
 
 COPY requirements.txt .
 RUN pip3 install -r requirements.txt

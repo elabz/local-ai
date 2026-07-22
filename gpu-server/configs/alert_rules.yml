@@ -95,6 +95,23 @@ groups:
           summary: "Model is offline on {{$labels.job}}"
           description: "GPU server {{$labels.job}} has no model loaded"
 
+      - alert: GPUReadinessLost
+        expr: gpu_readiness == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "GPU readiness lost on {{$labels.instance}}"
+          description: "The backend failed its bounded GPU readiness probe and must remain out of rotation."
+
+      - alert: GPUReadinessFlapping
+        expr: sum by (instance) (increase(gpu_readiness_transitions_total{state="unavailable"}[15m])) > 2
+        labels:
+          severity: critical
+        annotations:
+          summary: "GPU readiness repeatedly failed on {{$labels.instance}}"
+          description: "GPU readiness became unavailable more than twice in 15 minutes; inspect the physical PCI path before restarting."
+
       - alert: SpeechServiceDown
         expr: probe_success{job="speech-health"} == 0
         for: 1m
@@ -163,6 +180,58 @@ groups:
         annotations:
           summary: "{{$labels.operation}} speech error rate exceeds 5%"
           description: "At least ten requests occurred and the error ratio remained above 5% for 10 minutes."
+
+      - alert: CustomVoiceQueueBacklog
+        expr: custom_voice_queue_depth > 3
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Custom voice queue is backed up"
+          description: "More than three private build jobs have remained queued for 15 minutes."
+
+      - alert: CustomVoiceGPUReserveLow
+        expr: custom_voice_worker_gpu_free_mib < 1024
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Custom voice worker breached the speech GPU reserve"
+          description: "Pause the offline worker and verify live speech health."
+
+      - alert: CustomVoiceBuildStalled
+        expr: custom_voice_jobs{state="building"} > 0 and custom_voice_worker_phase_duration_seconds{phase="building"} > 21600
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Custom voice build exceeded its deadline"
+          description: "A private build has remained in the building phase beyond six hours."
+
+      - alert: CustomVoiceRegistryDrift
+        expr: increase(custom_voice_registry_drift_total[10m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "Custom voice registry drift detected"
+          description: "An active, missing, mismatched, or unexpected custom artifact was detected."
+
+      - alert: CustomVoiceActivationFailure
+        expr: increase(custom_voice_activation_failures_total[15m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "Custom voice activation failed closed"
+          description: "The prior active mapping should remain in service; inspect safe activation events."
+
+      - alert: CustomVoiceCleanupBacklog
+        expr: custom_voice_cleanup_backlog > 10
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Custom voice cleanup backlog is growing"
+          description: "More than ten verified-deletion requests remain queued."
       
       # Inference Latency Alert
       - alert: InferenceLatencyHigh

@@ -1,0 +1,45 @@
+model_list:
+  - model_name: gpu-routing-one-down
+    litellm_params:
+      model: openai/test-embed
+      api_base: http://gpu-test-healthy:8080/v1
+      api_key: test
+    model_info:
+      id: healthy-sibling
+      mode: embedding
+  - model_name: gpu-routing-one-down
+    litellm_params:
+      model: openai/test-embed
+      api_base: http://gpu-test-unavailable:8080/v1
+      api_key: test
+    model_info:
+      id: unavailable-replica
+      mode: embedding
+  - model_name: gpu-routing-all-down
+    litellm_params:
+      model: openai/test-embed
+      api_base: http://gpu-test-unavailable:8080/v1
+      api_key: test
+    model_info:
+      id: unavailable-a
+      mode: embedding
+  - model_name: gpu-routing-all-down
+    litellm_params:
+      model: openai/test-embed
+      api_base: http://gpu-test-unavailable-2:8080/v1
+      api_key: test
+    model_info:
+      id: unavailable-b
+      mode: embedding
+
+router_settings:
+  routing_strategy: least-busy
+  enable_health_check: true
+  allowed_fails: 1
+  cooldown_time: 10
+  num_retries: 1
+  timeout: 5
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  health_check_interval: 2

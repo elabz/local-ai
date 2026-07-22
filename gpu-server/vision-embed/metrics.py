@@ -75,6 +75,13 @@ gpu_temperature_celsius = Gauge(
     "GPU temperature in Celsius",
     ["gpu_id"],
 )
+gpu_readiness = Gauge("gpu_readiness", "Whether configured GPU readiness is ready (1=yes)")
+gpu_readiness_transitions_total = Counter("gpu_readiness_transitions_total", "GPU readiness transitions", ["state", "reason"])
+
+
+def record_gpu_readiness(state: str, reason: str) -> None:
+    gpu_readiness.set(1 if state == "ready" else 0)
+    gpu_readiness_transitions_total.labels(state=state, reason=reason).inc()
 
 
 class GPUMetricsCollector:
