@@ -30,22 +30,22 @@
 - [x] 4.2 Verify the worker is running, using the expected pinned image and GPU, consuming bounded resources, and has not modified the failed attempt.
 - [x] 4.3 Start a persistent restricted watch on Pea that records UTC time, worker state, checkpoint freshness, bounded CPU/memory activity, result/artifact presence, safe terminal reason, and TTS health.
 - [x] 4.4 Document the safe reconnect/status command in the change or project operations memory so a fresh session can inspect the existing watch without launching a duplicate.
-- [ ] 4.5 Track checkpoint freshness and TTS health through terminal completion while avoiding restarts based only on temporary low utilization.
+- [x] 4.5 Track checkpoint freshness and TTS health through terminal completion while avoiding restarts based only on temporary low utilization.
 
 ## 5. Validate Construction Result
 
-- [ ] 5.1 On worker exit, distinguish successful result production from timeout, cancellation, GPU failure, health failure, or other safe terminal reason.
-- [ ] 5.2 For success, validate `result.json` schema and its exact manifest, plan, seed, builder, image, model/runtime identities, 6,000 executed steps, finite metrics, duration, and artifact digest.
-- [ ] 5.3 Load the produced tensor through the restricted weights-only validation path and reject unsafe, malformed, empty, non-finite, or incompatible content.
-- [ ] 5.4 Preserve the completed construction evidence immutably before beginning postbuild qualification.
+- [x] 5.1 On worker exit, distinguish successful result production from timeout, cancellation, GPU failure, health failure, or other safe terminal reason.
+- [x] 5.2 For success, validate `result.json` schema and its exact manifest, plan, seed, builder, image, model/runtime identities, 6,000 executed steps, finite metrics, duration, and artifact digest.
+- [x] 5.3 Load the produced tensor through the restricted weights-only validation path and reject unsafe, malformed, empty, non-finite, or incompatible content.
+- [x] 5.4 Preserve the completed construction evidence immutably before beginning postbuild qualification.
 - [ ] 5.5 For failure, leave Dima v1 active, preserve rerun evidence, record the safe reason, and do not automatically begin another rerun.
 
 ## 6. Strict Postbuild Qualification
 
-- [ ] 6.1 Run the clean pinned Kokoro compatibility runner and require valid nontrivial synthesis output for every compatibility phrase.
-- [ ] 6.2 Evaluate only the four untouched held-out recordings with the existing WER policy and strict minimum mean speaker similarity `0.68`.
-- [ ] 6.3 Record per-sample content-free metrics and the aggregate `pass`, `review`, or `reject` decision without relaxing thresholds after observing results.
-- [ ] 6.4 Compare safe aggregate v2 evidence with v1's prior mean similarity of approximately `0.6417` while avoiding unsupported claims from construction fitness alone.
+- [x] 6.1 Run the clean pinned Kokoro compatibility runner and require valid nontrivial synthesis output for every compatibility phrase.
+- [x] 6.2 Evaluate only the four untouched held-out recordings with the existing WER policy and strict minimum mean speaker similarity `0.68`.
+- [x] 6.3 Record per-sample content-free metrics and the aggregate `pass`, `review`, or `reject` decision without relaxing thresholds after observing results.
+- [x] 6.4 Compare safe aggregate v2 evidence with v1's prior mean similarity of approximately `0.6417` while avoiding unsupported claims from construction fitness alone.
 - [ ] 6.5 If qualification passes, seal the immutable `custom-dima` v2 artifact and generate its exact manifest, protected preview, SPDX SBOM, and digest-bound evidence.
 
 ## 7. HeartCode Review and Activation
@@ -58,6 +58,6 @@
 
 ## 8. Closeout
 
-- [ ] 8.1 Stop the persistent watch after a recorded terminal outcome and retain only the restricted evidence required for audit and troubleshooting.
-- [ ] 8.2 Run focused runtime, custom-voice, and OpenSpec validation and reconcile every task with evidence.
-- [ ] 8.3 Record final status, artifact/evaluation identifiers, active version, and any follow-up work without including private samples, transcripts, paths, or credentials.
+- [x] 8.1 Stop the persistent watch after a recorded terminal outcome and retain only the restricted evidence required for audit and troubleshooting.
+- [x] 8.2 Run focused runtime, custom-voice, and OpenSpec validation and reconcile every task with evidence.
+- [x] 8.3 Record final status, artifact/evaluation identifiers, active version, and any follow-up work without including private samples, transcripts, paths, or credentials.

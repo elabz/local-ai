@@ -68,3 +68,31 @@ samples, attestation bodies, and unrestricted inspection output.
 - Initial watch state: worker running, checkpoint/result/artifact absent, TTS healthy
 - Safe reconnect command:
   `ssh boss@192.168.0.144 /home/boss/local-ai/gpu-server/custom_voice/status_build_watch.sh bench-speaker-001-dima-v2-seed-137-rerun-1`
+
+## Terminal construction and strict qualification — 2026-07-22
+
+- Worker terminal outcome: success with completed result and artifact
+- Executed steps: 6000
+- Duration: 18037.618 seconds
+- Result identities: schema, manifest, plan, seed, builder, worker image, and
+  Kokoro runtime matched the isolated rerun
+- Artifact SHA-256:
+  `a9137c462a58f6489462a3bee4328ef8c90c69436d51ffb7027976dea5209d81`
+- Restricted tensor validation: weights-only load passed; finite float32 tensor,
+  shape 510 x 1 x 256, 130560 elements
+- Immutable candidate: sealed as `custom-dima` v2 before qualification
+- Pinned Kokoro compatibility: pass; 2/2 phrases produced nontrivial 24 kHz audio
+- Held-out evaluation: exactly 4 samples; all reported metrics finite
+- Evaluation report SHA-256:
+  `2d331d1dfe9bf2b0ff0f2974899895deedba0f1d38eaafbbcbe8ef7805386e6c`
+- Mean word error rate: 0.0190518387 (maximum 0.20; pass)
+- Mean speaker similarity: 0.6179251820 (minimum 0.68; reject)
+- Prior v1 comparison: v2 is below v1's prior approximately 0.6417 mean
+  similarity; construction fitness was not treated as release evidence
+- Release decision: reject; no SBOM, admin approval, staging, or activation was
+  attempted
+- Active runtime after rejection: `custom-dima` v1 remains active;
+  `cv_custom_dima` is discovered and authenticated stable-ID synthesis returned
+  HTTP 200 with nontrivial RIFF audio
+- Persistent build watch/notifier: stopped after terminal completion; restricted
+  Slack terminal marker retained
