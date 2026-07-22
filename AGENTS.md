@@ -36,3 +36,12 @@
 - Record development clips with exact transcripts and consistent room, microphone placement, gain, pace, and emotional register. Require clean 5–35 second mono speech with no clipping or long silence.
 - Use more than one speaker representation when redesigning similarity scoring. Resemblyzer is useful verification evidence, not a complete proxy for human-perceived identity; retain human listening as a finalist-selection step.
 - A post-Kokoro voice-conversion system may improve cloning while retaining Kokoro for text generation, but it adds another inference model and is not a pure Kokoro voice pack. Treat that as an architecture change, not a builder tweak.
+
+## Production build and review lessons
+
+- Production custom-voice builds run on Pea and must not depend on HeartCode's `docker-compose.dev.yml`. Use an isolated, resource-bounded worker and leave the existing speech runtime and active voice untouched during construction and qualification.
+- A completed worker is not an activated voice. Require immutable result/artifact validation, compatibility synthesis, strict untouched-held-out qualification, SBOM and attestation gates before activation.
+- Preserve the prior active version when a candidate is rejected or placed in private review. A newer review version does not replace the currently published version; admin views must expose version history clearly enough to distinguish them.
+- New or rejected voices may be made available for authenticated admin audio evaluation without public catalog publication. Keep preview/review authorization separate from Quick Chat/public availability.
+- Terminal Slack notification is useful for long Pea builds, but it must report only safe terminal state and must not expose credentials, private paths, transcripts, attestations, or artifact contents.
+- HeartCode frontend service workers must skip non-HTTP(S) requests such as `chrome-extension:` before calling Cache APIs. In Vite development, stale service-worker or optimized-dependency chunk references can produce hashed-chunk 404s; clear old workers/caches and verify all served dependency assets after frontend changes.
