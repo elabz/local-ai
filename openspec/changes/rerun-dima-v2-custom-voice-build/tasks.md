@@ -8,19 +8,19 @@
 
 ## 2. Prepare Isolated Rerun
 
-- [ ] 2.1 Create job identity `bench-speaker-001-dima-v2-seed-137-rerun-1` with distinct workspace, result, launch-log, lock, container, and idempotency identities.
-- [ ] 2.2 Verify the rerun destinations do not already exist; fail closed rather than deleting or overwriting unexpected state.
-- [ ] 2.3 Recreate the digest-bound build plan with seed 137, `adapt-002` through `adapt-006`, explicit `adapt-001` exclusion, population 10, three fitness texts, checkpoint interval 100, 6,000 steps, and `max_duration_seconds=36000`.
-- [ ] 2.4 Verify the four held-out samples remain declared only for postbuild evaluation and are absent from all construction references.
-- [ ] 2.5 Validate exact manifest, input, transcript-sidecar, plan, builder revision, Kokoro runtime/model/config, and worker-image digests without printing private content.
-- [ ] 2.6 Set restrictive ownership and permissions on the new private workspace and result locations.
+- [x] 2.1 Create job identity `bench-speaker-001-dima-v2-seed-137-rerun-1` with distinct workspace, result, launch-log, lock, container, and idempotency identities.
+- [x] 2.2 Verify the rerun destinations do not already exist; fail closed rather than deleting or overwriting unexpected state.
+- [x] 2.3 Recreate the digest-bound build plan with seed 137, `adapt-002` through `adapt-006`, explicit `adapt-001` exclusion, population 10, three fitness texts, checkpoint interval 100, 6,000 steps, and `max_duration_seconds=36000`.
+- [x] 2.4 Verify the four held-out samples remain declared only for postbuild evaluation and are absent from all construction references.
+- [x] 2.5 Validate exact manifest, input, transcript-sidecar, plan, builder revision, Kokoro runtime/model/config, and worker-image digests without printing private content.
+- [x] 2.6 Set restrictive ownership and permissions on the new private workspace and result locations.
 
 ## 3. Named Worker Preflight
 
-- [ ] 3.1 Confirm adequate host disk space, no conflicting custom-voice worker, and no active build lock.
-- [ ] 3.2 Confirm the pinned `local-ai-custom-voice-worker:dima-v2-r3` image and recorded image digest are available; do not substitute an unpinned image.
-- [ ] 3.3 Confirm local pinned Kokoro configuration and model weights load without network access.
-- [ ] 3.4 Verify the intended NVIDIA GPU is healthy, the worker receives the NVIDIA runtime/device, and admission plus runtime free-VRAM reserves pass.
+- [x] 3.1 Confirm adequate host disk space, no conflicting custom-voice worker, and no active build lock.
+- [x] 3.2 Confirm the pinned `local-ai-custom-voice-worker:dima-v2-r3` image and recorded image digest are available; do not substitute an unpinned image.
+- [x] 3.3 Confirm local pinned Kokoro configuration and model weights load without network access.
+- [x] 3.4 Verify the intended NVIDIA GPU is healthy, the worker receives the NVIDIA runtime/device, and admission plus runtime free-VRAM reserves pass.
 - [ ] 3.5 Run a named short synthesis/embedding preflight using authorized build data and report only success, duration, frame count, resource bounds, and safe error codes.
 - [ ] 3.6 Recheck TTS model health immediately before launch and stop if the production guardrail is not satisfied.
 

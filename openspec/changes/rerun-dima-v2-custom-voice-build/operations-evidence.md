@@ -21,3 +21,34 @@ samples, attestation bodies, and unrestricted inspection output.
 - HeartCode control-plane evidence: prior dynamic catalog check recorded
   `custom-dima` available; no local development compose dependency is used for
   this production Pea build
+
+## Isolated rerun preparation — 2026-07-21
+
+- Job/idempotency identity: `bench-speaker-001-dima-v2-seed-137-rerun-1`
+- Rerun destinations: clear before creation; no prior state deleted
+- Workspace/result modes: restrictive (`0700` directories, `0600` files)
+- Plan SHA-256: `b7c915822512df594306a18b1abc4ff4eb710fc0a14420e6b195d88e2fad89b7`
+- Construction IDs: `adapt-002` through `adapt-006`; `adapt-001` excluded
+- Held-out samples: 4 declared; construction overlap 0
+- Seed/population/fitness/checkpoint/steps/deadline: 137 / 10 / 3 / 100 / 6000 / 36000 seconds
+- Manifest digest: matched
+- Normalized input digests: 10/10 matched
+- Transcript-sidecar digests: 10/10 matched
+- Builder revision: `3a38c6030cc4657df073c67ded37cdf7627c4969`
+- Worker image ID: `sha256:d7c2c29f74558929642fcf6751cf82357439feecf812c45ab6679b5969113e7b`
+- Kokoro runtime digest: `560e5ba33e78597cf35d266a5591c3ce7558dce318b3019fb6d94e28b466080b`
+- Kokoro config SHA-256: `5abb01e2403b072bf03d04fde160443e209d7a0dad49a423be15196b9b43c17f`
+- Kokoro model SHA-256: `496dba118d1a58f5f3db2efc88dbdc216e0483fc89fe6e47ee1f2c53f18ad1e4`
+
+## Named preflight — 2026-07-21
+
+- Host disk free: 35.5 GiB
+- Active custom-voice workers: 0
+- Shared build lock: available
+- Offline Kokoro config/weights load: pass
+- Intended worker-visible GPUs: 1
+- Admission free VRAM: 6810 MiB (5000 MiB required)
+- Runtime reserve: pass (1024 MiB required)
+- Synthesis/embedding preflight: blocked; the pinned worker can read the
+  restrictive workspace, but the authorized audio preprocessing/embedding
+  subprocess terminates without a safe result. No rerun worker was launched.
