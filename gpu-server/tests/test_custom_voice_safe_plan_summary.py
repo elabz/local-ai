@@ -24,7 +24,7 @@ def test_summary_is_content_free_and_allow_listed(tmp_path):
 
     assert result["plan_sha256"] == hashlib.sha256(raw).hexdigest()
     assert result["fields"]["job_id"] == "job-1"
-    assert result["construction_ids"] == ["adapt-002"]
+    assert result["construction_reference_ids"] == ["adapt-002"]
     assert result["heldout_reference_count"] == 0
     assert "transcript" not in str(result)
     assert "private.wav" not in str(result)
