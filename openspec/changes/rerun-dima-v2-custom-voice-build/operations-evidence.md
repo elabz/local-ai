@@ -49,6 +49,11 @@ samples, attestation bodies, and unrestricted inspection output.
 - Intended worker-visible GPUs: 1
 - Admission free VRAM: 6810 MiB (5000 MiB required)
 - Runtime reserve: pass (1024 MiB required)
-- Synthesis/embedding preflight: blocked; the pinned worker can read the
-  restrictive workspace, but the authorized audio preprocessing/embedding
-  subprocess terminates without a safe result. No rerun worker was launched.
+- Initial preflight diagnosis: client-side wait expired while preprocessing;
+  Docker and kernel evidence showed no worker OOM or worker error
+- Authorized embedding: pass; 276000 frames, 256 dimensions, 36.996 seconds,
+  773.6 MiB peak RSS
+- Authenticated synthesis: pass; HTTP 200, RIFF, 56346 decoded frames,
+  112770 bytes on the corrected frame-count probe
+- Immediate pre-launch TTS model health: healthy
+- Temporary diagnostic container: removed

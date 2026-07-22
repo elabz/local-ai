@@ -21,8 +21,8 @@
 - [x] 3.2 Confirm the pinned `local-ai-custom-voice-worker:dima-v2-r3` image and recorded image digest are available; do not substitute an unpinned image.
 - [x] 3.3 Confirm local pinned Kokoro configuration and model weights load without network access.
 - [x] 3.4 Verify the intended NVIDIA GPU is healthy, the worker receives the NVIDIA runtime/device, and admission plus runtime free-VRAM reserves pass.
-- [ ] 3.5 Run a named short synthesis/embedding preflight using authorized build data and report only success, duration, frame count, resource bounds, and safe error codes.
-- [ ] 3.6 Recheck TTS model health immediately before launch and stop if the production guardrail is not satisfied.
+- [x] 3.5 Run a named short synthesis/embedding preflight using authorized build data and report only success, duration, frame count, resource bounds, and safe error codes.
+- [x] 3.6 Recheck TTS model health immediately before launch and stop if the production guardrail is not satisfied.
 
 ## 4. Launch and Durable Watch
 
