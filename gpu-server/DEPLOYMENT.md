@@ -660,7 +660,7 @@ sudo cp nvidia-power-limit.service /etc/systemd/system/
 sudo nano /etc/systemd/system/nvidia-power-limit.service
 
 # Edit to set power limit for each GPU
-# Example: -pl 90 -i 0 (90W limit for GPU 0)
+# Example: -pl 120 -i 0 (120W limit for GPU 0)
 
 sudo systemctl enable --now nvidia-power-limit.service
 sudo systemctl status nvidia-power-limit.service

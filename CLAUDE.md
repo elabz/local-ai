@@ -142,7 +142,7 @@ Embed tier is **2 of each type**, co-located one-per-chat-GPU (`rebalance-embed-
 - KV cache: `q8_0` quantization for both keys and values
 - `EXTRA_ARGS: "--jinja"` — enables Jinja chat templates for Llama 3.1 models
 - `CACHE_REUSE=256` — prompt caching for faster TTFT
-- Power limit: 90W per GPU (`nvidia-power-limit.service`)
+- Power limit: 120W per GPU (`nvidia-power-limit.service`)
 
 ### Vision Embedding Server (`gpu-server/vision-embed/`)
 - PyTorch + `transformers` (`trust_remote_code`) FastAPI service loading the nomic v1.5 pair — NOT llama.cpp

@@ -161,7 +161,7 @@ curl -X POST http://localhost:4000/key/delete \
 - **CPU**: Intel Celeron 3865U (2-core, no AVX)
 - **RAM**: 32GB DDR4
 - **GPUs**: 8x NVIDIA P104-100 (8GB VRAM, Pascal, compute 6.1)
-- **Power**: 90W limit per GPU via `nvidia-power-limit.service`
+- **Power**: 120W limit per GPU via `nvidia-power-limit.service`
 
 ### Prod (192.168.0.152) - Proxy Server
 - Runs LiteLLM proxy, PostgreSQL, monitoring stack

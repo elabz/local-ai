@@ -34,7 +34,7 @@ non-zero exit indicates missing UUID or inventory mismatch.
 | RAM | 32GB DDR4 |
 | GPUs | 8x NVIDIA P104-100 (8GB VRAM, GP104, Pascal, compute 6.1) |
 | OS | Ubuntu 22.04 LTS |
-| Power | 90W limit per GPU |
+| Power | 120W limit per GPU |
 
 ## Step 1: OS and Driver Setup
 
@@ -100,7 +100,7 @@ After=nvidia-persistenced.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/nvidia-smi -pl 90
+ExecStart=/usr/bin/nvidia-smi -pl 120
 RemainAfterExit=yes
 
 [Install]
