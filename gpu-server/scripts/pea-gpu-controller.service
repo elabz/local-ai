@@ -1,18 +1,26 @@
+# Durable GPU recovery / quarantine controller for PEA (gpu_failure_controller.py).
+# Replaces the boss @reboot crontab launcher: systemd supervises it, restarts it
+# on failure, and journald keeps the logs. Install with install-pea-gpu-controller.sh.
 [Unit]
 Description=Pea durable GPU recovery and quarantine controller
-Documentation=https://github.com/heartcode
+Documentation=https://github.com/elabz/local-ai
 After=docker.service nvidia-persistenced.service
 Requires=docker.service
 PartOf=docker.service
+# Never stop retrying: a recovery daemon that gives up is worse than one that loops.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
 ExecStart=/usr/bin/python3 /home/boss/local-ai/gpu-server/scripts/gpu_failure_controller.py
 EnvironmentFile=-/home/boss/local-ai/gpu-server/.gpu-watchdog.env
-Restart=always
+Restart=on-failure
 RestartSec=10
 Environment="GPU_CONTROLLER_POLL_SECONDS=60"
 Environment="GPU_RECOVERY_SETTLE_SECONDS=20"
+# Block the first cycle until the driver reports the full GPU set — prevents the
+# cold-boot race that marked every card gpu_absent (see gpu_failure_controller.py).
+Environment="GPU_DRIVER_WAIT_SECONDS=180"
 
 # Logging
 StandardOutput=journal

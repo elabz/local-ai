@@ -666,6 +666,21 @@ sudo systemctl enable --now nvidia-power-limit.service
 sudo systemctl status nvidia-power-limit.service
 ```
 
+## GPU Recovery Controller (systemd)
+
+`gpu_failure_controller.py` (durable GPU recovery + port quarantine) runs as the
+supervised `pea-gpu-controller.service` — `Restart=on-failure`, journald logs,
+state in `/var/lib/pea-gpu-controller`. It replaces the older boss `@reboot`
+crontab launcher (which raced the NVIDIA driver at boot). Install / re-install:
+
+```bash
+cd gpu-server/scripts
+sudo ./install-pea-gpu-controller.sh   # stops cron launcher, migrates state, enables the unit
+systemctl status pea-gpu-controller.service
+journalctl -u pea-gpu-controller -f    # a healthy start logs "GPU driver ready: N/N" then goes quiet
+```
+
+
 Check power limits:
 ```bash
 nvidia-smi -q -d POWER
