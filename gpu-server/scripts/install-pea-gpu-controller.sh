@@ -31,7 +31,10 @@ pkill -f 'gpu_failure_controller.py' 2>/dev/null && sleep 2 || echo "   none run
 
 echo "2. Removing the @reboot crontab launcher for ${CRON_USER} ..."
 if crontab -u "$CRON_USER" -l 2>/dev/null | grep -q 'gpu_failure_controller'; then
-    crontab -u "$CRON_USER" -l 2>/dev/null | grep -v 'gpu_failure_controller' | crontab -u "$CRON_USER" -
+    # grep -v returns 1 when it filters out every line (the launcher was the only
+    # entry); capture with `|| true` so set -e/pipefail doesn't abort the install.
+    remaining="$(crontab -u "$CRON_USER" -l 2>/dev/null | grep -v 'gpu_failure_controller' || true)"
+    printf '%s\n' "$remaining" | crontab -u "$CRON_USER" -
     echo "   removed"
 else
     echo "   none found"
