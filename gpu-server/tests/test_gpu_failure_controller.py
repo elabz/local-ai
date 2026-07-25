@@ -139,3 +139,57 @@ def test_command_timeout_is_bounded_and_does_not_crash_controller(tmp_path):
     ctl = controller(tmp_path, runner)
     result = ctl.command(["docker", "inspect", "missing"], timeout=1)
     assert result.returncode == 124
+
+
+def test_empty_discovery_skips_cycle_without_touching_services(tmp_path):
+    # nvidia-smi not ready (cold boot): discovery returns nothing. The controller
+    # must NOT tear down / quarantine every slot — that is what half-killed the
+    # stack at boot and stuck at attempts>=MAX.
+    commands, quarantine = [], FakeQuarantine()
+    def runner(args, **kw):
+        commands.append(args)
+        return completed(args, 1) if args[0] == "nvidia-smi" else completed(args)
+    ctl = controller(tmp_path, runner, quarantine)
+    assert ctl.cycle() == {}
+    assert not any(command[:2] == ["docker", "compose"] for command in commands)
+    assert quarantine.started == []
+    assert ctl.recovery["slots"] == {}
+
+
+def test_wait_for_driver_returns_once_expected_gpus_are_visible(tmp_path):
+    # Driver comes up on the 3rd probe; wait_for_driver blocks until the full
+    # expected GPU set is visible, then returns so the first cycle sees them.
+    calls = {"n": 0}
+    def runner(args, **kw):
+        if args[0] == "nvidia-smi":
+            calls["n"] += 1
+            if calls["n"] < 3:
+                return completed(args, 1)  # driver not ready
+            return completed(args, stdout="GPU-old, 00000000:04:00.0\n")
+        return completed(args)
+    ctl = controller(tmp_path, runner)
+    ctl.wait_for_driver()
+    assert calls["n"] >= 3
+
+
+def test_wait_for_driver_times_out_when_gpus_never_appear(tmp_path, monkeypatch):
+    monkeypatch.setenv("GPU_DRIVER_WAIT_SECONDS", "0")
+    ctl = controller(tmp_path, lambda args, **kw: completed(args, 1))
+    ctl.wait_for_driver()  # must return, not hang, when the deadline passes
+
+
+def test_quarantine_bind_conflict_does_not_crash(tmp_path):
+    # A port already held (e.g. by the healthy real container) must not crash the
+    # controller when it tries to quarantine — one bad bind is logged and skipped.
+    port = free_ports(1)[0]
+    blocker = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    blocker.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    blocker.bind(("127.0.0.1", port))
+    blocker.listen(1)
+    quarantine = gpu.Quarantine(host="127.0.0.1")
+    try:
+        quarantine.start([port])  # must not raise
+        assert port not in quarantine.servers
+    finally:
+        quarantine.stop()
+        blocker.close()

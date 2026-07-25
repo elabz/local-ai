@@ -76,7 +76,15 @@ class Quarantine:
         for port in ports:
             if int(port) in self.servers:
                 continue
-            server = ThreadingHTTPServer((self.host, int(port)), Quiet503)
+            try:
+                server = ThreadingHTTPServer((self.host, int(port)), Quiet503)
+            except OSError as exc:
+                # The port is already bound — normally by the real service
+                # container that is actually healthy. Never let one quarantine
+                # bind failure crash the whole controller (that left the boot
+                # rollout half-done). Log and move on.
+                LOG.warning("Quarantine bind skipped on port %s: %s", port, exc)
+                continue
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
             self.servers[int(port)] = server
@@ -228,8 +236,35 @@ class Controller:
         atomic_json(self.recovery_path, self.recovery)
         return False
 
+    def wait_for_driver(self):
+        """Block until nvidia-smi reports the full expected GPU set, or a bounded
+        timeout elapses. Prevents the first cold-boot cycle from running before
+        the driver is ready and falsely quarantining every slot as gpu_absent."""
+        expected = len(self.inventory.get("slots", {}))
+        if not expected:
+            return
+        deadline = time.time() + float(os.getenv("GPU_DRIVER_WAIT_SECONDS", "180"))
+        while True:
+            found = len(self.discover())
+            if found >= expected:
+                LOG.info("GPU driver ready: %d/%d GPUs visible", found, expected)
+                return
+            if time.time() >= deadline:
+                LOG.warning("Driver wait timed out: %d/%d GPUs visible", found, expected)
+                return
+            LOG.info("Waiting for GPU driver: %d/%d visible", found, expected)
+            self.sleep(float(os.getenv("GPU_DRIVER_POLL_SECONDS", "5")))
+
     def cycle(self, force=False):
         discovered = self.discover()
+        if not discovered:
+            # nvidia-smi returned nothing: the driver is not ready (cold boot) or
+            # the probe transiently failed — never a simultaneous per-slot
+            # hardware failure. Treating every slot as absent here is what tore
+            # down and quarantined the whole stack at boot, then stuck at
+            # attempts>=MAX. Skip the cycle and let a later poll reconcile.
+            LOG.warning("No GPUs discovered; skipping cycle (driver not ready?)")
+            return {}
         self.reconcile_replacements(discovered)
         results = {}
         for pci, slot in self.inventory["slots"].items():
@@ -262,6 +297,7 @@ def main():
     stopping = threading.Event()
     for sig in (signal.SIGTERM, signal.SIGINT):
         signal.signal(sig, lambda *_: stopping.set())
+    controller.wait_for_driver()
     while True:
         controller.cycle(force=args.force)
         if args.once or stopping.wait(float(os.getenv("GPU_CONTROLLER_POLL_SECONDS", "60"))):
