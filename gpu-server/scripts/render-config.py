@@ -21,7 +21,13 @@ from pathlib import Path
 
 import yaml
 
-KINDS = {"chat", "text-embed", "vision-embed", "visual-embed", "image", "stt", "tts"}
+# "hosted" is a routed third-party model (e.g. Gemini through its provider API):
+# no GPU, no deployments, no local weight to download. It exists so the manuals
+# pilot's VLM/metadata arms reach Gemini through the same proxy, keys and
+# Langfuse tracing as everything else, rather than calling the vendor directly.
+KINDS = {
+    "chat", "text-embed", "vision-embed", "visual-embed", "image", "stt", "tts", "hosted",
+}
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "gpu-server" / "models.yaml"
@@ -61,20 +67,31 @@ def validate(manifest: dict) -> None:
         seen_names.add(name)
 
         deployments = m.get("deployments") or []
-        if not deployments:
-            errors.append(f"{name}: no deployments")
-        for d in deployments:
-            gpu, port = d.get("gpu"), d.get("port")
-            if not isinstance(gpu, int) or not (1 <= gpu <= 8):
-                errors.append(f"{name}: gpu {gpu!r} out of range 1-8")
-            if not isinstance(port, int):
-                errors.append(f"{name}: port {port!r} is not an int")
-            elif port in seen_ports:
-                errors.append(
-                    f"{name}: port {port} collides with {seen_ports[port]}"
-                )
-            else:
-                seen_ports[port] = name
+        if kind == "hosted":
+            # No local hardware: it routes to a provider, so it declares the
+            # provider model string and the env var holding the key instead of
+            # gpu/port deployments.
+            if deployments:
+                errors.append(f"{name}: hosted model must not declare deployments")
+            if not m.get("litellm_model"):
+                errors.append(f"{name}: hosted model missing litellm_model (provider/model)")
+            if not m.get("api_key_env"):
+                errors.append(f"{name}: hosted model missing api_key_env")
+        else:
+            if not deployments:
+                errors.append(f"{name}: no deployments")
+            for d in deployments:
+                gpu, port = d.get("gpu"), d.get("port")
+                if not isinstance(gpu, int) or not (1 <= gpu <= 8):
+                    errors.append(f"{name}: gpu {gpu!r} out of range 1-8")
+                if not isinstance(port, int):
+                    errors.append(f"{name}: port {port!r} is not an int")
+                elif port in seen_ports:
+                    errors.append(
+                        f"{name}: port {port} collides with {seen_ports[port]}"
+                    )
+                else:
+                    seen_ports[port] = name
 
         src = m.get("source") or {}
         if kind == "chat":
@@ -101,20 +118,37 @@ def render_litellm(manifest: dict) -> str:
     rate_limits = []
     aliases: dict[str, str] = {}
     for m in manifest["models"]:
-        for i, d in enumerate(m["deployments"]):
+        if m["kind"] == "hosted":
+            # Provider passthrough: litellm_model is the full `provider/model`
+            # string and the key comes from the environment, so there is no
+            # api_base or sk-local. One entry, no load-balanced replicas.
             params = {
-                "model": f"openai/{m['litellm_model']}",
-                "api_base": f"http://{host}:{d['port']}/v1",
-                "api_key": "sk-local",
+                "model": m["litellm_model"],
+                "api_key": f"os.environ/{m['api_key_env']}",
             }
             params.update(m.get("params") or {})
             model_list.append(
                 {
                     "model_name": m["api_name"],
                     "litellm_params": params,
-                    "model_info": {"id": _dep_id(m, i, d), "mode": m["mode"]},
+                    "model_info": {"id": f"{m['api_name']}-hosted", "mode": m["mode"]},
                 }
             )
+        else:
+            for i, d in enumerate(m["deployments"]):
+                params = {
+                    "model": f"openai/{m['litellm_model']}",
+                    "api_base": f"http://{host}:{d['port']}/v1",
+                    "api_key": "sk-local",
+                }
+                params.update(m.get("params") or {})
+                model_list.append(
+                    {
+                        "model_name": m["api_name"],
+                        "litellm_params": params,
+                        "model_info": {"id": _dep_id(m, i, d), "mode": m["mode"]},
+                    }
+                )
         if m.get("rate_limit"):
             rate_limits.append({"model_name": m["api_name"], **m["rate_limit"]})
         for alias in m.get("aliases") or []:

@@ -1,0 +1,68 @@
+# Manuals-parser — CPU-only image for the pilot run on Elm.
+#
+# Elm is the chosen run location (design decision 2): i5-13600KF, 14C/20T, no
+# usable GPU and no NVIDIA driver loaded. The CUDA image (./Dockerfile) carries
+# several GB of cu121 runtime that Elm would never touch and whose root disk (86%
+# full) cannot spare, so this variant builds on a slim base with CPU torch wheels
+# instead. Same pinned engines and the same convert.py; only the compute backend
+# differs.
+#
+# When the deferred GPU card is fitted (task 1.7), build ./Dockerfile instead and
+# run with `--device cuda` — convert.py forces FP32 and switches OCR to the
+# RapidOCR torch backend on that path.
+#
+# Batch container, not a server: no ports, no healthcheck, no metrics endpoint.
+
+FROM python:3.11-slim-bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1
+
+# poppler-utils + tesseract back the OCR path on scanned documents;
+# libgl1/libglib2.0-0 are the usual OpenCV runtime deps pulled in by the
+# layout models.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    poppler-utils \
+    tesseract-ocr tesseract-ocr-eng tesseract-ocr-deu tesseract-ocr-fra \
+    tesseract-ocr-spa tesseract-ocr-ita \
+    tesseract-ocr-jpn tesseract-ocr-jpn-vert \
+    libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# CPU torch wheels — same versions as the CUDA image, from the CPU index so no
+# cu121 runtime is pulled in. torchvision is required by the layout models.
+RUN pip3 install --upgrade pip && \
+    pip3 install torch==2.4.1 torchvision==0.19.1 \
+        --index-url https://download.pytorch.org/whl/cpu
+
+COPY requirements.txt .
+RUN pip3 install -r requirements.txt
+
+COPY . .
+
+# Model weights (layout/OCR/table models) are cached into a mounted volume so
+# repeat batch runs do not re-download them.
+#
+# DOCLING_ARTIFACTS_PATH is deliberately NOT set — see the note in ./Dockerfile.
+# Docling treats it as "models already present", so an empty volume aborts every
+# conversion before the first download (found in pilot task 1.4).
+RUN mkdir -p /models
+ENV HF_HOME=/models \
+    HF_HUB_CACHE=/models \
+    PADDLE_PDX_MODEL_SOURCE=huggingface \
+    PADDLE_PDX_CACHE_HOME=/models/paddle
+
+# The VLM arms call Google's Gemini API directly (product decision 2026-08-03 —
+# see convert.py `_call_gemini`). Supply the key at run time; none is baked into
+# the image.
+ENV GEMINI_API_KEY="" \
+    GEMINI_VLM_MODEL=gemini-3-flash-preview
+
+# Corpus in, results out — both bind-mounted at run time.
+VOLUME ["/corpus", "/out", "/models"]
+
+ENTRYPOINT ["python3", "convert.py"]
+CMD ["--help"]

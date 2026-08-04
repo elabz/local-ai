@@ -51,6 +51,10 @@ services:
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
       - LANGFUSE_HOST=${LANGFUSE_HOST:-}
+      # Shared prepaid Gemini key backing the gemini-3-flash-preview route
+      # (content-manuals-pilot VLM + metadata arms). Absent = that route 401s;
+      # the local GPU models are unaffected.
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     depends_on:
       litellm-postgres:

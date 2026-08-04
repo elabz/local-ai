@@ -1,0 +1,51 @@
+# Manuals-parser batch environment — PDF → structured Markdown/HTML + figures.
+# torch + torchvision are installed in the Dockerfile (CUDA cu121, sm_61) so the
+# engines below resolve against the Pascal-compatible build rather than pulling
+# a default CPU/newer-CUDA wheel.
+#
+# Batch-only component: no FastAPI/uvicorn/prometheus surface, unlike the
+# serving components in gpu-server/.
+#
+# Every engine here is licence-clean in BOTH code and model weights — see
+# README § Licensing. That constraint is why MinerU, Marker and Surya are
+# absent despite scoring well on document-conversion benchmarks.
+
+# --- Conversion engines -----------------------------------------------------
+# Docling — MIT code (IBM), CDLA-Permissive-2.0 + Apache-2.0 weights.
+# Primary engine, run over the whole corpus.
+docling==2.114.0
+
+# PaddleOCR PP-StructureV3 — Apache-2.0 code and weights. Runs the scanned
+# subset; strongest table extraction in the permissive tier, which is what the
+# parts-list rubric dimension turns on.
+paddleocr==3.2.0
+paddlepaddle==3.0.0
+# PP-StructureV3 is a paddlex *pipeline*, and installing paddleocr does not
+# install what that pipeline needs: constructing PPStructureV3 raises
+# `DependencyError: PP-StructureV3 requires additional dependencies`. The pin is
+# on paddlex itself because paddleocr 3.2.0 resolves paddlex 3.2.1, and the
+# extra must be requested against that exact version or pip resolves a different
+# paddlex underneath paddleocr. (Found in pilot task 3.1, first live run of the
+# arm.)
+paddlex[ocr]==3.2.1
+
+# --- VLM arm (routed through our own LiteLLM proxy) -------------------------
+pypdfium2>=4.30.0          # Apache-2.0/BSD page rendering → PNG
+httpx>=0.27.0              # LiteLLM chat/completions calls
+
+# --- Triage / metrics -------------------------------------------------------
+pypdf>=5.1.0               # page counts + born-digital vs scanned triage
+pdfplumber>=0.11.4         # text-layer probing for the triage heuristic
+
+# --- Shared -----------------------------------------------------------------
+pillow>=10.2.0             # page-render encoding, figure dimension checks
+orjson>=3.9.15             # CVE-2024-27454; metrics serialisation
+
+# transformers is a transitive dep of docling-ibm-models, whose specifier
+# (>=4.42,<6.0) lets the resolver take 5.x. It must not: transformers 5.x
+# imports `DTensor` from `torch.distributed.tensor` at module import time, and
+# torch 2.4.1 does not export that name — every conversion died with an
+# ImportError before a single page was parsed (found in pilot task 1.4, first
+# live build). torch is pinned at 2.4.1 because that is the Pascal sm_61 build
+# proven in gpu-server/dino-embed, so transformers is what gives way.
+transformers>=4.42,<5      # 4.57.6 verified against torch 2.4.1 on 2026-08-03

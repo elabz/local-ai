@@ -147,6 +147,20 @@ models:
     deployments:
       - {gpu: 7, port: 8201}
 
+  # --- Hosted: Gemini Flash 3 (no local GPU) ----------------------------------
+  # Routed through the proxy for the content-manuals-pilot: the VLM conversion
+  # arm and the image-metadata arm both need a multimodal model, and PEA has
+  # none yet (its "vision" containers are embedding servers). Keying it here
+  # keeps one proxy seam, Postgres-managed keys and Langfuse tracing rather than
+  # calling the vendor directly. Shared prepaid Gemini key supplied at runtime as
+  # GEMINI_API_KEY (litellm docker-compose passes it through). Pinned to
+  # gemini-3-flash-preview.
+  - api_name: gemini-3-flash-preview
+    kind: hosted
+    mode: chat
+    litellm_model: gemini/gemini-3-flash-preview
+    api_key_env: GEMINI_API_KEY
+
 # Hand-maintained LiteLLM router/general/litellm settings live in
 # litellm/config.base.yaml; the generator merges the model_list + model_rate_limits
 # + model_group_alias derived from the models above into it.
