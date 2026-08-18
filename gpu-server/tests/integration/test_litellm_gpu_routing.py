@@ -45,3 +45,15 @@ def test_all_unavailable_returns_service_unavailable():
         json={"model": "gpu-routing-all-down", "input": "bounded integration probe"},
     )
     assert response.status_code == 503
+
+
+def test_router_policy_is_bounded_and_has_startup_cooldown():
+    """The disposable stack uses one alternate attempt and P104 startup margin."""
+    from pathlib import Path
+    import yaml
+
+    config = yaml.safe_load((Path(__file__).with_name("litellm_gpu_routing.yaml")).read_text())
+    router = config["router_settings"]
+    assert router["allowed_fails"] == 1
+    assert router["num_retries"] == 1
+    assert router["cooldown_time"] >= 60

@@ -152,11 +152,11 @@ model_list:
     mode: audio_speech
 router_settings:
   routing_strategy: least-busy
-  num_retries: 2
+  num_retries: 1
   retry_after: 3
   timeout: 90
   allowed_fails: 1
-  cooldown_time: 60
+  cooldown_time: 90
   enable_health_check: true
   model_rate_limits:
   - model_name: heartcode-chat-sfw
@@ -195,4 +195,6 @@ general_settings:
 litellm_settings:
   set_verbose: false
   drop_params: true
-  callbacks: speech_correlation.speech_correlation_callback
+  callbacks:
+  - speech_correlation.speech_correlation_callback
+  - prometheus

@@ -15,6 +15,7 @@ from metrics import (
     inference_duration_seconds,
     inference_tokens_total,
     active_requests_gauge,
+    backend_in_flight_requests,
 )
 from gpu_health import GPUUnavailable
 
@@ -74,6 +75,14 @@ async def health_check(request: Request):
     """Health check endpoint. Returns 503 unless llama.cpp reports status 'ok'."""
     try:
         llama_client = request.app.state.llama_client
+        availability = getattr(request.app.state, "backend_availability", None)
+        if availability is not None:
+            snapshot = availability.snapshot()
+            if snapshot.state != "ready":
+                raise HTTPException(
+                    status_code=503,
+                    detail={"code": "BACKEND_NOT_READY", "state": snapshot.state, "reason": snapshot.reason},
+                )
         readiness = getattr(request.app.state, "gpu_readiness", None)
         if readiness is not None and not readiness.ready:
             raise HTTPException(status_code=503, detail={"code": "GPU_UNAVAILABLE", "reason": readiness.snapshot().reason})
@@ -93,6 +102,8 @@ async def health_check(request: Request):
             "status": "healthy",
             "server_id": settings.server_id,
             "llama_status": llama_status,
+            "backend_state": "ready",
+            "backend_reason": "ready",
         }
     except HTTPException:
         raise
@@ -113,6 +124,24 @@ def require_gpu_ready(request: Request) -> None:
             readiness.require_ready()
     except GPUUnavailable as error:
         raise HTTPException(status_code=503, detail={"code": "GPU_UNAVAILABLE", "reason": error.reason}) from None
+
+
+def begin_inference(request: Request) -> None:
+    availability = getattr(request.app.state, "backend_availability", None)
+    if availability is not None:
+        availability.begin_request()
+        active = availability.snapshot().in_flight
+        active_requests_gauge.set(active)
+        backend_in_flight_requests.set(active)
+
+
+def end_inference(request: Request) -> None:
+    availability = getattr(request.app.state, "backend_availability", None)
+    if availability is not None:
+        availability.end_request()
+        active = availability.snapshot().in_flight
+        active_requests_gauge.set(active)
+        backend_in_flight_requests.set(active)
 
 
 @router.get("/v1/models")
@@ -138,13 +167,13 @@ async def create_completion(request: Request, body: CompletionRequest):
     llama_client = request.app.state.llama_client
 
     inference_requests_total.labels(endpoint="completions", status="started").inc()
-    active_requests_gauge.inc()
+    begin_inference(request)
     start_time = time.time()
 
     try:
         if body.stream:
             return EventSourceResponse(
-                _stream_completion(llama_client, body),
+                _stream_completion(request, llama_client, body),
                 media_type="text/event-stream",
             )
 
@@ -197,7 +226,8 @@ async def create_completion(request: Request, body: CompletionRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
     finally:
-        active_requests_gauge.dec()
+        if not body.stream:
+            end_inference(request)
 
 
 @router.post("/v1/chat/completions")
@@ -207,7 +237,7 @@ async def create_chat_completion(request: Request, body: ChatCompletionRequest):
     llama_client = request.app.state.llama_client
 
     inference_requests_total.labels(endpoint="chat", status="started").inc()
-    active_requests_gauge.inc()
+    begin_inference(request)
     start_time = time.time()
 
     try:
@@ -215,7 +245,7 @@ async def create_chat_completion(request: Request, body: ChatCompletionRequest):
 
         if body.stream:
             return EventSourceResponse(
-                _stream_chat_completion(llama_client, messages, body),
+                _stream_chat_completion(request, llama_client, messages, body),
                 media_type="text/event-stream",
             )
 
@@ -251,10 +281,11 @@ async def create_chat_completion(request: Request, body: ChatCompletionRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
     finally:
-        active_requests_gauge.dec()
+        if not body.stream:
+            end_inference(request)
 
 
-async def _stream_completion(llama_client, body: CompletionRequest):
+async def _stream_completion(request: Request, llama_client, body: CompletionRequest):
     """Stream completion responses."""
     try:
         async for token in llama_client.completion_stream(
@@ -284,9 +315,11 @@ async def _stream_completion(llama_client, body: CompletionRequest):
     except Exception as e:
         logger.error(f"Stream error: {e}")
         yield {"data": {"error": str(e)}}
+    finally:
+        end_inference(request)
 
 
-async def _stream_chat_completion(llama_client, messages: list, body: ChatCompletionRequest):
+async def _stream_chat_completion(request: Request, llama_client, messages: list, body: ChatCompletionRequest):
     """Stream chat completion responses via llama.cpp native chat API."""
     import orjson
 
@@ -332,6 +365,8 @@ async def _stream_chat_completion(llama_client, messages: list, body: ChatComple
     except Exception as e:
         logger.error(f"Stream error: {e}")
         yield {"data": orjson.dumps({"error": str(e)}).decode()}
+    finally:
+        end_inference(request)
 
 
 @router.post("/tokenize")

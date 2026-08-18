@@ -12,13 +12,15 @@
 # Router settings for load balancing
 router_settings:
   routing_strategy: "least-busy"
-  num_retries: 2
+  # One bounded retry permits a healthy sibling without amplifying an outage.
+  num_retries: 1
   retry_after: 3
   timeout: 90
   # A chat group has multiple replicas. Cool down a failed deployment after
   # its first connection error so request retries move to a healthy sibling.
   allowed_fails: 1
-  cooldown_time: 60
+  # P104-100 model startup measured 38-47s; retain margin before re-admission.
+  cooldown_time: 90
 
   # Health check settings
   enable_health_check: true
@@ -49,7 +51,9 @@ general_settings:
 litellm_settings:
   set_verbose: false
   drop_params: true  # Drop unsupported params instead of erroring
-  callbacks: speech_correlation.speech_correlation_callback
+  callbacks:
+    - speech_correlation.speech_correlation_callback
+    - prometheus
 
 # Environment variables needed:
 #   LITELLM_MASTER_KEY - Master key for admin API access

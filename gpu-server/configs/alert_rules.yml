@@ -95,6 +95,30 @@ groups:
           summary: "Model is offline on {{$labels.job}}"
           description: "GPU server {{$labels.job}} has no model loaded"
 
+      - alert: ChatBackendRestartRateRegression
+        expr: increase(watchdog_restart_decisions_total{decision="restart"}[15m]) > 1
+        labels:
+          severity: critical
+        annotations:
+          summary: "Chat backend restart rate regressed on {{$labels.instance}}"
+          description: "More than one bounded watchdog restart was selected in 15 minutes."
+
+      - alert: ChatBackendRestartSuppressed
+        expr: increase(watchdog_restart_decisions_total{decision=~"suppress|continue",reason="restart_suppressed"}[15m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "Chat backend restart circuit is open on {{$labels.instance}}"
+          description: "Rapid restart cycling was suppressed; follow the GPU availability runbook."
+
+      - alert: HeartCodeChatDownstream5xx
+        expr: increase(litellm_proxy_failed_requests_metric_total{requested_model=~"heartcode-chat.*"}[10m]) > 2
+        labels:
+          severity: critical
+        annotations:
+          summary: "HeartCode chat downstream failures increased"
+          description: "LiteLLM recorded more than two failed HeartCode chat requests in ten minutes."
+
       - alert: GPUReadinessLost
         expr: gpu_readiness == 0
         for: 30s

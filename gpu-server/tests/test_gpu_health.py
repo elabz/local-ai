@@ -292,6 +292,7 @@ def loaded_chat_routes(monkeypatch):
     monkeypatch.setitem(sys.modules, "metrics", types.SimpleNamespace(
         active_requests_gauge=Metric(), inference_tokens_total=Metric(),
         inference_duration_seconds=Metric(), inference_requests_total=Metric(),
+        backend_in_flight_requests=Metric(),
     ))
     monkeypatch.setitem(sys.modules, "gpu_health", sys.modules[__name__].GPUReadiness.__module__ and __import__("gpu_health"))
     path = Path(__file__).resolve().parents[1] / "routes.py"

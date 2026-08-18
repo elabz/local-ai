@@ -4,6 +4,12 @@ The PEA chat wrapper runs a background watchdog every 15 seconds. Its llama.cpp 
 
 During sustained three-worker extraction on 2026-08-18, llama.cpp continued returning successful completions while health probes timed out. The watchdog nevertheless restarted all three `heartcode-chat-sfw` backends. LiteLLM logged downstream connection failures and returned HTTP 500 after exhausting two retries. Docker showed no OOM kill. GPU memory remained within device capacity. The restart counters—304, 293, and 265—show that this failure mode predates the observed workload.
 
+Rollout investigation found a second failure hidden by Docker's container-level
+`OOMKilled=false`: under sustained load the kernel can kill the llama.cpp child
+inside the 2 GiB memory cgroup while leaving the Python PID 1 alive. Acceptance
+therefore also requires SFW wrapper memory headroom sized from observed RSS;
+this is distinct from GPU-memory capacity and from the false HTTP-probe loop.
+
 ## Goals / Non-Goals
 
 **Goals:**

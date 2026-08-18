@@ -1,0 +1,38 @@
+services:
+  gpu-test-healthy:
+    image: python:3.11-slim
+    entrypoint: ["sh", "-c", "pip install -q fastapi uvicorn && exec python3 -m uvicorn fake_openai_backend:app --host 0.0.0.0 --port 8080"]
+    working_dir: /test
+    environment: {BACKEND_AVAILABLE: "1"}
+    volumes:
+      - ./fake_openai_backend.py:/test/fake_openai_backend.py:ro
+
+  gpu-test-unavailable:
+    image: python:3.11-slim
+    entrypoint: ["sh", "-c", "pip install -q fastapi uvicorn && exec python3 -m uvicorn fake_openai_backend:app --host 0.0.0.0 --port 8080"]
+    working_dir: /test
+    environment: {BACKEND_AVAILABLE: "0"}
+    volumes:
+      - ./fake_openai_backend.py:/test/fake_openai_backend.py:ro
+
+  gpu-test-unavailable-2:
+    image: python:3.11-slim
+    entrypoint: ["sh", "-c", "pip install -q fastapi uvicorn && exec python3 -m uvicorn fake_openai_backend:app --host 0.0.0.0 --port 8080"]
+    working_dir: /test
+    environment: {BACKEND_AVAILABLE: "0"}
+    volumes:
+      - ./fake_openai_backend.py:/test/fake_openai_backend.py:ro
+
+  litellm-routing-test:
+    image: ghcr.io/berriai/litellm:main-latest
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      LITELLM_MASTER_KEY: test-gpu-routing-key
+    volumes:
+      - ./litellm_gpu_routing.yaml:/app/config.yaml:ro
+    ports:
+      - "4410:4000"
+    depends_on:
+      - gpu-test-healthy
+      - gpu-test-unavailable
+      - gpu-test-unavailable-2

@@ -132,9 +132,8 @@ class LlamaClient:
         if stop:
             payload["stop"] = stop
 
-        # Debug: Log the prompt for troubleshooting
+        # Log only bounded metadata; never request content.
         logger.info(f"Sending completion request with prompt length: {len(payload['prompt'])}")
-        logger.debug(f"Prompt: {payload['prompt'][:500]}...")
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             async with client.stream(
@@ -143,8 +142,8 @@ class LlamaClient:
                 json=payload,
             ) as response:
                 if response.status_code != 200:
-                    error_text = await response.aread()
-                    logger.error(f"Completion request failed: {response.status_code} - {error_text.decode()}")
+                    await response.aread()
+                    logger.error("Completion request failed: status=%s", response.status_code)
                 response.raise_for_status()
 
                 async for line in response.aiter_lines():
