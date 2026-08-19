@@ -16,7 +16,7 @@ STATES = {"starting", "ready", "busy", "degraded", "unavailable"}
 REASONS = {
     "starting", "ready", "inference_active", "busy_probe_timeout",
     "idle_probe_failure", "stuck_request", "child_exit", "gpu_unavailable",
-    "restart_suppressed", "recovering",
+    "restart_suppressed", "recovering", "capacity_exhausted",
 }
 
 
@@ -46,6 +46,7 @@ class BackendAvailability:
         restart_limit: int = 3,
         restart_window_seconds: float = 900.0,
         restart_state_path: Optional[str] = None,
+        max_in_flight: int = 1,
         on_transition: Optional[Callable[[str, str], None]] = None,
         clock: Callable[[], float] = time.monotonic,
         wall_clock: Callable[[], float] = time.time,
@@ -55,6 +56,7 @@ class BackendAvailability:
         self.restart_limit = max(1, restart_limit)
         self.restart_window_seconds = max(1.0, restart_window_seconds)
         self.restart_state_path = Path(restart_state_path) if restart_state_path else None
+        self.max_in_flight = max(1, max_in_flight)
         self.on_transition = on_transition
         self.clock = clock
         self.wall_clock = wall_clock
@@ -73,10 +75,14 @@ class BackendAvailability:
         if changed and self.on_transition:
             self.on_transition(state, reason)
 
-    def begin_request(self) -> None:
+    def begin_request(self) -> bool:
         with self._lock:
+            if len(self._started) >= self.max_in_flight:
+                self._transition("busy", "capacity_exhausted")
+                return False
             self._started.append(self.clock())
             self._transition("busy", "inference_active")
+            return True
 
     def end_request(self) -> None:
         with self._lock:

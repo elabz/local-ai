@@ -40,7 +40,7 @@ class Settings(BaseSettings):
 
     # Rate limiting
     max_concurrent_requests: int = Field(default=1)  # 1 slot = 4096 tokens per conversation
-    request_timeout: int = Field(default=120)
+    request_timeout: int = Field(default=180)
 
     # Occupancy-aware watchdog
     watchdog_interval_seconds: float = Field(default=15.0)
@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     watchdog_restart_limit: int = Field(default=3)
     watchdog_restart_window_seconds: float = Field(default=900.0)
     watchdog_state_dir: str = Field(default="/var/lib/pea-gpu-state")
+    max_in_flight_requests: int = Field(default=1)
 
     # Metrics
     enable_metrics: bool = Field(default=True)

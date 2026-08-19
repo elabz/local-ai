@@ -25,7 +25,7 @@
 # VRAM budget: ~5.7GB model + ~1GB KV + ~0.35GB embed + ~0.55GB overhead = ~7.6GB / 8GB
 #
 # Memory Budget (16GB RAM + 16GB swap observed on Pea 2026-08-18):
-#   - 3x SFW chat containers: 2.5GB each = 7.5GB max
+#   - 3x SFW chat containers: 5GB each = 15GB max, one active request each
 #   - 3x NSFW chat containers: 2GB each = 6GB max
 #   - 3x text-embed containers (GPU 4-6): 768MB each = 2.25GB max
 #   - 3x vision-embed containers (GPU 1-3): 2.5GB each = 7.5GB max (~1.1GB used each)
@@ -79,6 +79,7 @@ x-gpu-env-common: &gpu-env-common
   WATCHDOG_STUCK_REQUEST_SECONDS: ${WATCHDOG_STUCK_REQUEST_SECONDS:-300}
   WATCHDOG_RESTART_LIMIT: ${WATCHDOG_RESTART_LIMIT:-3}
   WATCHDOG_RESTART_WINDOW_SECONDS: ${WATCHDOG_RESTART_WINDOW_SECONDS:-900}
+  MAX_IN_FLIGHT_REQUESTS: ${MAX_IN_FLIGHT_REQUESTS:-1}
 
 x-embedding-server-common: &embedding-server-common
   image: local-ai-llama:latest
@@ -136,8 +137,8 @@ services:
       - "8080:8080"
     # Sustained SFW load reached ~2.3GiB RSS and the 2GiB cgroup killed only
     # llama-server (Docker OOMKilled remained false because PID 1 survived).
-    mem_limit: 2560m
-    memswap_limit: 4096m
+    mem_limit: 6144m
+    memswap_limit: 7168m
     deploy:
       resources:
         reservations:
@@ -160,8 +161,8 @@ services:
       MODEL_NAME: ${GPU_2_MODEL_NAME:-unknown}
     ports:
       - "8081:8080"
-    mem_limit: 2560m
-    memswap_limit: 4096m
+    mem_limit: 6144m
+    memswap_limit: 7168m
     deploy:
       resources:
         reservations:
@@ -184,8 +185,8 @@ services:
       MODEL_NAME: ${GPU_3_MODEL_NAME:-unknown}
     ports:
       - "8082:8080"
-    mem_limit: 2560m
-    memswap_limit: 4096m
+    mem_limit: 6144m
+    memswap_limit: 7168m
     deploy:
       resources:
         reservations:

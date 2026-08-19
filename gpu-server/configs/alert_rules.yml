@@ -112,7 +112,7 @@ groups:
           description: "Rapid restart cycling was suppressed; follow the GPU availability runbook."
 
       - alert: HeartCodeChatDownstream5xx
-        expr: increase(litellm_proxy_failed_requests_metric_total{requested_model=~"heartcode-chat.*"}[10m]) > 2
+        expr: increase(litellm_proxy_total_requests_metric_total{requested_model=~"heartcode-chat.*",status_code=~"500|502|504"}[10m]) > 2
         labels:
           severity: critical
         annotations:

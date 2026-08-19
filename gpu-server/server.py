@@ -51,7 +51,6 @@ def start_llama_server() -> subprocess.Popen:
         "--threads", str(settings.n_threads),
         "--parallel", str(settings.max_concurrent_requests),
         "--cont-batching",
-        "--mlock",
         "--cache-reuse", str(settings.cache_reuse),  # Enable prompt caching for faster TTFT
         "--cache-type-k", settings.cache_type_k,  # Quantize KV cache
         "--cache-type-v", settings.cache_type_v,
@@ -114,6 +113,7 @@ async def lifespan(app: FastAPI):
         restart_limit=settings.watchdog_restart_limit,
         restart_window_seconds=settings.watchdog_restart_window_seconds,
         restart_state_path=os.path.join(settings.watchdog_state_dir, f"{settings.server_id}.json"),
+        max_in_flight=settings.max_in_flight_requests,
         on_transition=record_backend_state,
     )
     app.state.backend_availability = availability

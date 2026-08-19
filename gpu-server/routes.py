@@ -4,6 +4,8 @@ import logging
 import time
 from typing import List, Optional
 
+import httpx
+
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -129,7 +131,12 @@ def require_gpu_ready(request: Request) -> None:
 def begin_inference(request: Request) -> None:
     availability = getattr(request.app.state, "backend_availability", None)
     if availability is not None:
-        availability.begin_request()
+        if not availability.begin_request():
+            inference_requests_total.labels(endpoint="admission", status="rejected").inc()
+            raise HTTPException(
+                status_code=503,
+                detail={"code": "BACKEND_BUSY", "reason": "capacity_exhausted"},
+            )
         active = availability.snapshot().in_flight
         active_requests_gauge.set(active)
         backend_in_flight_requests.set(active)
@@ -220,6 +227,13 @@ async def create_completion(request: Request, body: CompletionRequest):
             },
         }
 
+    except (httpx.TimeoutException, httpx.RequestError):
+        inference_requests_total.labels(endpoint="completions", status="unavailable").inc()
+        logger.warning("Completion downstream unavailable")
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "BACKEND_UNAVAILABLE", "reason": "downstream_timeout"},
+        )
     except Exception as e:
         inference_requests_total.labels(endpoint="completions", status="error").inc()
         logger.error(f"Completion error: {e}")
@@ -275,6 +289,13 @@ async def create_chat_completion(request: Request, body: ChatCompletionRequest):
 
         return result
 
+    except (httpx.TimeoutException, httpx.RequestError):
+        inference_requests_total.labels(endpoint="chat", status="unavailable").inc()
+        logger.warning("Chat completion downstream unavailable")
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "BACKEND_UNAVAILABLE", "reason": "downstream_timeout"},
+        )
     except Exception as e:
         inference_requests_total.labels(endpoint="chat", status="error").inc()
         logger.error(f"Chat completion error: {e}")

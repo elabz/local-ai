@@ -113,7 +113,7 @@ def record_backend_state(state: str, reason: str) -> None:
     safe_reason = reason if reason in {
         "starting", "ready", "inference_active", "busy_probe_timeout",
         "idle_probe_failure", "stuck_request", "child_exit", "gpu_unavailable",
-        "restart_suppressed", "recovering",
+        "restart_suppressed", "recovering", "capacity_exhausted",
     } else "idle_probe_failure"
     if _backend_state_current is not None:
         backend_state.labels(state=_backend_state_current[0], reason=_backend_state_current[1]).set(0)

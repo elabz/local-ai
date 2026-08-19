@@ -3,6 +3,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import httpx
+
 
 GPU_SERVER = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(GPU_SERVER))
@@ -50,6 +52,14 @@ class FakeAsyncClient:
         return FakeResponse(json)
 
 
+class FailingAsyncClient(FakeAsyncClient):
+    attempts = 0
+
+    async def post(self, url, json):
+        self.__class__.attempts += 1
+        raise httpx.ReadTimeout("bounded timeout")
+
+
 class SamplingPassthroughTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         FakeAsyncClient.calls.clear()
@@ -87,6 +97,15 @@ class SamplingPassthroughTest(unittest.IsolatedAsyncioTestCase):
         payload = FakeAsyncClient.calls[0][1]
         for name, value in ADVANCED.items():
             self.assertEqual(payload[name], value)
+
+    async def test_chat_timeout_is_not_retried_inside_backend_wrapper(self):
+        FailingAsyncClient.attempts = 0
+        with patch("llama_client.httpx.AsyncClient", FailingAsyncClient):
+            with self.assertRaises(httpx.ReadTimeout):
+                await LlamaClient().chat_completion(
+                    [{"role": "user", "content": "hello"}]
+                )
+        self.assertEqual(FailingAsyncClient.attempts, 1)
 
 
 if __name__ == "__main__":

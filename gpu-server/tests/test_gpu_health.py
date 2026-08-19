@@ -363,3 +363,29 @@ def test_chat_gpu_unavailable_rejects_every_inference_route(monkeypatch):
         )
         assert [response.status_code for response in requests] == [503, 503, 503]
         assert child.calls == []
+
+
+def test_chat_downstream_timeout_is_classifiable_503(monkeypatch):
+    import httpx
+
+    with loaded_chat_routes(monkeypatch) as routes:
+        app = FastAPI()
+        app.include_router(routes.router)
+        child = LlamaStub()
+
+        async def timeout(**_kwargs):
+            raise httpx.ReadTimeout("bounded timeout")
+
+        child.chat_completion = timeout
+        app.state.llama_client = child
+        readiness = GPUReadiness(enabled=False)
+        app.state.gpu_readiness = readiness
+        client = TestClient(app)
+        response = client.post(
+            "/v1/chat/completions",
+            json={"messages": [{"role": "user", "content": "fixed synthetic"}]},
+        )
+        assert response.status_code == 503
+        assert response.json()["detail"] == {
+            "code": "BACKEND_UNAVAILABLE", "reason": "downstream_timeout",
+        }

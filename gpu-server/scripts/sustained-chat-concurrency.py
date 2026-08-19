@@ -4,12 +4,13 @@
 import argparse
 import concurrent.futures
 import json
+import os
 import time
 import urllib.error
 import urllib.request
 
 
-def post(url: str, model: str, timeout: float) -> tuple[int, float]:
+def post(url: str, model: str, timeout: float, api_key: str, request_interval: float) -> tuple[int, float]:
     # Fixed synthetic text only; neither request nor response content is logged.
     body = json.dumps({
         "model": model,
@@ -18,16 +19,22 @@ def post(url: str, model: str, timeout: float) -> tuple[int, float]:
         "stream": False,
     }).encode()
     started = time.monotonic()
-    request = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    request = urllib.request.Request(url, data=body, headers=headers)
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             response.read()
-            return response.status, time.monotonic() - started
+            result = (response.status, time.monotonic() - started)
     except urllib.error.HTTPError as error:
         error.read()
-        return error.code, time.monotonic() - started
+        result = (error.code, time.monotonic() - started)
     except Exception:
-        return 0, time.monotonic() - started
+        result = (0, time.monotonic() - started)
+    if request_interval:
+        time.sleep(request_interval)
+    return result
 
 
 def main() -> int:
@@ -38,17 +45,22 @@ def main() -> int:
     parser.add_argument("--watchdog-interval", type=float, default=15)
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--timeout", type=float, default=180)
+    parser.add_argument("--api-key-env", help="Read the API key from this environment variable")
+    parser.add_argument("--request-interval", type=float, default=0.5, help="Per-worker delay to prevent retry amplification")
     args = parser.parse_args()
     if args.duration < args.watchdog_interval * 5:
         parser.error("duration must span at least five watchdog intervals")
 
     deadline = time.monotonic() + args.duration
+    api_key = os.environ.get(args.api_key_env, "") if args.api_key_env else ""
+    if args.api_key_env and not api_key:
+        parser.error("configured API key environment variable is absent")
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as pool:
         pending = set()
         while time.monotonic() < deadline or pending:
             while time.monotonic() < deadline and len(pending) < args.workers:
-                pending.add(pool.submit(post, args.url, args.model, args.timeout))
+                pending.add(pool.submit(post, args.url, args.model, args.timeout, api_key, args.request_interval))
             done, pending = concurrent.futures.wait(
                 pending, timeout=0.25, return_when=concurrent.futures.FIRST_COMPLETED,
             )

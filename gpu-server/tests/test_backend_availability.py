@@ -39,6 +39,16 @@ def test_busy_probe_timeout_never_restarts_live_inference(tmp_path):
     assert snapshot.in_flight == 1
 
 
+def test_admission_is_atomically_bounded(tmp_path):
+    availability, _ = tracker(tmp_path, max_in_flight=2)
+    assert availability.begin_request()
+    assert availability.begin_request()
+    assert not availability.begin_request()
+    snapshot = availability.snapshot()
+    assert snapshot.in_flight == 2
+    assert snapshot.reason == "capacity_exhausted"
+
+
 def test_idle_probe_failure_restarts_at_bounded_threshold(tmp_path):
     availability, _ = tracker(tmp_path, idle_failure_limit=3)
     assert not availability.probe_failed().restart

@@ -4,7 +4,6 @@ import logging
 from typing import AsyncGenerator, Optional, List, Dict, Any
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential
 
 from config import settings
 
@@ -35,10 +34,6 @@ class LlamaClient:
             response = await client.get(f"{self.base_url}/props")
             return response.json()
 
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-    )
     async def completion(
         self,
         prompt: str,
@@ -165,10 +160,6 @@ class LlamaClient:
                         except Exception as e:
                             logger.warning(f"Failed to parse chunk: {e}")
 
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-    )
     async def chat_completion(
         self,
         messages: List[Dict[str, str]],

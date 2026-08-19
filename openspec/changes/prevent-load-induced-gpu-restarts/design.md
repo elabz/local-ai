@@ -9,6 +9,10 @@ Rollout investigation found a second failure hidden by Docker's container-level
 inside the 2 GiB memory cgroup while leaving the Python PID 1 alive. Acceptance
 therefore also requires SFW wrapper memory headroom sized from observed RSS;
 this is distinct from GPU-memory capacity and from the false HTTP-probe loop.
+The deployed host has 16 GiB RAM and 16 GiB swap rather than the stale 32 GiB
+RAM assumption in compose comments. The chat wrapper therefore does not use
+llama.cpp `--mlock`; GPU-offloaded model pages remain reclaimable under host
+pressure instead of forcing child or unrelated-service OOM kills.
 
 ## Goals / Non-Goals
 

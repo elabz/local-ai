@@ -44,14 +44,35 @@ llama.cpp child inside its 2 GiB memory cgroup. Docker still reported
 `OOMKilled=false` because the Python wrapper remained alive. Kernel evidence
 showed approximately 1.94 GiB anonymous RSS plus 0.33 GiB file RSS. The wrapper
 correctly recovered the genuine child exit, but the event produced two proxy
-failures. SFW limits were therefore raised to 2.5 GiB with 4 GiB memory+swap;
-the final acceptance window is recorded below.
+failures. Initial 2.5 GiB and 3 GiB limits remained too low during extended
+observation: a single active long-context llama.cpp process reached about
+3.06 GiB anonymous RSS plus 0.14 GiB file/shmem. With bounded admission active,
+the production working set reached 4.34–5.44 GiB with one request serving and
+one queued, eventually pressuring unrelated chat services on the 16 GiB host.
+The final deployment matches admission to the one llama.cpp slot per backend,
+uses a 6 GiB ceiling with 7 GiB memory+swap, aligns proxy/backend timeouts at
+180 seconds, and removes wrapper-internal retries. LiteLLM is the sole bounded
+retry/queue boundary. The stale `--mlock` setting was also removed so the
+measured 16 GiB RAM/16 GiB swap host can reclaim GPU-offloaded model pages.
 
-After the 2.5 GiB SFW limits were active on all three backends, the canary
-completed 29/29 fixed synthetic requests across five watchdog intervals.
-Restart counts remained 0/0/0. A subsequent 75-second production observation
-left the cumulative SFW proxy-failure counter unchanged at 28 and produced no
-new llama.cpp cgroup OOM event.
+An early short-window candidate completed 29/29 fixed synthetic requests but
+was rejected after longer observation exposed cgroup and host-memory pressure.
+The final configuration was therefore qualified over a full 15-minute restart
+window under live production load: restart counts stayed 0/0/0, cgroup OOM
+events stayed zero, successful proxy responses increased by 66, peak backend
+memory was 3.19 GiB of 5 GiB, host available memory remained above 5 GiB, and
+swap free did not decline. In the final five-watchdog-interval steady-state
+check, successful responses increased 206 to 212 while unexpected
+500/502/504 responses remained exactly 8; controlled saturation returned 503.
+A later long-context request briefly reached about 5.3 GiB RSS, demonstrating
+that the earlier 5 GiB cgroup ceiling was undersized despite healthy host
+headroom. The final 6 GiB/7 GiB bounds were re-qualified after rollout.
+Across an extended five-minute post-rollout window, eleven 30-second samples
+held restart counts at 0/0/0 with no Docker or kernel OOM event. Peak observed
+memory at the end of the window remained below 2.4 GiB per backend. In the
+following five-watchdog-interval steady-state check, successful responses rose
+from 4416 to 4422, unexpected 500/502/504 responses stayed flat at 44, and the
+LiteLLM Prometheus target remained up.
 
 LiteLLM routing acceptance passed 3/3 in a disposable stack: an unavailable
 deployment was excluded in favor of a healthy sibling, all-unavailable returned
@@ -59,7 +80,8 @@ bounded HTTP 503, and the router used one retry with a 90-second cooldown.
 LiteLLM's Prometheus callback is enabled; Pea Prometheus reports the `elm`
 scrape target up and evaluates the validated failure alert.
 
-Focused current-source tests passed 31/31. Python compilation, compose
+The final focused current-source suite passed 34/34, including availability,
+timeout classification, sampling passthrough, and client/no-retry coverage. Python compilation, compose
 interpolation, LiteLLM structural validation, Prometheus configuration/rules,
 and strict OpenSpec validation passed.
 

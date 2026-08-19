@@ -15,7 +15,7 @@ router_settings:
   # One bounded retry permits a healthy sibling without amplifying an outage.
   num_retries: 1
   retry_after: 3
-  timeout: 90
+  timeout: 180
   # A chat group has multiple replicas. Cool down a failed deployment after
   # its first connection error so request retries move to a healthy sibling.
   allowed_fails: 1
@@ -36,7 +36,7 @@ general_settings:
   global_max_parallel_requests: 17
 
   # Request timeout
-  request_timeout: 90
+  request_timeout: 180
 
   # Logging
   json_logs: true
