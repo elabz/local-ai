@@ -25,6 +25,20 @@ router_settings:
   # Health check settings
   enable_health_check: true
 
+# Isolated evaluation routes that are not part of the production GPU manifest.
+# These are intentionally unaliased and must not affect normal model routing.
+extra_model_list:
+  - model_name: heartcode-chat-qwen3-canary
+    litellm_params:
+      model: openai/Qwen3-8B-Q4_K_M.gguf
+      api_base: http://192.168.0.144:18085/v1
+      api_key: sk-local
+      max_tokens: 512
+      temperature: 0.7
+    model_info:
+      id: qwen3-canary-gpu5
+      mode: chat
+
 # General settings - PostgreSQL-backed API key management
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY

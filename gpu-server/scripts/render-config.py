@@ -120,6 +120,11 @@ def render_litellm(manifest: dict) -> str:
         for alias in m.get("aliases") or []:
             aliases[alias] = m["api_name"]
 
+    # Hand-maintained isolated evaluation routes (for example a canary model)
+    # are kept outside the GPU manifest because they do not own a production
+    # chat service or generated GPU_N_MODEL_* environment entry.
+    model_list.extend(base.get("extra_model_list") or [])
+
     router = dict(base.get("router_settings") or {})
     if rate_limits:
         router["model_rate_limits"] = rate_limits
