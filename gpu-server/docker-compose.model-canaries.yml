@@ -1,0 +1,132 @@
+services:
+  sfw-model-canary:
+    image: ${CANARY_IMAGE:-local-ai-llama:v0.2.0}
+    container_name: pea-sfw-model-canary-gpu5
+    restart: "no"
+    runtime: nvidia
+    mem_limit: 8g
+    memswap_limit: 10g
+    environment:
+      NVIDIA_VISIBLE_DEVICES: ${PEA_GPU_5_UUID:-GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b}
+    volumes:
+      - ./models:/models:ro
+    ports:
+      - "${SFW_CANARY_PORT:-18085}:8080"
+    entrypoint: ["llama-server"]
+    command:
+      - "--model"
+      - "/models/${SFW_CANARY_MODEL:?set SFW_CANARY_MODEL}"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8080"
+      - "--n-gpu-layers"
+      - "99"
+      - "--ctx-size"
+      - "${CANARY_CONTEXT:-4096}"
+      - "--batch-size"
+      - "${CANARY_BATCH:-128}"
+      - "--ubatch-size"
+      - "${CANARY_UBATCH:-64}"
+      - "--threads"
+      - "2"
+      - "--parallel"
+      - "1"
+      - "--cache-type-k"
+      - "${CANARY_CACHE_TYPE:-q8_0}"
+      - "--cache-type-v"
+      - "${CANARY_CACHE_TYPE:-q8_0}"
+      - "--jinja"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 300s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['${PEA_GPU_5_UUID:-GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b}']
+              capabilities: [gpu]
+
+  nsfw-model-canary:
+    image: ${CANARY_IMAGE:-local-ai-llama:v0.2.0}
+    container_name: pea-nsfw-model-canary-gpu6
+    restart: "no"
+    runtime: nvidia
+    mem_limit: 8g
+    memswap_limit: 10g
+    environment:
+      NVIDIA_VISIBLE_DEVICES: ${PEA_GPU_6_UUID:-GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9}
+      # Reasoning policy for the thinking-capable NSFW canary (Huihui Qwen3 8B).
+      # llama-server (build >= b10566) reads these LLAMA_ARG_* variables natively.
+      # Operator controls (override at `up` time):
+      #   NSFW_CANARY_REASONING:        on | off | auto  (native reasoning toggle;
+      #                                 do NOT use chat_template_kwargs enable_thinking=false —
+      #                                 it crashed streaming on the older b8027 build and stays
+      #                                 banned until independently re-proven)
+      #   NSFW_CANARY_REASONING_FORMAT: deepseek | deepseek-legacy | none | auto
+      #                                 (deepseek => thoughts arrive as delta.reasoning_content)
+      #   NSFW_CANARY_REASONING_BUDGET: -1 unrestricted | 0 immediate end | N>0 token budget
+      #   NSFW_CANARY_REASONING_BUDGET_MESSAGE: thought injected before the close-think tag
+      #                                 when the budget is exhausted
+      # The bounded default below (32 tokens) was selected by the
+      # present-bounded-model-reasoning evaluation (heartcode repo,
+      # 2026-08-26): smallest budget passing the quality, non-empty-answer,
+      # and >=12 t/s gates; mean time to first answer 2.9s vs 10.7s
+      # unrestricted at ~23 t/s. The SFW/Gemma canary is intentionally
+      # untouched.
+      LLAMA_ARG_REASONING: ${NSFW_CANARY_REASONING:-on}
+      LLAMA_ARG_THINK: ${NSFW_CANARY_REASONING_FORMAT:-deepseek}
+      LLAMA_ARG_THINK_BUDGET: ${NSFW_CANARY_REASONING_BUDGET:-32}
+      LLAMA_ARG_THINK_BUDGET_MESSAGE: ${NSFW_CANARY_REASONING_BUDGET_MESSAGE:-I am out of thinking budget, so I will stop reasoning here and give my in-character answer now.}
+      # The Huihui GGUF embeds a stripped generic ChatML template with no
+      # reasoning support, which silently disables every reasoning control
+      # above (llama.cpp derives reasoning handling from the template). Pin
+      # the official Qwen3 template from gpu-server/chat-templates/ instead.
+      LLAMA_ARG_CHAT_TEMPLATE_FILE: ${NSFW_CANARY_CHAT_TEMPLATE:-/chat-templates/qwen3.jinja}
+    volumes:
+      - ./models:/models:ro
+      - ./chat-templates:/chat-templates:ro
+    ports:
+      - "${NSFW_CANARY_PORT:-18086}:8080"
+    entrypoint: ["llama-server"]
+    command:
+      - "--model"
+      - "/models/${NSFW_CANARY_MODEL:?set NSFW_CANARY_MODEL}"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8080"
+      - "--n-gpu-layers"
+      - "99"
+      - "--ctx-size"
+      - "${CANARY_CONTEXT:-4096}"
+      - "--batch-size"
+      - "${CANARY_BATCH:-128}"
+      - "--ubatch-size"
+      - "${CANARY_UBATCH:-64}"
+      - "--threads"
+      - "2"
+      - "--parallel"
+      - "1"
+      - "--cache-type-k"
+      - "${CANARY_CACHE_TYPE:-q8_0}"
+      - "--cache-type-v"
+      - "${CANARY_CACHE_TYPE:-q8_0}"
+      - "--jinja"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 300s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['${PEA_GPU_6_UUID:-GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9}']
+              capabilities: [gpu]
