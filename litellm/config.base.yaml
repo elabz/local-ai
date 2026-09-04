@@ -12,15 +12,11 @@
 # Router settings for load balancing
 router_settings:
   routing_strategy: "least-busy"
-  # One bounded retry permits a healthy sibling without amplifying an outage.
-  num_retries: 1
+  num_retries: 3
   retry_after: 3
-  timeout: 180
-  # A chat group has multiple replicas. Cool down a failed deployment after
-  # its first connection error so request retries move to a healthy sibling.
-  allowed_fails: 1
-  # P104-100 model startup measured 38-47s; retain margin before re-admission.
-  cooldown_time: 90
+  timeout: 90
+  allowed_fails: 20
+  cooldown_time: 5
 
   # Health check settings
   enable_health_check: true
@@ -31,7 +27,7 @@ extra_model_list:
   - model_name: heartcode-chat-qwen3-canary
     litellm_params:
       model: openai/Qwen3-8B-Q4_K_M.gguf
-      api_base: http://192.168.0.144:18085/v1
+      api_base: http://192.168.70.144:18085/v1
       api_key: sk-local
       max_tokens: 512
       temperature: 0.7
@@ -50,7 +46,7 @@ general_settings:
   global_max_parallel_requests: 17
 
   # Request timeout
-  request_timeout: 180
+  request_timeout: 90
 
   # Logging
   json_logs: true
@@ -65,9 +61,7 @@ general_settings:
 litellm_settings:
   set_verbose: false
   drop_params: true  # Drop unsupported params instead of erroring
-  callbacks:
-    - speech_correlation.speech_correlation_callback
-    - prometheus
+  callbacks: speech_correlation.speech_correlation_callback
 
 # Environment variables needed:
 #   LITELLM_MASTER_KEY - Master key for admin API access

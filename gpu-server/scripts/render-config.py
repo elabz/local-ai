@@ -23,6 +23,15 @@ import yaml
 
 KINDS = {"chat", "text-embed", "vision-embed", "visual-embed", "image", "stt", "tts"}
 
+# Chat templates we ship in gpu-server/chat-templates/. A chat model may pin one
+# with `chat_template: <name>` in models.yaml; llama.cpp is then started with
+# --chat-template-file instead of trusting whatever template the GGUF embeds.
+# Several published GGUFs ship broken templates, so pinning is the safe default
+# for any model whose prompt format matters.
+CHAT_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "chat-templates"
+# Path as seen from inside the container (see the compose bind mount).
+CHAT_TEMPLATE_MOUNT = "/chat-templates"
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "gpu-server" / "models.yaml"
 BASE_CONFIG = REPO_ROOT / "litellm" / "config.base.yaml"
@@ -82,6 +91,17 @@ def validate(manifest: dict) -> None:
                 errors.append(f"{name}: chat model must resolve to a gguf source")
             if not m.get("model_type"):
                 errors.append(f"{name}: chat model missing model_type (sfw/nsfw)")
+
+        template = m.get("chat_template")
+        if template is not None:
+            if kind != "chat":
+                errors.append(f"{name}: chat_template is only valid on kind: chat")
+            elif not (CHAT_TEMPLATE_DIR / f"{template}.jinja").is_file():
+                available = sorted(p.stem for p in CHAT_TEMPLATE_DIR.glob("*.jinja"))
+                errors.append(
+                    f"{name}: chat_template '{template}' not found in "
+                    f"chat-templates/ (have: {available})"
+                )
 
     if errors:
         raise ManifestError("invalid models.yaml:\n  - " + "\n  - ".join(errors))
@@ -146,14 +166,21 @@ def render_env(manifest: dict) -> str:
         if m["kind"] != "chat":
             continue
         path = f"/models/{m['source']['file']}"
+        template = m.get("chat_template")
         for d in m["deployments"]:
             gpu = d["gpu"]
             lines += [
                 f"GPU_{gpu}_MODEL_TYPE={m['model_type']}",
                 f"GPU_{gpu}_MODEL_PATH={path}",
                 f"GPU_{gpu}_MODEL_NAME={m['env_model_name']}",
-                "",
             ]
+            # Empty when unpinned, so the wrapper falls back to the GGUF's own
+            # embedded template and behaviour is unchanged.
+            lines.append(
+                f"GPU_{gpu}_CHAT_TEMPLATE="
+                + (f"{CHAT_TEMPLATE_MOUNT}/{template}.jinja" if template else "")
+            )
+            lines.append("")
     return "\n".join(lines).rstrip("\n") + "\n"
 
 
