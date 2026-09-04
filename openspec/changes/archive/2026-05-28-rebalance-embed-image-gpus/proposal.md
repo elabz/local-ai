@@ -22,5 +22,5 @@ vision-embed runs on a dedicated GPU 7 using only ~1.1 GB of 8 GB — wasteful. 
 
 - **VRAM**: GPU 1-3 go from chat+text-embed (~6.5 GB) to chat+vision-embed (~7.3 GB) — tighter on 8 GB; bound vision batch size + monitor.
 - **Live services**: stop text-embed on GPU 1-3 + the dedicated vision; start 3 co-located vision + 1 new image server. Chat keeps running throughout.
-- **LiteLLM (prod 192.168.0.152)**: config update + restart (brief blip).
+- **LiteLLM (prod 192.168.70.152)**: config update + restart (brief blip).
 - **Image server #2**: shares `image_backends`/`models` volumes so the cuda12-diffusers backend + SSD-1B are not re-downloaded.

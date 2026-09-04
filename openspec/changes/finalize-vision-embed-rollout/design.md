@@ -1,6 +1,6 @@
 ## Context
 
-`vision-embed` (nomic-embed-vision-v1.5 + text-v1.5, 768-d) is compose-managed and healthy on PEA GPU 7 (`:8101`), verified 2026-05-28. The prod LiteLLM proxy (`ssh elm`, 192.168.0.152) mounts `litellm/config.yaml` from its git checkout (`./config.yaml:/app/config.yaml:ro`, `--config /app/config.yaml`), so a `git pull` + container restart picks up config changes. Prod is on `main@2bf4c17` (pre-cutover); its live config routes `heartcode-embed` to 7 legacy text-embed servers (`:8090-8096`). `origin/main` (merged) routes `heartcode-embed` → `:8100` (shelved BiQwen) and adds `heartcode-embed-vision` → `:8101`.
+`vision-embed` (nomic-embed-vision-v1.5 + text-v1.5, 768-d) is compose-managed and healthy on PEA GPU 7 (`:8101`), verified 2026-05-28. The prod LiteLLM proxy (`ssh elm`, 192.168.70.152) mounts `litellm/config.yaml` from its git checkout (`./config.yaml:/app/config.yaml:ro`, `--config /app/config.yaml`), so a `git pull` + container restart picks up config changes. Prod is on `main@2bf4c17` (pre-cutover); its live config routes `heartcode-embed` to 7 legacy text-embed servers (`:8090-8096`). `origin/main` (merged) routes `heartcode-embed` → `:8100` (shelved BiQwen) and adds `heartcode-embed-vision` → `:8101`.
 
 ## Goals / Non-Goals
 

@@ -1,12 +1,12 @@
 ## ADDED Requirements
 
 ### Requirement: Deploy workflow runs on a LAN-resident self-hosted runner
-The deploy workflow SHALL run on a self-hosted runner labeled `homelab` that resides on the private LAN, so it can reach Prod (`192.168.0.152`) and PEA (`192.168.0.144`). Deploy jobs MUST NOT run on GitHub-hosted runners.
+The deploy workflow SHALL run on a self-hosted runner labeled `homelab` that resides on the private LAN, so it can reach Prod (`192.168.70.152`) and PEA (`192.168.70.144`). Deploy jobs MUST NOT run on GitHub-hosted runners.
 
 #### Scenario: Deploy targets the self-hosted runner
 - **WHEN** the deploy workflow is invoked
 - **THEN** its jobs run on `runs-on: [self-hosted, homelab]`
-- **AND** they can reach `192.168.0.x` hosts that GitHub-hosted runners cannot
+- **AND** they can reach `192.168.70.x` hosts that GitHub-hosted runners cannot
 
 ### Requirement: Deploys are explicitly triggered and gated
 The deploy workflow SHALL be triggered by `workflow_dispatch` with a target input (`litellm`, `gpu-server`, or `both`). Self-hosted deploy jobs MUST NOT run for pull requests from forks, and production deploys SHALL require approval via a GitHub `production` Environment.

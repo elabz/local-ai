@@ -41,12 +41,12 @@ local-ai/
 
 ## Deployment Topology
 
-- **PEA (192.168.0.144)**: All GPU servers — 3 SFW + 3 NSFW chat, each co-located with one embed server (vision on 1-2, DINOv2-visual on 3+6, text on 4-5) + 2 image — `gpu-server/docker-compose.yml`
-- **Prod (192.168.0.152)**: LiteLLM proxy + monitoring — `litellm/docker-compose.yml`
+- **PEA (192.168.70.144)**: All GPU servers — 3 SFW + 3 NSFW chat, each co-located with one embed server (vision on 1-2, DINOv2-visual on 3+6, text on 4-5) + 2 image — `gpu-server/docker-compose.yml`
+- **Prod (192.168.70.152)**: LiteLLM proxy + monitoring — `litellm/docker-compose.yml`
 
 ## Common Commands
 
-### GPU Server (on PEA - 192.168.0.144)
+### GPU Server (on PEA - 192.168.70.144)
 ```bash
 cd gpu-server
 docker compose up -d                    # Start all GPU servers
@@ -58,7 +58,7 @@ docker build -t local-ai-llama:latest . # Rebuild llama.cpp image
 ./scripts/download-models.sh            # Download all GGUF models
 ```
 
-### LiteLLM Proxy (on Prod - 192.168.0.152)
+### LiteLLM Proxy (on Prod - 192.168.70.152)
 ```bash
 cd litellm
 docker compose up -d                    # Start LiteLLM + PostgreSQL
@@ -82,7 +82,7 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 
 Two workflows under `.github/workflows/`:
 
-- **`gpu-build.yml` (CI)** — runs on every push/PR on GitHub-hosted runners (no secrets, no LAN). Jobs: `compose-validate` (`docker compose config` for every stack), `litellm-validate` (`litellm/validate_config.py`), `model-manifest-validate` (`render-config.py --check`), `python-lint` (ruff + `py_compile`), and a **build-only**, path-filtered `gpu-build` (llama.cpp image, no push). GitHub-hosted runners **cannot reach the 192.168.0.x LAN**, so CI never deploys.
+- **`gpu-build.yml` (CI)** — runs on every push/PR on GitHub-hosted runners (no secrets, no LAN). Jobs: `compose-validate` (`docker compose config` for every stack), `litellm-validate` (`litellm/validate_config.py`), `model-manifest-validate` (`render-config.py --check`), `python-lint` (ruff + `py_compile`), and a **build-only**, path-filtered `gpu-build` (llama.cpp image, no push). GitHub-hosted runners **cannot reach the 192.168.70.x LAN**, so CI never deploys.
 - **`deploy.yml` (CD)** — manual `workflow_dispatch` (`target`: `litellm`/`gpu-server`/`both`) on a **self-hosted runner labeled `homelab`** (registered on Prod; can SSH to PEA over the LAN). Gated by the `production` Environment. LiteLLM = `git checkout <sha>` + `docker compose up -d litellm` + health check on Prod; GPU server = SSH to PEA, regenerate env, native `docker build`, rolling `gpu-server-1..6` restart with `/health` gating.
 
 ### Changing a model or its tenancy (single source of truth)
@@ -155,7 +155,7 @@ Embed tier is **2 of each type**, co-located one-per-chat-GPU (`rebalance-embed-
 - Shelved alternative: `gpu-server/multimodal-embed/` (BiQwen2.5, document retrieval) — see change `switch-to-nomic-multimodal-embed`
 
 ### LiteLLM Config (`litellm/config.yaml`)
-- All endpoints point to PEA (192.168.0.144)
+- All endpoints point to PEA (192.168.70.144)
 - Routing: `least-busy` strategy with 2 retries
 - Rate limits: 35 RPM SFW, 34 RPM NSFW, 60 RPM vision embed (3 backends), 40 RPM text embed (3 backends)
 - `heartcode-embed-vision` → 3 deployments (`:8101-8103`, GPU 1-3); `heartcode-embed` → 3 (`:8093-8095`, GPU 4-6); `heartcode-image` → 2 (`:5100`,`:5101`, GPU 7-8); BiQwen2.5 (`:8100`) shelved
@@ -191,7 +191,7 @@ The GPU chat servers use a FastAPI wrapper around llama.cpp's `llama-server`:
 
 ## Hardware
 
-### PEA (192.168.0.144)
+### PEA (192.168.70.144)
 - **CPU**: Intel Celeron 3865U (2-core, 1.8GHz, no AVX/AVX2/BMI2)
 - **RAM**: 32GB DDR4
 - **GPUs**: 8x P104-100 (8GB VRAM, Pascal, compute 6.1)
@@ -199,6 +199,6 @@ The GPU chat servers use a FastAPI wrapper around llama.cpp's `llama-server`:
 - **Safe limits**: 35 RPM SFW, 34 RPM NSFW, 40 RPM vision embed (2), 28 RPM text embed (2), 40 RPM visual/DINOv2 (2)
 - **GPU allocation**: 1 embed server co-located per chat GPU — GPU 1-2 SFW chat + **vision-embed**, GPU 3 SFW chat + **DINOv2-visual**, GPU 4-5 NSFW chat + **text-embed**, GPU 6 NSFW chat + **DINOv2-visual**, GPU 7-8 **image** (2x). GPU 1-2 ~7.4GB, GPU 3/6 ~7.5GB (chat+DINOv2) — monitor under peak load.
 
-### Prod (192.168.0.152)
+### Prod (192.168.70.152)
 - Runs LiteLLM proxy, PostgreSQL, optional monitoring stack
 - No GPU required

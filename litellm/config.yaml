@@ -4,7 +4,7 @@ model_list:
 - model_name: heartcode-chat-sfw
   litellm_params:
     model: openai/Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf
-    api_base: http://192.168.0.144:8080/v1
+    api_base: http://192.168.70.144:8080/v1
     api_key: sk-local
     max_tokens: 512
     temperature: 0.8
@@ -14,7 +14,7 @@ model_list:
 - model_name: heartcode-chat-sfw
   litellm_params:
     model: openai/Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf
-    api_base: http://192.168.0.144:8081/v1
+    api_base: http://192.168.70.144:8081/v1
     api_key: sk-local
     max_tokens: 512
     temperature: 0.8
@@ -24,7 +24,7 @@ model_list:
 - model_name: heartcode-chat-sfw
   litellm_params:
     model: openai/Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf
-    api_base: http://192.168.0.144:8082/v1
+    api_base: http://192.168.70.144:8082/v1
     api_key: sk-local
     max_tokens: 512
     temperature: 0.8
@@ -34,7 +34,7 @@ model_list:
 - model_name: heartcode-chat-nsfw
   litellm_params:
     model: openai/Lumimaid-v0.2-8B-Q5_K_M-imat.gguf
-    api_base: http://192.168.0.144:8083/v1
+    api_base: http://192.168.70.144:8083/v1
     api_key: sk-local
     max_tokens: 512
     temperature: 0.8
@@ -44,7 +44,7 @@ model_list:
 - model_name: heartcode-chat-nsfw
   litellm_params:
     model: openai/Lumimaid-v0.2-8B-Q5_K_M-imat.gguf
-    api_base: http://192.168.0.144:8084/v1
+    api_base: http://192.168.70.144:8084/v1
     api_key: sk-local
     max_tokens: 512
     temperature: 0.8
@@ -54,7 +54,7 @@ model_list:
 - model_name: heartcode-chat-nsfw
   litellm_params:
     model: openai/Lumimaid-v0.2-8B-Q5_K_M-imat.gguf
-    api_base: http://192.168.0.144:8085/v1
+    api_base: http://192.168.70.144:8085/v1
     api_key: sk-local
     max_tokens: 512
     temperature: 0.8
@@ -64,7 +64,7 @@ model_list:
 - model_name: heartcode-embed
   litellm_params:
     model: openai/nomic-embed-text-v1.5.Q8_0.gguf
-    api_base: http://192.168.0.144:8093/v1
+    api_base: http://192.168.70.144:8093/v1
     api_key: sk-local
     extra_body: &id001
       encoding_format: float
@@ -74,7 +74,7 @@ model_list:
 - model_name: heartcode-embed
   litellm_params:
     model: openai/nomic-embed-text-v1.5.Q8_0.gguf
-    api_base: http://192.168.0.144:8094/v1
+    api_base: http://192.168.70.144:8094/v1
     api_key: sk-local
     extra_body: *id001
   model_info:
@@ -83,7 +83,7 @@ model_list:
 - model_name: heartcode-embed-vision
   litellm_params:
     model: openai/heartcode-embed-vision
-    api_base: http://192.168.0.144:8101/v1
+    api_base: http://192.168.70.144:8101/v1
     api_key: sk-local
     timeout: 60
     extra_body: &id002
@@ -94,7 +94,7 @@ model_list:
 - model_name: heartcode-embed-vision
   litellm_params:
     model: openai/heartcode-embed-vision
-    api_base: http://192.168.0.144:8102/v1
+    api_base: http://192.168.70.144:8102/v1
     api_key: sk-local
     timeout: 60
     extra_body: *id002
@@ -104,7 +104,7 @@ model_list:
 - model_name: heartcode-embed-visual
   litellm_params:
     model: openai/heartcode-embed-visual
-    api_base: http://192.168.0.144:8104/v1
+    api_base: http://192.168.70.144:8104/v1
     api_key: sk-local
     timeout: 60
     extra_body: &id003
@@ -115,7 +115,7 @@ model_list:
 - model_name: heartcode-embed-visual
   litellm_params:
     model: openai/heartcode-embed-visual
-    api_base: http://192.168.0.144:8105/v1
+    api_base: http://192.168.70.144:8105/v1
     api_key: sk-local
     timeout: 60
     extra_body: *id003
@@ -125,7 +125,7 @@ model_list:
 - model_name: heartcode-image
   litellm_params:
     model: openai/heartcode-image
-    api_base: http://192.168.0.144:5100/v1
+    api_base: http://192.168.70.144:5100/v1
     api_key: sk-local
   model_info:
     id: heartcode-image1
@@ -133,7 +133,7 @@ model_list:
 - model_name: heartcode-stt
   litellm_params:
     model: openai/guillaumekln/faster-whisper-small.en
-    api_base: http://192.168.0.144:8200/v1
+    api_base: http://192.168.70.144:8200/v1
     api_key: sk-local
     timeout: 180
   model_info:
@@ -142,7 +142,7 @@ model_list:
 - model_name: heartcode-tts
   litellm_params:
     model: openai/kokoro
-    api_base: http://192.168.0.144:8201/v1
+    api_base: http://192.168.70.144:8201/v1
     api_key: os.environ/SPEECH_DIRECT_API_KEY
     timeout: 180
   model_info:
@@ -151,7 +151,7 @@ model_list:
 - model_name: heartcode-chat-qwen3-canary
   litellm_params:
     model: openai/Qwen3-8B-Q4_K_M.gguf
-    api_base: http://192.168.0.144:18085/v1
+    api_base: http://192.168.70.144:18085/v1
     api_key: sk-local
     max_tokens: 512
     temperature: 0.7

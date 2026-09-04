@@ -26,7 +26,7 @@
 
 #### Scenario: Backend api_base is derived from tenancy
 - **WHEN** a model entry declares a deployment on a given port
-- **THEN** the generated `model_list` routes that `api_name` to `http://192.168.0.144:<port>`
+- **THEN** the generated `model_list` routes that `api_name` to `http://192.168.70.144:<port>`
 
 ### Requirement: The manifest is schema-validated
 CI SHALL reject a `models.yaml` that violates structural rules: `kind` outside the allowed set, a GPU index outside 1-8, colliding ports across deployments, a duplicate `api_name`, or a chat deployment whose `source` does not resolve to a downloadable model.

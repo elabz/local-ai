@@ -8,7 +8,7 @@
 
 ## Private speech topology
 
-- Pea is reached as `boss@192.168.0.144`; HeartCode development containers run locally.
+- Pea is reached as `boss@192.168.70.144`; HeartCode development containers run locally.
 - The authenticated speech gateway is Pea port `8201`; the internal metering/control boundary is port `8200`.
 - `speech-tts` is Kokoro. Stable custom IDs use `custom-<name>`; Kokoro provider files use `cv_custom_<name>` because hyphens are parsed as blend syntax.
 - Custom voice artifacts, registries, SBOMs, mappings, and attestations are private operational data. Do not print credentials or full attestations in command output.

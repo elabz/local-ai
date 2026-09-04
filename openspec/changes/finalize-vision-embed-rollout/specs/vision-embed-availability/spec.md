@@ -2,7 +2,7 @@
 
 ### Requirement: heartcode-embed-vision served through the prod proxy
 
-After the cutover, the prod LiteLLM proxy (192.168.0.152) SHALL serve `heartcode-embed-vision`: an authenticated `/v1/embeddings` request with text or an image SHALL be routed to the PEA vision-embed service and return a 768-d vector.
+After the cutover, the prod LiteLLM proxy (192.168.70.152) SHALL serve `heartcode-embed-vision`: an authenticated `/v1/embeddings` request with text or an image SHALL be routed to the PEA vision-embed service and return a 768-d vector.
 
 #### Scenario: Text embedding through the proxy
 - **WHEN** a client calls the prod proxy `/v1/embeddings` with `model: heartcode-embed-vision` and a text input

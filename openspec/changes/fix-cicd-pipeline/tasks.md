@@ -13,7 +13,7 @@
 
 - [x] 2.1 Define `gpu-server/models.yaml`: per served model — `api_name`, `aliases`, `kind` (`chat`/`text-embed`/`vision-embed`/`visual-embed`/`image`), `deployments` (GPU index + port), `source`, routing knobs (`rate_limit`, `params`). Populated to describe the **current** topology exactly (6 models, 14 deployments).
 - [x] 2.2 Extract hand-maintained LiteLLM router/general/litellm settings into `litellm/config.base.yaml` (everything except `model_list` + the generated `model_rate_limits`/`model_group_alias`).
-- [x] 2.3 Write `gpu-server/scripts/render-config.py` (stdlib + `PyYAML`, deterministic): renders **`gpu-server/models.generated.env`** (refinement: `.env` holds secrets + is gitignored, so the generator owns a separate secret-free file), `litellm/config.yaml` (base + derived `model_list`, api_base `http://192.168.0.144:<port>`), and `models.download.tsv`. `--check` mode renders + diffs, non-zero on drift.
+- [x] 2.3 Write `gpu-server/scripts/render-config.py` (stdlib + `PyYAML`, deterministic): renders **`gpu-server/models.generated.env`** (refinement: `.env` holds secrets + is gitignored, so the generator owns a separate secret-free file), `litellm/config.yaml` (base + derived `model_list`, api_base `http://192.168.70.144:<port>`), and `models.download.tsv`. `--check` mode renders + diffs, non-zero on drift.
 - [x] 2.4 Zero-diff cutover: regenerated `litellm/config.yaml` is **semantically identical** to the original (14 deployments, rate limits, aliases, all settings verified equal — only formatting/comments differ). `models.generated.env` matches the live `.env` except the **vestigial `GPU_7`** (no service consumes it — intended drop). Generated files committed.
 - [x] 2.5 Schema validation in the generator: `kind` in allowed set, GPU index 1-8, no port collisions, unique `api_name`, chat deployments resolve to a gguf source (+ require `model_type`).
 - [x] 2.6 Add `model-manifest-validate` CI job: `render-config.py --check` (schema-validate then drift-check; fails the build). Negative-tested: a hand-edit to `config.yaml` fails the gate with a diff. `litellm-validate` retained for `config-local.yaml` (hand-maintained).
@@ -21,7 +21,7 @@
 
 ## 3. CD — self-hosted deploy workflow (opt-in)
 
-- [ ] 3.1 Register one self-hosted runner on Prod (`192.168.0.152`), label `homelab`; confirm it can SSH to PEA (`192.168.0.144`) over the LAN. _(USER INFRA — needs access to the Prod box; documented in `docs/pea-server-setup.md`.)_
+- [ ] 3.1 Register one self-hosted runner on Prod (`192.168.70.152`), label `homelab`; confirm it can SSH to PEA (`192.168.70.144`) over the LAN. _(USER INFRA — needs access to the Prod box; documented in `docs/pea-server-setup.md`.)_
 - [ ] 3.2 Create the `production` GitHub Environment with required reviewer(s); add repo variables `DEPLOY_DIR`/`LITELLM_HEALTH_URL` and secrets `GPU_SERVER_HOST/USER/SSH_KEY`. _(USER INFRA — GitHub repo settings.)_
 - [x] 3.3 Added `.github/workflows/deploy.yml` on `runs-on: [self-hosted, homelab]`, `workflow_dispatch` with a `target` input (`litellm` | `gpu-server` | `both`); manual-only trigger so fork PRs can never run it, `production` environment gate.
 - [x] 3.4 LiteLLM deploy job: validates (`render-config.py --check` + `validate_config.py`), then on Prod `git checkout <sha>` → `docker compose up -d litellm` → polls `LITELLM_HEALTH_URL` (fails if unhealthy within timeout).

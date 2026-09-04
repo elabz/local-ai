@@ -67,7 +67,7 @@ samples, attestation bodies, and unrestricted inspection output.
 - Persistent content-free watch: active at 60-second intervals
 - Initial watch state: worker running, checkpoint/result/artifact absent, TTS healthy
 - Safe reconnect command:
-  `ssh boss@192.168.0.144 /home/boss/local-ai/gpu-server/custom_voice/status_build_watch.sh bench-speaker-001-dima-v2-seed-137-rerun-1`
+  `ssh boss@192.168.70.144 /home/boss/local-ai/gpu-server/custom_voice/status_build_watch.sh bench-speaker-001-dima-v2-seed-137-rerun-1`
 
 ## Terminal construction and strict qualification — 2026-07-22
 

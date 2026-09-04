@@ -15,7 +15,7 @@
 ## 3. Integration
 
 - [x] 3.1 Add the service to `gpu-server/docker-compose.yml` on a GPU (decide coexist vs replace BiQwen2.5 on GPU 7); set healthcheck + mem/GPU limits — `vision-embed` (`pea-embed-vision-1`) on `GPU-f417c539`, port 8101, healthcheck, 4096m; **replaces** BiQwen2.5 (multimodal-embed shelved). prometheus + gpu-watchdog repointed to `pea-embed-vision-1`.
-- [x] 3.2 Activate the `heartcode-embed-vision` entry in `litellm/config.yaml` (uncomment, set `api_base`/port) — active deployment → `192.168.0.144:8101/v1`, `mode: embedding`, rpm 40; `heartcode-embed` (BiQwen2.5) marked shelved. _Repo config done; prod LiteLLM restart (192.168.0.152) pending._
+- [x] 3.2 Activate the `heartcode-embed-vision` entry in `litellm/config.yaml` (uncomment, set `api_base`/port) — active deployment → `192.168.70.144:8101/v1`, `mode: embedding`, rpm 40; `heartcode-embed` (BiQwen2.5) marked shelved. _Repo config done; prod LiteLLM restart (192.168.70.152) pending._
 - [x] 3.3 Verify text + image requests return identical-dimension shared-space vectors — verified **directly on the service** on PEA (`GPU-f417c539`, fp32): loads on cuda, text dim == image dim == **768**, L2-normalized, cross-modal ordering sane (red-img↔red-text > blue-text), ~1.1 GB VRAM. _Through-the-proxy round-trip still pending LiteLLM activation (3.2)._
 
 ## 4. Docs & validation

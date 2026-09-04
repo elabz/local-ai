@@ -1,12 +1,12 @@
 ## ADDED Requirements
 
 ### Requirement: CI runs on GitHub-hosted runners without secrets or LAN access
-The continuous-integration workflow SHALL run entirely on GitHub-hosted runners (`ubuntu-latest`) and MUST NOT require repository secrets, GHCR push permissions, or network access to the private LAN (`192.168.0.0/24`). A healthy repository state MUST produce a passing run.
+The continuous-integration workflow SHALL run entirely on GitHub-hosted runners (`ubuntu-latest`) and MUST NOT require repository secrets, GHCR push permissions, or network access to the private LAN (`192.168.70.0/24`). A healthy repository state MUST produce a passing run.
 
 #### Scenario: Push with a healthy repo passes
 - **WHEN** a commit is pushed to `main` (or a PR is opened) touching tracked paths
 - **THEN** all CI validation jobs complete successfully
-- **AND** no job attempts to push an image to GHCR or SSH to a `192.168.0.x` host
+- **AND** no job attempts to push an image to GHCR or SSH to a `192.168.70.x` host
 
 #### Scenario: No package-permission failure
 - **WHEN** the CI workflow runs

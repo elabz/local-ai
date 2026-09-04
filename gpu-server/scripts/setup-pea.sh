@@ -1,6 +1,6 @@
 #!/bin/bash
 # HeartCode PEA Server - Full Deployment Script
-# Run this on pea (192.168.0.144)
+# Run this on pea (192.168.70.144)
 #
 # Usage:
 #   ./setup-pea.sh              # Full setup
@@ -144,7 +144,7 @@ echo "GPU Memory Usage:"
 nvidia-smi --query-gpu=index,memory.used,memory.total --format=csv,noheader 2>/dev/null || echo "nvidia-smi not available"
 echo ""
 echo "Next steps:"
-echo "  1. Test chat:  curl http://192.168.0.144:8080/v1/chat/completions -d '{\"model\":\"model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"max_tokens\":50}'"
-echo "  2. Test embed: curl http://192.168.0.144:8090/v1/embeddings -d '{\"model\":\"model\",\"input\":\"test\"}'"
-echo "  3. Test image: curl http://192.168.0.144:5100/v1/images/generations -d '{\"prompt\":\"sunset\",\"model\":\"heartcode-image\",\"size\":\"512x512\"}'"
+echo "  1. Test chat:  curl http://192.168.70.144:8080/v1/chat/completions -d '{\"model\":\"model\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}],\"max_tokens\":50}'"
+echo "  2. Test embed: curl http://192.168.70.144:8090/v1/embeddings -d '{\"model\":\"model\",\"input\":\"test\"}'"
+echo "  3. Test image: curl http://192.168.70.144:5100/v1/images/generations -d '{\"prompt\":\"sunset\",\"model\":\"heartcode-image\",\"size\":\"512x512\"}'"
 echo "  4. Start LiteLLM proxy locally to test routing"

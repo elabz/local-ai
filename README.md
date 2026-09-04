@@ -6,7 +6,7 @@ Shared GPU inference infrastructure for local network projects. Provides OpenAI-
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  PEA Server (192.168.0.144) - gpu-server/                    │
+│  PEA Server (192.168.70.144) - gpu-server/                    │
 │                                                              │
 │  GPU 1-3: llama.cpp SFW chat     (ports 8080-8082)          │
 │  GPU 4-6: llama.cpp NSFW chat    (ports 8083-8085)          │
@@ -17,7 +17,7 @@ Shared GPU inference infrastructure for local network projects. Provides OpenAI-
 └───────────────────────┬──────────────────────────────────────┘
                         │ LAN
 ┌───────────────────────▼──────────────────────────────────────┐
-│  Prod Server (192.168.0.152) - litellm/                      │
+│  Prod Server (192.168.70.152) - litellm/                      │
 │                                                              │
 │  LiteLLM Proxy      (port 4000)  ──→ PEA inference APIs     │
 │  PostgreSQL          (port 5432)  (API key storage)          │
@@ -26,20 +26,20 @@ Shared GPU inference infrastructure for local network projects. Provides OpenAI-
 └───────────────────────┬──────────────────────────────────────┘
                         │ LAN
 │  Clients: Any project on the network                         │
-│  → http://192.168.0.152:4000/v1/chat/completions             │
-│  → http://192.168.0.152:4000/v1/embeddings                   │
-│  → http://192.168.0.152:4000/v1/images/generations           │
-│  → http://192.168.0.152:4000/v1/audio/*                      │
+│  → http://192.168.70.152:4000/v1/chat/completions             │
+│  → http://192.168.70.152:4000/v1/embeddings                   │
+│  → http://192.168.70.152:4000/v1/images/generations           │
+│  → http://192.168.70.152:4000/v1/audio/*                      │
 ```
 
 ## Components
 
 | Directory | Description | Deployed On |
 |-----------|-------------|-------------|
-| `gpu-server/` | llama.cpp + LocalAI inference servers (8x GPU) | PEA (192.168.0.144) |
-| `litellm/` | LiteLLM proxy + PostgreSQL for API keys | Prod (192.168.0.152) |
-| `monitoring/` | Prometheus + Grafana dashboards | Prod (192.168.0.152) |
-| `langfuse/` | LLM observability and tracing | Prod (192.168.0.152) |
+| `gpu-server/` | llama.cpp + LocalAI inference servers (8x GPU) | PEA (192.168.70.144) |
+| `litellm/` | LiteLLM proxy + PostgreSQL for API keys | Prod (192.168.70.152) |
+| `monitoring/` | Prometheus + Grafana dashboards | Prod (192.168.70.152) |
+| `langfuse/` | LLM observability and tracing | Prod (192.168.70.152) |
 | `load-tests/` | k6 stress tests and analysis tools | Dev machine |
 
 ## Models
@@ -80,7 +80,7 @@ docker compose up -d    # Start LiteLLM + PostgreSQL
 ### 3. Generate an API Key
 
 ```bash
-curl -X POST http://192.168.0.152:4000/key/generate \
+curl -X POST http://192.168.70.152:4000/key/generate \
   -H "Authorization: Bearer $LITELLM_MASTER_KEY" \
   -H "Content-Type: application/json" \
   -d '{"models": ["heartcode-chat-sfw", "heartcode-chat-nsfw", "heartcode-embed", "heartcode-image", "heartcode-stt", "heartcode-tts"],
@@ -91,7 +91,7 @@ curl -X POST http://192.168.0.152:4000/key/generate \
 
 ```bash
 # Chat completion (SFW)
-curl http://192.168.0.152:4000/v1/chat/completions \
+curl http://192.168.70.152:4000/v1/chat/completions \
   -H "Authorization: Bearer sk-your-key" \
   -H "Content-Type: application/json" \
   -d '{"model": "heartcode-chat-sfw",
@@ -99,7 +99,7 @@ curl http://192.168.0.152:4000/v1/chat/completions \
        "max_tokens": 256}'
 
 # Chat completion (NSFW)
-curl http://192.168.0.152:4000/v1/chat/completions \
+curl http://192.168.70.152:4000/v1/chat/completions \
   -H "Authorization: Bearer sk-your-key" \
   -H "Content-Type: application/json" \
   -d '{"model": "heartcode-chat-nsfw",
@@ -107,14 +107,14 @@ curl http://192.168.0.152:4000/v1/chat/completions \
        "max_tokens": 256}'
 
 # Embeddings
-curl http://192.168.0.152:4000/v1/embeddings \
+curl http://192.168.70.152:4000/v1/embeddings \
   -H "Authorization: Bearer sk-your-key" \
   -H "Content-Type: application/json" \
   -d '{"model": "heartcode-embed",
        "input": "Text to embed"}'
 
 # Image generation (~48s per 512x512 image)
-curl http://192.168.0.152:4000/v1/images/generations \
+curl http://192.168.70.152:4000/v1/images/generations \
   -H "Authorization: Bearer sk-your-key" \
   -H "Content-Type: application/json" \
   -d '{"model": "heartcode-image",
@@ -157,25 +157,25 @@ curl -X POST http://localhost:4000/key/delete \
 
 ## Hardware
 
-### PEA (192.168.0.144) - GPU Server
+### PEA (192.168.70.144) - GPU Server
 - **CPU**: Intel Celeron 3865U (2-core, no AVX)
 - **RAM**: 32GB DDR4
 - **GPUs**: 8x NVIDIA P104-100 (8GB VRAM, Pascal, compute 6.1)
 - **Power**: 120W limit per GPU via `nvidia-power-limit.service`
 
-### Prod (192.168.0.152) - Proxy Server
+### Prod (192.168.70.152) - Proxy Server
 - Runs LiteLLM proxy, PostgreSQL, monitoring stack
 - No GPU required
 
 ## Monitoring
 
 ```bash
-# Prometheus (on PEA): http://192.168.0.144:9099
+# Prometheus (on PEA): http://192.168.70.144:9099
 # Start monitoring stack on Prod:
 cd monitoring
 docker compose up -d
-# Grafana: http://192.168.0.152:3001
-# Prometheus: http://192.168.0.152:9090
+# Grafana: http://192.168.70.152:3001
+# Prometheus: http://192.168.70.152:9090
 ```
 
 ## Load Testing

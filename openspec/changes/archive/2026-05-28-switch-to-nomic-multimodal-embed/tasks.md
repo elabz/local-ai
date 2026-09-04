@@ -36,9 +36,9 @@
 
 ## 6. LiteLLM cutover
 
-- [x] 6.1 Replace the 7 `heartcode-embed` deployments in `litellm/config.yaml` with the new service endpoint(s), keeping `model_name: heartcode-embed` and `mode: embedding` — single deployment → `192.168.0.144:8100/v1`, `mode: embedding`, `timeout: 120`.
+- [x] 6.1 Replace the 7 `heartcode-embed` deployments in `litellm/config.yaml` with the new service endpoint(s), keeping `model_name: heartcode-embed` and `mode: embedding` — single deployment → `192.168.70.144:8100/v1`, `mode: embedding`, `timeout: 120`.
 - [x] 6.2 Re-tune `model_rate_limits`, parallelism, and embedding `request_timeout` for the heavier/lower-throughput profile — added `heartcode-embed` rpm 20; NSFW rpm 45→34 (3 GPUs); `global_max_parallel_requests` 14→13; per-deployment `timeout: 120`.
-- [ ] 6.3 Restart LiteLLM and validate `heartcode-embed` text + image requests through the proxy — **on Prod (elm/192.168.0.152)**; not in the PEA authorization.
+- [ ] 6.3 Restart LiteLLM and validate `heartcode-embed` text + image requests through the proxy — **on Prod (elm/192.168.70.152)**; not in the PEA authorization.
 - [ ] 6.4 Confirm rollback path works: reverting config to the old 7 deployments restores text embeddings — **on Prod**; `git checkout HEAD~1 -- litellm/config.yaml`, embed-1..6 still up.
 
 ## 7. Decommission & docs

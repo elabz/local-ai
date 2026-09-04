@@ -1,6 +1,6 @@
 # PEA GPU Server Setup Guide
 
-Complete instructions for setting up a GPU inference server from scratch using Pascal-architecture NVIDIA GPUs. This guide covers the PEA server (192.168.0.144) with 8x P104-100 GPUs, but can be adapted for similar hardware.
+Complete instructions for setting up a GPU inference server from scratch using Pascal-architecture NVIDIA GPUs. This guide covers the PEA server (192.168.70.144) with 8x P104-100 GPUs, but can be adapted for similar hardware.
 
 ## Prerequisites
 
@@ -326,7 +326,7 @@ accounted buffered TTS is available through LiteLLM as `heartcode-tts`.
 
 ## Step 8: LiteLLM Proxy Setup (Prod Server)
 
-The LiteLLM proxy runs on a separate server (192.168.0.152) and load-balances requests across GPUs.
+The LiteLLM proxy runs on a separate server (192.168.70.152) and load-balances requests across GPUs.
 
 ### 8.1 On the Prod Server
 
@@ -564,9 +564,9 @@ Note: changing a GPU's *service kind* (e.g. chat → embed) still requires a man
 CI (`.github/workflows/gpu-build.yml`) runs on GitHub-hosted runners and only
 **validates** (compose config, LiteLLM config, model manifest drift, Python lint,
 build-only image). It cannot deploy — GitHub-hosted runners cannot reach the
-192.168.0.x LAN. Deploys run from `deploy.yml` on a **self-hosted runner**.
+192.168.70.x LAN. Deploys run from `deploy.yml` on a **self-hosted runner**.
 
-### One-time: register the self-hosted runner (on Prod, 192.168.0.152)
+### One-time: register the self-hosted runner (on Prod, 192.168.70.152)
 Prod has no GPU contention and can SSH to PEA over the LAN, so host the runner there.
 ```bash
 # GitHub → repo → Settings → Actions → Runners → New self-hosted runner (Linux x64)
@@ -583,7 +583,7 @@ Then in GitHub repo settings:
 - **Secrets**: `GPU_SERVER_HOST`, `GPU_SERVER_USER`, `GPU_SERVER_SSH_KEY` (PEA SSH; the
   runner uses these to reach PEA over the LAN).
 
-Confirm the runner can reach PEA: `ssh <GPU_SERVER_USER>@192.168.0.144 docker ps`.
+Confirm the runner can reach PEA: `ssh <GPU_SERVER_USER>@192.168.70.144 docker ps`.
 
 ### Deploying
 GitHub → Actions → **Deploy** → *Run workflow* → pick `target` (`litellm` /

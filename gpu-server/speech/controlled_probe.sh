@@ -2,10 +2,10 @@
 set -euo pipefail
 
 : "${AUDIO_FILE:?set AUDIO_FILE to a non-sensitive WAV used only for this probe}"
-: "${LITELLM_URL:?set LITELLM_URL, for example http://192.168.0.152:4000}"
+: "${LITELLM_URL:?set LITELLM_URL, for example http://192.168.70.152:4000}"
 : "${LITELLM_API_KEY:?set LITELLM_API_KEY}"
 : "${LITELLM_ADMIN_KEY:?set LITELLM_ADMIN_KEY for the accounting verification API}"
-: "${SPEECH_DIRECT_URL:?set SPEECH_DIRECT_URL, for example http://192.168.0.144:8201}"
+: "${SPEECH_DIRECT_URL:?set SPEECH_DIRECT_URL, for example http://192.168.70.144:8201}"
 : "${SPEECH_DIRECT_API_KEY:?set SPEECH_DIRECT_API_KEY}"
 PROMETHEUS_URL=${PROMETHEUS_URL:-http://localhost:9099}
 EXPECTED_GPU_UUID=${EXPECTED_GPU_UUID:-GPU-f417c539-26db-94e9-4c8f-c5a775291988}

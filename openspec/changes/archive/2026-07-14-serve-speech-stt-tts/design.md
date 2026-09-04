@@ -49,9 +49,9 @@ Committed model: `guillaumekln/faster-whisper-small.en` with CTranslate2 `int8`.
 
 ## Endpoints, streaming, and accounting
 
-- Accounted STT: `POST http://192.168.0.152:4000/v1/audio/transcriptions`, model `heartcode-stt`.
-- Accounted non-streaming TTS: `POST http://192.168.0.152:4000/v1/audio/speech`, model `heartcode-tts`.
-- Low-latency streaming TTS: `POST http://192.168.0.144:8201/v1/audio/speech`, model `kokoro`, using `Authorization: Bearer $SPEECH_DIRECT_API_KEY`.
+- Accounted STT: `POST http://192.168.70.152:4000/v1/audio/transcriptions`, model `heartcode-stt`.
+- Accounted non-streaming TTS: `POST http://192.168.70.152:4000/v1/audio/speech`, model `heartcode-tts`.
+- Low-latency streaming TTS: `POST http://192.168.70.144:8201/v1/audio/speech`, model `kokoro`, using `Authorization: Bearer $SPEECH_DIRECT_API_KEY`.
 - Direct Speaches/Kokoro health inside PEA: `:8200/health` and the internal `speech-tts:8880/health`; Prometheus exposes both as `probe_success{job="speech-health"}`.
 
 LiteLLM successfully proxies both audio endpoints and writes virtual-key accounting rows (two rows verified with a short-lived speech-only key). It buffers TTS bodies: a long direct request delivered first bytes in 8 ms and completed in 10.75 s, while LiteLLM delivered first bytes at 10.45 s and completed at 10.45 s. Therefore interactive streaming uses the authenticated Caddy gateway on `:8201` with buffering disabled. Those direct calls are not LiteLLM spend rows; they are separated by the dedicated key and recorded in the gateway's structured access log. Requests that require LiteLLM virtual-key accounting use the proxy path and accept full-body buffering.

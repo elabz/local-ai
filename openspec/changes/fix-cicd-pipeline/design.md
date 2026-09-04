@@ -4,12 +4,12 @@
 
 - Build of `gpu-server/Dockerfile` (llama.cpp + CUDA for Pascal) **succeeds** in ~13 min.
 - Push to `ghcr.io/elabz/local-ai/gpu-server` **fails**: `denied: installation not allowed to Create organization package` — the workflow declares no `permissions:`, so `GITHUB_TOKEN` lacks `packages: write`.
-- The `Deploy to GPU servers` step never runs, and could never succeed: it `appleboy/ssh-action`s to `192.168.0.144`, a **private LAN address GitHub-hosted runners cannot route to**.
+- The `Deploy to GPU servers` step never runs, and could never succeed: it `appleboy/ssh-action`s to `192.168.70.144`, a **private LAN address GitHub-hosted runners cannot route to**.
 
 Two structural mismatches make the current design unsalvageable as-is:
 
 1. **Deployment is build-on-host, not registry-pull.** `gpu-server/docker-compose.yml` runs `image: local-ai-llama:latest` (built on PEA via `docker build`), plus `local-ai-vision-embed:latest` and `local-ai-dino-embed:latest`. The GHCR image the workflow pushes/pulls is never referenced by compose.
-2. **Targets live on a private LAN.** PEA (`192.168.0.144`) and Prod (`192.168.0.152`) are only reachable from inside the network. A cloud runner cannot deploy to them.
+2. **Targets live on a private LAN.** PEA (`192.168.70.144`) and Prod (`192.168.70.152`) are only reachable from inside the network. A cloud runner cannot deploy to them.
 
 Constraints from the hardware/topology (see `CLAUDE.md`, `[[pea-p104-ml-constraints]]`): PEA is a no-AVX Celeron with 8× Pascal P104-100; the llama.cpp image needs the no-AVX/`compute 6.1` build flags and is best built natively on PEA. Prod has no GPU and spare CPU.
 
@@ -47,9 +47,9 @@ Keep a `gpu-build` job that runs `docker/build-push-action` with `push: false`, 
 *Why:* The llama.cpp image builds from `main` and can break on upstream changes; a build-only check catches that before it reaches PEA, without needing GHCR permissions or being tied to the (unused) registry flow. *Alternative considered:* push to GHCR with `packages: write` and switch compose to pull — rejected (registry auth on PEA, native no-AVX build is simplest on-host, larger blast radius). Reintroducible later if the model changes.
 
 ### Decision 3 — CD runs on a self-hosted runner on the LAN
-Add `deploy.yml` with `runs-on: [self-hosted, homelab]`. Register **one** self-hosted runner on **Prod (`192.168.0.152`)** — it has no GPU contention and can SSH to PEA over the LAN. The deploy job then reaches both hosts: LiteLLM locally on Prod, GPU servers via LAN SSH to PEA (reuse `appleboy/ssh-action`, now from inside the network).
+Add `deploy.yml` with `runs-on: [self-hosted, homelab]`. Register **one** self-hosted runner on **Prod (`192.168.70.152`)** — it has no GPU contention and can SSH to PEA over the LAN. The deploy job then reaches both hosts: LiteLLM locally on Prod, GPU servers via LAN SSH to PEA (reuse `appleboy/ssh-action`, now from inside the network).
 
-*Why:* A self-hosted runner is the only mechanism that can route to `192.168.0.x`. One runner + LAN-internal SSH covers both hosts with minimal infra. *Alternatives considered:* (a) Tailscale/WireGuard from a cloud runner — works, but adds a tunnel + auth-key secret and keeps builds off-host; deferred. (b) Pull-based (watchtower / cron `git pull`) — rejected: no gating, no manual control, no health-gated rollout.
+*Why:* A self-hosted runner is the only mechanism that can route to `192.168.70.x`. One runner + LAN-internal SSH covers both hosts with minimal infra. *Alternatives considered:* (a) Tailscale/WireGuard from a cloud runner — works, but adds a tunnel + auth-key secret and keeps builds off-host; deferred. (b) Pull-based (watchtower / cron `git pull`) — rejected: no gating, no manual control, no health-gated rollout.
 
 ### Decision 4 — Deploy triggers are explicit and gated
 `deploy.yml` triggers on `workflow_dispatch` with an input choosing target (`litellm` | `gpu-server` | `both`). Optionally a `push` trigger on `litellm/**` to main for hands-off config rollout — but default to manual-first. Guard self-hosted jobs so they never run on fork PRs (`if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'`), and use a GitHub **Environment** (`production`) with required reviewers for an approval gate.
@@ -68,7 +68,7 @@ Bump `actions/checkout` and `docker/*` actions to Node 24-compatible versions (s
 Introduce `gpu-server/models.yaml`: a list of served models, each with `api_name` (+ `aliases`), `kind` (`chat` | `text-embed` | `vision-embed` | `visual-embed` | `image`), `deployments` (slot/GPU index + port for each backend instance), `source` (GGUF filename or HF repo for the downloader), and routing knobs (`rpm`, etc.). A generator `gpu-server/scripts/render-config.py` reads it and renders three artifacts:
 
 1. **`gpu-server/models.generated.env`** — the `GPU_N_MODEL_PATH/TYPE/NAME` values the chat services consume (compose.yml:116-118), so chat model swaps need no compose edit. (Refinement during apply: the existing `gpu-server/.env` is gitignored and holds **secrets** (`LITELLM_MASTER_KEY`, Langfuse keys), so the generator owns a **separate secret-free file**, committed + drift-checked; secrets stay in the hand-maintained `.env`. Deploy loads both: `docker compose --env-file .env --env-file models.generated.env up -d`.)
-2. **`litellm/config.yaml`** — by merging hand-maintained `litellm/config.base.yaml` (router_settings, general_settings, litellm_settings) with a manifest-derived `model_list` (api_base per backend `http://192.168.0.144:<port>`, aliases, rate limits).
+2. **`litellm/config.yaml`** — by merging hand-maintained `litellm/config.base.yaml` (router_settings, general_settings, litellm_settings) with a manifest-derived `model_list` (api_base per backend `http://192.168.70.144:<port>`, aliases, rate limits).
 3. **The download list** consumed by `scripts/download-models.sh` (GGUF filenames / HF repos).
 
 *Why split, not full-generation:* the parameterized chat env and routing are repetitive and sync-prone — ideal to generate. Compose *structure* (per-kind images, `command:` blocks, GPU UUIDs, `deploy.resources`) is not, so it stays hand-maintained (see Non-Goals). Merging a `config.base.yaml` keeps router/rate-limit knobs hand-editable while models come from the manifest. *Alternative considered:* a thin "edit `.env` + checklist" approach with no generator — rejected (user chose manifest+generator); it leaves the download list and LiteLLM routing as separate manual steps, which is exactly the drift we're removing.

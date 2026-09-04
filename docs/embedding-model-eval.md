@@ -82,7 +82,7 @@ Also record, per model, on a P104-100 in **fp32**:
 Two ways to get embeddings for the candidates — pick per model:
 
 - **Already-served model** (`nomic-embed-vision-v1.5`): hit the live endpoint
-  `POST http://192.168.0.144:8101/v1/embeddings` (text strings or `{"image": "<data-uri>"}`),
+  `POST http://192.168.70.144:8101/v1/embeddings` (text strings or `{"image": "<data-uri>"}`),
   exactly like production. No extra setup.
 - **A candidate not yet deployed** (`jina-clip-v2`, `siglip2`): either
   - load it locally on a P104-100 in a throwaway container (transformers, fp32 — see each

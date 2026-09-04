@@ -1,4 +1,4 @@
-## 1. Prod LiteLLM cutover (ssh elm / 192.168.0.152)
+## 1. Prod LiteLLM cutover (ssh elm / 192.168.70.152)
 
 - [x] 1.1 Reconcile `heartcode-embed` (merged config pointed it at the shelved `:8100`): **restore-legacy** → 4 text-embed backends (`:8090-8093`, per "4 text-embed servers"). Also removed the dead `heartcode-chat-nsfw` `:8086` deployment (pea-gpu-7 was removed) and fixed the NSFW header (3 GPUs); updated `CLAUDE.md`. All routed `api_base`s now map to live backends.
 - [x] 1.2 `ssh elm`: `git pull origin main` — prod at merge commit `f3b15ba` (config is repo-mounted at `./config.yaml`)
