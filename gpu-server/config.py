@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     llama_server_host: str = Field(default="127.0.0.1")
     llama_server_port: int = Field(default=8081)
     extra_args: str = Field(default="")  # Extra llama-server args, e.g. "--jinja"
+    # Pin the chat template instead of trusting the one embedded in the GGUF.
+    # Set from models.yaml via GPU_N_CHAT_TEMPLATE (see chat-templates/).
+    # Empty = use the GGUF's own template, which is the historical behaviour.
+    chat_template_file: str = Field(default="")
 
     # Inference defaults
     default_temperature: float = Field(default=0.8)

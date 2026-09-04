@@ -1,8 +1,10 @@
 """API routes for GPU server."""
 
+import asyncio
 import logging
+import os
 import time
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import httpx
 
@@ -28,7 +30,13 @@ router = APIRouter()
 # Request/Response models
 class Message(BaseModel):
     role: str
-    content: str
+    content: Optional[str] = None
+    tool_calls: Optional[List[dict[str, Any]]] = None
+    tool_call_id: Optional[str] = None
+    name: Optional[str] = None
+
+    def as_openai_dict(self) -> dict[str, Any]:
+        return self.model_dump(exclude_none=True)
 
 
 class CompletionRequest(BaseModel):
@@ -65,6 +73,10 @@ class ChatCompletionRequest(BaseModel):
     xtc_probability: Optional[float] = None
     stream: bool = False
     model: Optional[str] = None  # Ignored, for OpenAI compatibility
+    response_format: Optional[dict[str, Any]] = None
+    tools: Optional[List[dict[str, Any]]] = None
+    tool_choice: Optional[Any] = None
+    parallel_tool_calls: Optional[bool] = None
 
 
 class TokenizeRequest(BaseModel):
@@ -78,9 +90,10 @@ async def health_check(request: Request):
     try:
         llama_client = request.app.state.llama_client
         availability = getattr(request.app.state, "backend_availability", None)
+        snapshot = None
         if availability is not None:
             snapshot = availability.snapshot()
-            if snapshot.state != "ready":
+            if snapshot.state not in {"ready", "busy"}:
                 raise HTTPException(
                     status_code=503,
                     detail={"code": "BACKEND_NOT_READY", "state": snapshot.state, "reason": snapshot.reason},
@@ -88,6 +101,17 @@ async def health_check(request: Request):
         readiness = getattr(request.app.state, "gpu_readiness", None)
         if readiness is not None and not readiness.ready:
             raise HTTPException(status_code=503, detail={"code": "GPU_UNAVAILABLE", "reason": readiness.snapshot().reason})
+        # A live request is positive liveness evidence. Do not make LiteLLM
+        # withdraw the only canary deployment merely because its one inference
+        # slot is occupied; the watchdog separately handles genuinely stuck work.
+        if snapshot is not None and snapshot.state == "busy":
+            return {
+                "status": "healthy",
+                "server_id": settings.server_id,
+                "llama_status": "busy",
+                "backend_state": snapshot.state,
+                "backend_reason": snapshot.reason,
+            }
         health = await llama_client.health_check()
         llama_status = health.get("status")
 
@@ -128,15 +152,26 @@ def require_gpu_ready(request: Request) -> None:
         raise HTTPException(status_code=503, detail={"code": "GPU_UNAVAILABLE", "reason": error.reason}) from None
 
 
-def begin_inference(request: Request) -> None:
+def _admission_wait_seconds() -> float:
+    try:
+        return max(0.0, float(os.getenv("ADMISSION_WAIT_SECONDS", "0")))
+    except ValueError:
+        return 0.0
+
+
+async def begin_inference(request: Request) -> None:
     availability = getattr(request.app.state, "backend_availability", None)
     if availability is not None:
-        if not availability.begin_request():
-            inference_requests_total.labels(endpoint="admission", status="rejected").inc()
-            raise HTTPException(
-                status_code=503,
-                detail={"code": "BACKEND_BUSY", "reason": "capacity_exhausted"},
-            )
+        deadline = asyncio.get_running_loop().time() + _admission_wait_seconds()
+        while not availability.begin_request():
+            remaining = deadline - asyncio.get_running_loop().time()
+            if remaining <= 0:
+                inference_requests_total.labels(endpoint="admission", status="rejected").inc()
+                raise HTTPException(
+                    status_code=503,
+                    detail={"code": "BACKEND_BUSY", "reason": "capacity_exhausted"},
+                )
+            await asyncio.sleep(min(0.05, remaining))
         active = availability.snapshot().in_flight
         active_requests_gauge.set(active)
         backend_in_flight_requests.set(active)
@@ -174,7 +209,7 @@ async def create_completion(request: Request, body: CompletionRequest):
     llama_client = request.app.state.llama_client
 
     inference_requests_total.labels(endpoint="completions", status="started").inc()
-    begin_inference(request)
+    await begin_inference(request)
     start_time = time.time()
 
     try:
@@ -251,11 +286,11 @@ async def create_chat_completion(request: Request, body: ChatCompletionRequest):
     llama_client = request.app.state.llama_client
 
     inference_requests_total.labels(endpoint="chat", status="started").inc()
-    begin_inference(request)
+    await begin_inference(request)
     start_time = time.time()
 
     try:
-        messages = [{"role": m.role, "content": m.content} for m in body.messages]
+        messages = [m.as_openai_dict() for m in body.messages]
 
         if body.stream:
             return EventSourceResponse(
@@ -277,6 +312,10 @@ async def create_chat_completion(request: Request, body: ChatCompletionRequest):
             dry_penalty_last_n=body.dry_penalty_last_n,
             xtc_threshold=body.xtc_threshold,
             xtc_probability=body.xtc_probability,
+            response_format=body.response_format,
+            tools=body.tools,
+            tool_choice=body.tool_choice,
+            parallel_tool_calls=body.parallel_tool_calls,
             stream=False,
         )
 

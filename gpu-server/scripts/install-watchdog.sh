@@ -12,9 +12,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "Installing GPU Watchdog Service..."
 
-# Make controller executable
+# Make watchdog executable
 echo "1. Setting permissions..."
-chmod +x "$SCRIPT_DIR/gpu_failure_controller.py"
+chmod +x "$SCRIPT_DIR/gpu-watchdog.sh"
 
 # Install systemd service
 echo "2. Installing systemd service..."

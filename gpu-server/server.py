@@ -56,6 +56,18 @@ def start_llama_server() -> subprocess.Popen:
         "--cache-type-v", settings.cache_type_v,
     ]
 
+    # Pin the chat template when models.yaml specifies one. --jinja is implied:
+    # a .jinja template file is only honoured with the jinja engine enabled.
+    if settings.chat_template_file:
+        if not os.path.isfile(settings.chat_template_file):
+            raise RuntimeError(
+                f"chat template not found: {settings.chat_template_file} "
+                "(is chat-templates/ mounted into the container?)"
+            )
+        cmd.extend(["--chat-template-file", settings.chat_template_file])
+        if "--jinja" not in (settings.extra_args or ""):
+            cmd.append("--jinja")
+
     # Append extra args (e.g. --jinja for Llama 3.1 chat templates)
     if settings.extra_args:
         cmd.extend(settings.extra_args.split())

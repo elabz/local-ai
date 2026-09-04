@@ -1,7 +1,17 @@
 # GPU Server with llama.cpp for Pascal GPUs
 # Optimized for P106-100 (6GB) and P104-100 (8GB)
+#
+# Build knobs (defaults reproduce the fleet image byte-for-byte):
+#   CUDA_VERSION   base image tag. 11.8.0 is the fleet build. Newer llama.cpp
+#                  needs CUDA 12.x; stay on 12.x, NOT 13.x — CUDA 13 dropped
+#                  Pascal (compute 6.1), which is every card in this box.
+#   LLAMA_CPP_REF  git ref to build. `master` is the historical (unpinned)
+#                  behaviour; pin a tag for reproducible canary builds.
+#   BUILD_JOBS     compile parallelism. Unset = $(nproc). Set to 1 on this
+#                  2-core Celeron to leave a core for live inference.
+ARG CUDA_VERSION=11.8.0
 
-FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 AS builder
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04 AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -14,8 +24,12 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone and build llama.cpp with CUDA support
+ARG LLAMA_CPP_REF=master
 WORKDIR /build
-RUN git clone https://github.com/ggerganov/llama.cpp.git
+RUN git clone https://github.com/ggerganov/llama.cpp.git && \
+    cd llama.cpp && \
+    git checkout "${LLAMA_CPP_REF}" && \
+    git rev-parse HEAD > /build/llama.cpp.commit
 
 WORKDIR /build/llama.cpp
 
@@ -50,11 +64,12 @@ RUN LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
     -DCMAKE_C_FLAGS="-march=x86-64 -mno-bmi2" \
     -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,/usr/local/cuda/lib64/stubs"
 
+ARG BUILD_JOBS
 RUN LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH} \
-    cmake --build build --config Release -j$(nproc)
+    cmake --build build --config Release -j${BUILD_JOBS:-$(nproc)}
 
-# Runtime image
-FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
+# Runtime image (CUDA_VERSION resolves from the global ARG above)
+FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu22.04
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
@@ -68,6 +83,8 @@ COPY --from=builder /build/llama.cpp/build/bin/llama-server /usr/local/bin/
 COPY --from=builder /build/llama.cpp/build/bin/llama-cli /usr/local/bin/
 COPY --from=builder /build/llama.cpp/build/bin/llama-quantize /usr/local/bin/
 COPY --from=builder /build/llama.cpp/build/bin/*.so* /usr/local/lib/
+# Build provenance: which llama.cpp commit this image actually contains.
+COPY --from=builder /build/llama.cpp.commit /etc/llama.cpp.commit
 
 # Update library cache
 RUN ldconfig

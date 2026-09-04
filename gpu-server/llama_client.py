@@ -15,6 +15,11 @@ def _optional_sampling_params(**values: Any) -> Dict[str, Any]:
     return {name: value for name, value in values.items() if value is not None}
 
 
+def _value_or_default(value: Any, default: Any) -> Any:
+    """Preserve valid falsy OpenAI values such as temperature=0."""
+    return default if value is None else value
+
+
 class LlamaClient:
     """Async client for llama.cpp server API."""
 
@@ -55,11 +60,11 @@ class LlamaClient:
         """Generate completion (non-streaming)."""
         payload = {
             "prompt": prompt,
-            "n_predict": max_tokens or settings.default_max_tokens,
-            "temperature": temperature or settings.default_temperature,
-            "top_p": top_p or settings.default_top_p,
-            "top_k": top_k or settings.default_top_k,
-            "repeat_penalty": repeat_penalty or settings.default_repeat_penalty,
+            "n_predict": _value_or_default(max_tokens, settings.default_max_tokens),
+            "temperature": _value_or_default(temperature, settings.default_temperature),
+            "top_p": _value_or_default(top_p, settings.default_top_p),
+            "top_k": _value_or_default(top_k, settings.default_top_k),
+            "repeat_penalty": _value_or_default(repeat_penalty, settings.default_repeat_penalty),
             "stream": False,
         }
         payload.update(
@@ -105,11 +110,11 @@ class LlamaClient:
         """Generate completion with streaming."""
         payload = {
             "prompt": prompt,
-            "n_predict": max_tokens or settings.default_max_tokens,
-            "temperature": temperature or settings.default_temperature,
-            "top_p": top_p or settings.default_top_p,
-            "top_k": top_k or settings.default_top_k,
-            "repeat_penalty": repeat_penalty or settings.default_repeat_penalty,
+            "n_predict": _value_or_default(max_tokens, settings.default_max_tokens),
+            "temperature": _value_or_default(temperature, settings.default_temperature),
+            "top_p": _value_or_default(top_p, settings.default_top_p),
+            "top_k": _value_or_default(top_k, settings.default_top_k),
+            "repeat_penalty": _value_or_default(repeat_penalty, settings.default_repeat_penalty),
             "stream": True,
         }
         payload.update(
@@ -162,7 +167,7 @@ class LlamaClient:
 
     async def chat_completion(
         self,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
@@ -175,6 +180,10 @@ class LlamaClient:
         dry_penalty_last_n: Optional[int] = None,
         xtc_threshold: Optional[float] = None,
         xtc_probability: Optional[float] = None,
+        response_format: Optional[Dict[str, Any]] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
+        tool_choice: Optional[Any] = None,
+        parallel_tool_calls: Optional[bool] = None,
         stream: bool = False,
     ) -> Dict[str, Any]:
         """
@@ -183,9 +192,9 @@ class LlamaClient:
         """
         payload = {
             "messages": messages,
-            "max_tokens": max_tokens or settings.default_max_tokens,
-            "temperature": temperature or settings.default_temperature,
-            "top_p": top_p or settings.default_top_p,
+            "max_tokens": _value_or_default(max_tokens, settings.default_max_tokens),
+            "temperature": _value_or_default(temperature, settings.default_temperature),
+            "top_p": _value_or_default(top_p, settings.default_top_p),
             "stream": False,
         }
         payload.update(
@@ -201,6 +210,14 @@ class LlamaClient:
                 xtc_probability=xtc_probability,
             )
         )
+        for key, value in (
+            ("response_format", response_format),
+            ("tools", tools),
+            ("tool_choice", tool_choice),
+            ("parallel_tool_calls", parallel_tool_calls),
+        ):
+            if value is not None:
+                payload[key] = value
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.post(
@@ -234,9 +251,9 @@ class LlamaClient:
 
         payload = {
             "messages": messages,
-            "max_tokens": max_tokens or settings.default_max_tokens,
-            "temperature": temperature or settings.default_temperature,
-            "top_p": top_p or settings.default_top_p,
+            "max_tokens": _value_or_default(max_tokens, settings.default_max_tokens),
+            "temperature": _value_or_default(temperature, settings.default_temperature),
+            "top_p": _value_or_default(top_p, settings.default_top_p),
             "stream": True,
         }
         payload.update(

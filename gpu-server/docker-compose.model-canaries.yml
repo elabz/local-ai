@@ -36,6 +36,12 @@ services:
       - "${CANARY_CACHE_TYPE:-q8_0}"
       - "--cache-type-v"
       - "${CANARY_CACHE_TYPE:-q8_0}"
+      # Prefix KV reuse, matching CACHE_REUSE on the production chat workers.
+      # Without it every turn re-ingests the whole prompt: layered memory varies
+      # the context between turns, so a strict prefix match fails and TTFA pays
+      # full ingestion each time (~5s at only ~1k tokens on the 12B).
+      - "--cache-reuse"
+      - "${CANARY_CACHE_REUSE:-256}"
       - "--jinja"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -60,63 +66,57 @@ services:
     memswap_limit: 10g
     environment:
       NVIDIA_VISIBLE_DEVICES: ${PEA_GPU_6_UUID:-GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9}
-      # Reasoning policy for the thinking-capable NSFW canary (Huihui Qwen3 8B).
-      # llama-server (build >= b10566) reads these LLAMA_ARG_* variables natively.
-      # Operator controls (override at `up` time):
-      #   NSFW_CANARY_REASONING:        on | off | auto  (native reasoning toggle;
-      #                                 do NOT use chat_template_kwargs enable_thinking=false —
-      #                                 it crashed streaming on the older b8027 build and stays
-      #                                 banned until independently re-proven)
-      #   NSFW_CANARY_REASONING_FORMAT: deepseek | deepseek-legacy | none | auto
-      #                                 (deepseek => thoughts arrive as delta.reasoning_content)
-      #   NSFW_CANARY_REASONING_BUDGET: -1 unrestricted | 0 immediate end | N>0 token budget
-      #   NSFW_CANARY_REASONING_BUDGET_MESSAGE: thought injected before the close-think tag
-      #                                 when the budget is exhausted
-      # The bounded default below (32 tokens) was selected by the
-      # present-bounded-model-reasoning evaluation (heartcode repo,
-      # 2026-08-26): smallest budget passing the quality, non-empty-answer,
-      # and >=12 t/s gates; mean time to first answer 2.9s vs 10.7s
-      # unrestricted at ~23 t/s. The SFW/Gemma canary is intentionally
-      # untouched.
-      LLAMA_ARG_REASONING: ${NSFW_CANARY_REASONING:-on}
-      LLAMA_ARG_THINK: ${NSFW_CANARY_REASONING_FORMAT:-deepseek}
-      LLAMA_ARG_THINK_BUDGET: ${NSFW_CANARY_REASONING_BUDGET:-32}
-      LLAMA_ARG_THINK_BUDGET_MESSAGE: ${NSFW_CANARY_REASONING_BUDGET_MESSAGE:-I am out of thinking budget, so I will stop reasoning here and give my in-character answer now.}
-      # The Huihui GGUF embeds a stripped generic ChatML template with no
-      # reasoning support, which silently disables every reasoning control
-      # above (llama.cpp derives reasoning handling from the template). Pin
-      # the official Qwen3 template from gpu-server/chat-templates/ instead.
-      LLAMA_ARG_CHAT_TEMPLATE_FILE: ${NSFW_CANARY_CHAT_TEMPLATE:-/chat-templates/qwen3.jinja}
+      EXPECTED_GPU_UUID: ${PEA_GPU_6_UUID:-GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9}
+      SERVER_ID: nsfw-model-canary-gpu6
+      MODEL_PATH: /models/${NSFW_CANARY_MODEL:?set NSFW_CANARY_MODEL}
+      HOST: 0.0.0.0
+      PORT: 8080
+      LLAMA_SERVER_HOST: 127.0.0.1
+      LLAMA_SERVER_PORT: 8081
+      N_GPU_LAYERS: 99
+      N_CTX: ${CANARY_CONTEXT:-4096}
+      N_BATCH: ${CANARY_BATCH:-128}
+      N_UBATCH: ${CANARY_UBATCH:-64}
+      N_THREADS: 2
+      # Prefix KV reuse, same knob as the SFW slot above and the production
+      # workers. server.py forwards this to llama-server as --cache-reuse.
+      CACHE_REUSE: ${CANARY_CACHE_REUSE:-256}
+      CACHE_TYPE_K: ${CANARY_CACHE_TYPE:-q8_0}
+      CACHE_TYPE_V: ${CANARY_CACHE_TYPE:-q8_0}
+      # Gemma 4 direct-response defaults. The fixed evaluation suite supplies
+      # explicit samplers where required; these cover direct/manual probes.
+      EXTRA_ARGS: >-
+        --jinja
+        --top-k ${CANARY_TOP_K:-64}
+        --top-p ${CANARY_TOP_P:-0.95}
+        --min-p ${CANARY_MIN_P:-0}
+        --repeat-penalty ${CANARY_REPEAT_PENALTY:-1.0}
+        --presence-penalty ${CANARY_PRESENCE_PENALTY:-0}
+      MAX_CONCURRENT_REQUESTS: 1
+      MAX_IN_FLIGHT_REQUESTS: 1
+      ADMISSION_WAIT_SECONDS: 30
+      GPU_HEALTH_ENABLED: 1
+      DEFAULT_TOP_K: ${CANARY_TOP_K:-64}
+      DEFAULT_TOP_P: ${CANARY_TOP_P:-0.95}
+      DEFAULT_REPEAT_PENALTY: ${CANARY_REPEAT_PENALTY:-1.0}
+      # The 2026 Gemma 4 campaign requires immediate in-character answers.
+      # llama.cpp reads LLAMA_ARG_* variables natively. Keep reasoning off for
+      # every candidate and use each GGUF's embedded Gemma 4 Jinja template.
+      LLAMA_ARG_REASONING: "off"
+      LLAMA_ARG_THINK: "none"
     volumes:
       - ./models:/models:ro
       - ./chat-templates:/chat-templates:ro
+      - ./server.py:/app/server.py:ro
+      - ./metrics.py:/app/metrics.py:ro
+      - ./routes.py:/app/routes.py:ro
+      - ./gpu_health.py:/app/gpu_health.py:ro
+      - ./llama_client.py:/app/llama_client.py:ro
+      - ./availability.py:/app/availability.py:ro
+      - ./config.py:/app/config.py:ro
+      - ./state:/var/lib/pea-gpu-state
     ports:
       - "${NSFW_CANARY_PORT:-18086}:8080"
-    entrypoint: ["llama-server"]
-    command:
-      - "--model"
-      - "/models/${NSFW_CANARY_MODEL:?set NSFW_CANARY_MODEL}"
-      - "--host"
-      - "0.0.0.0"
-      - "--port"
-      - "8080"
-      - "--n-gpu-layers"
-      - "99"
-      - "--ctx-size"
-      - "${CANARY_CONTEXT:-4096}"
-      - "--batch-size"
-      - "${CANARY_BATCH:-128}"
-      - "--ubatch-size"
-      - "${CANARY_UBATCH:-64}"
-      - "--threads"
-      - "2"
-      - "--parallel"
-      - "1"
-      - "--cache-type-k"
-      - "${CANARY_CACHE_TYPE:-q8_0}"
-      - "--cache-type-v"
-      - "${CANARY_CACHE_TYPE:-q8_0}"
-      - "--jinja"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s
