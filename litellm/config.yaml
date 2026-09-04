@@ -41,15 +41,12 @@ model_list:
   model_info:
     id: heartcode-gpu4
     mode: chat
-# NSFW replicas on 8084 (gpu5) and 8085 (gpu6) were removed 2026-08-27: those
-# containers are deliberately gone (GPUs 5/6 now serve canaries), and dead pool
-# entries made least-busy routing periodically hit unreachable backends.
 - model_name: heartcode-embed
   litellm_params:
     model: openai/nomic-embed-text-v1.5.Q8_0.gguf
     api_base: http://192.168.70.144:8093/v1
     api_key: sk-local
-    extra_body: &id001
+    extra_body:
       encoding_format: float
   model_info:
     id: heartcode-embed1
@@ -60,7 +57,7 @@ model_list:
     api_base: http://192.168.70.144:8101/v1
     api_key: sk-local
     timeout: 60
-    extra_body: &id002
+    extra_body: &id001
       encoding_format: float
   model_info:
     id: heartcode-embed-vision1
@@ -71,7 +68,7 @@ model_list:
     api_base: http://192.168.70.144:8102/v1
     api_key: sk-local
     timeout: 60
-    extra_body: *id002
+    extra_body: *id001
   model_info:
     id: heartcode-embed-vision2
     mode: embedding
@@ -81,7 +78,7 @@ model_list:
     api_base: http://192.168.70.144:8104/v1
     api_key: sk-local
     timeout: 60
-    extra_body: &id003
+    extra_body: &id002
       encoding_format: float
   model_info:
     id: heartcode-embed-visual1
@@ -92,7 +89,7 @@ model_list:
     api_base: http://192.168.70.144:8105/v1
     api_key: sk-local
     timeout: 60
-    extra_body: *id003
+    extra_body: *id002
   model_info:
     id: heartcode-embed-visual2
     mode: embedding
@@ -122,15 +119,6 @@ model_list:
   model_info:
     id: heartcode-tts1
     mode: audio_speech
-# Retired/stale canary entries removed 2026-08-27. One model is loaded per
-# canary slot and llama.cpp ignores the requested model name, so an entry whose
-# model is not the one loaded on its port silently serves the wrong model:
-#   - heartcode-chat-qwen3-canary (trial concluded; 18085 now serves gemma-3-12b)
-#   - heartcode-chat-gemma-3-4b-canary (never loaded; 18085 serves gemma-3-12b)
-#   - heartcode-chat-huihui-qwen3-nsfw-canary (trial concluded; 18086 now serves
-#     the Gemma 4 Luchador canary)
-# Re-add an entry only when its model is actually loaded on the slot. Trial
-# records: HeartCode repo, docs/model-canary-log.md.
 - model_name: heartcode-chat-gemma-3-12b-canary
   litellm_params:
     model: openai/gemma-3-12b-it-Q4_K_M.gguf
@@ -166,10 +154,6 @@ router_settings:
   - model_name: heartcode-chat-nsfw
     rpm: 34
     tpm: 38000
-  # Raised 2026-08-27: 28 rpm starved layered memory — every chat turn embeds
-  # the user turn, the reply, and the retrieval query, and the offline Celery
-  # memory tasks batch on top, so sustained chat 429'd here and HeartCode
-  # silently degraded recall. Two dedicated embed backends handle this easily.
   - model_name: heartcode-embed
     rpm: 240
     tpm: 200000

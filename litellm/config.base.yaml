@@ -12,27 +12,51 @@
 # Router settings for load balancing
 router_settings:
   routing_strategy: "least-busy"
-  num_retries: 3
+  # One bounded retry permits a healthy sibling without amplifying an outage.
+  num_retries: 1
   retry_after: 3
-  timeout: 90
-  allowed_fails: 20
-  cooldown_time: 5
+  timeout: 180
+  # A chat group has multiple replicas. Cool down a failed deployment after
+  # its first connection error so request retries move to a healthy sibling.
+  allowed_fails: 1
+  # P104-100 model startup measured 38-47s; retain margin before re-admission.
+  cooldown_time: 90
 
   # Health check settings
   enable_health_check: true
 
 # Isolated evaluation routes that are not part of the production GPU manifest.
 # These are intentionally unaliased and must not affect normal model routing.
+#
+# One model is loaded per canary slot and llama.cpp ignores the requested model
+# name, so an entry whose model is not the one loaded on its port silently
+# serves the wrong model. Retired/stale entries removed 2026-08-27:
+#   - heartcode-chat-qwen3-canary (trial concluded; 18085 now serves gemma-3-12b)
+#   - heartcode-chat-gemma-3-4b-canary (never loaded; 18085 serves gemma-3-12b)
+#   - heartcode-chat-huihui-qwen3-nsfw-canary (trial concluded; 18086 now serves
+#     the Gemma 4 Luchador canary)
+# Add an entry only when its model is actually loaded on the slot. Trial
+# records: HeartCode repo, docs/model-canary-log.md.
 extra_model_list:
-  - model_name: heartcode-chat-qwen3-canary
+  - model_name: heartcode-chat-gemma-3-12b-canary
     litellm_params:
-      model: openai/Qwen3-8B-Q4_K_M.gguf
+      model: openai/gemma-3-12b-it-Q4_K_M.gguf
       api_base: http://192.168.70.144:18085/v1
       api_key: sk-local
       max_tokens: 512
-      temperature: 0.7
+      temperature: 0.8
     model_info:
-      id: qwen3-canary-gpu5
+      id: gemma-3-12b-canary-gpu5
+      mode: chat
+  - model_name: heartcode-chat-gemma4-luchador-nsfw-canary
+    litellm_params:
+      model: openai/rpDungeon_Gemma-4-E4B-Luchador-Q5_K_M.gguf
+      api_base: http://192.168.70.144:18086/v1
+      api_key: sk-local
+      max_tokens: 512
+      temperature: 0.8
+    model_info:
+      id: gemma4-luchador-nsfw-canary-gpu6
       mode: chat
 
 # General settings - PostgreSQL-backed API key management
@@ -46,7 +70,7 @@ general_settings:
   global_max_parallel_requests: 17
 
   # Request timeout
-  request_timeout: 90
+  request_timeout: 180
 
   # Logging
   json_logs: true
@@ -61,7 +85,9 @@ general_settings:
 litellm_settings:
   set_verbose: false
   drop_params: true  # Drop unsupported params instead of erroring
-  callbacks: speech_correlation.speech_correlation_callback
+  callbacks:
+    - speech_correlation.speech_correlation_callback
+    - prometheus
 
 # Environment variables needed:
 #   LITELLM_MASTER_KEY - Master key for admin API access

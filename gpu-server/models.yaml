@@ -35,7 +35,7 @@ models:
     model_type: sfw
     env_model_name: Sao10K/Llama-3.1-8B-Stheno-v3.4
     aliases: [heartcode-default, heartcode-sfw, heartcode-chat]
-    rate_limit: {rpm: 35, tpm: 300000}
+    rate_limit: {rpm: 35, tpm: 50000}
     params: {max_tokens: 512, temperature: 0.8}
     source:
       type: gguf
@@ -63,13 +63,14 @@ models:
       file: Lumimaid-v0.2-8B-Q5_K_M-imat.gguf
       fallback_file: Lumimaid-v0.2-8B-Q4_K_M-imat.gguf
     deployments:
-      # GPU 5 was a third NSFW replica on 8084. That card now serves the Qwen3
-      # canary (port 18085), so the replica is gone. Keep it out of this list:
-      # LiteLLM round-robins these endpoints, and a listed-but-dead port burns a
-      # real user request each time its failure cooldown expires — and again on
-      # every proxy restart, which resets cooldown state.
+      # NSFW replicas on 8084 (gpu5) and 8085 (gpu6) were removed 2026-08-27:
+      # those containers are deliberately gone (GPUs 5/6 now serve canaries on
+      # 18085/18086), and dead pool entries made least-busy routing periodically
+      # hit unreachable backends. A listed-but-dead port burns a real user
+      # request each time its failure cooldown expires — and again on every
+      # proxy restart, which resets cooldown state. Re-add a replica here only
+      # when its container is actually running.
       - {gpu: 4, port: 8083}
-      - {gpu: 6, port: 8085}
 
   # --- Text embeddings, nomic-embed-text-v1.5 GGUF (GPU 4-5, co-located) --------
   - api_name: heartcode-embed
@@ -77,15 +78,20 @@ models:
     mode: embedding
     litellm_model: nomic-embed-text-v1.5.Q8_0.gguf
     id_prefix: heartcode-embed
-    rate_limit: {rpm: 28, tpm: 28000}
+    # Raised 2026-08-27 from 28 rpm: that starved layered memory — every chat
+    # turn embeds the user turn, the reply, and the retrieval query, and the
+    # offline Celery memory tasks batch on top, so sustained chat 429'd here and
+    # HeartCode silently degraded recall.
+    rate_limit: {rpm: 240, tpm: 200000}
     params: {extra_body: {encoding_format: float}}
     source:
       type: gguf
       repo: nomic-ai/nomic-embed-text-v1.5-GGUF
       file: nomic-embed-text-v1.5.Q8_0.gguf
     deployments:
+      # The second replica on 8094 (gpu5) was removed 2026-08-27 together with
+      # the NSFW replica on that card; GPU 5 serves a canary now.
       - {gpu: 4, port: 8093}
-      - {gpu: 5, port: 8094}
 
   # --- Vision embeddings, nomic CLIP pair, 768-d (GPU 1-2, co-located) ----------
   - api_name: heartcode-embed-vision
