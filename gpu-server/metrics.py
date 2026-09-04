@@ -70,6 +70,69 @@ gpu_temperature_celsius = Gauge(
     ["gpu_id"],
 )
 
+gpu_readiness = Gauge(
+    "gpu_readiness",
+    "Whether configured GPU readiness is ready (1=yes)",
+)
+gpu_readiness_transitions_total = Counter(
+    "gpu_readiness_transitions_total",
+    "GPU readiness transitions by bounded state and reason",
+    ["state", "reason"],
+)
+
+backend_state = Gauge(
+    "backend_state", "Current backend availability state", ["state", "reason"],
+)
+backend_state_transitions_total = Counter(
+    "backend_state_transitions_total", "Backend state transitions", ["state", "reason"],
+)
+backend_in_flight_requests = Gauge(
+    "backend_in_flight_requests", "Bounded in-flight inference requests",
+)
+watchdog_probe_failures_total = Counter(
+    "watchdog_probe_failures_total", "Watchdog probe failures", ["reason"],
+)
+watchdog_restart_decisions_total = Counter(
+    "watchdog_restart_decisions_total", "Watchdog restart decisions", ["decision", "reason"],
+)
+llama_child_exits_total = Counter(
+    "llama_child_exits_total", "Unexpected llama.cpp child exits",
+)
+backend_recovery_seconds = Histogram(
+    "backend_recovery_seconds", "Time from wrapper startup to llama.cpp readiness",
+    buckets=[5, 10, 20, 30, 45, 60, 90, 120, 180, 300],
+)
+
+
+_backend_state_current = None
+
+
+def record_backend_state(state: str, reason: str) -> None:
+    global _backend_state_current
+    safe_state = state if state in {"starting", "ready", "busy", "degraded", "unavailable"} else "unavailable"
+    safe_reason = reason if reason in {
+        "starting", "ready", "inference_active", "busy_probe_timeout",
+        "idle_probe_failure", "stuck_request", "child_exit", "gpu_unavailable",
+        "restart_suppressed", "recovering", "capacity_exhausted",
+    } else "idle_probe_failure"
+    if _backend_state_current is not None:
+        backend_state.labels(state=_backend_state_current[0], reason=_backend_state_current[1]).set(0)
+    backend_state.labels(state=safe_state, reason=safe_reason).set(1)
+    _backend_state_current = (safe_state, safe_reason)
+    backend_state_transitions_total.labels(state=safe_state, reason=safe_reason).inc()
+
+
+def record_gpu_readiness(state: str, reason: str) -> None:
+    if state not in {"starting", "ready", "unavailable"}:
+        state = "unavailable"
+    if reason not in {
+        "disabled", "starting", "ready", "model_unavailable", "gpu_query_failed",
+        "gpu_identity_mismatch", "gpu_memory_failed", "gpu_execution_failed",
+    }:
+        reason = "gpu_query_failed"
+    gpu_readiness.set(1 if state == "ready" else 0)
+    gpu_readiness_transitions_total.labels(state=state, reason=reason).inc()
+
 
 class GPUMetricsCollector:
     """Collect GPU metrics using pynvml."""

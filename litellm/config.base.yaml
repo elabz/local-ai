@@ -12,14 +12,28 @@
 # Router settings for load balancing
 router_settings:
   routing_strategy: "least-busy"
-  num_retries: 2
+  num_retries: 3
   retry_after: 3
   timeout: 90
-  allowed_fails: 2
-  cooldown_time: 60
+  allowed_fails: 20
+  cooldown_time: 5
 
   # Health check settings
   enable_health_check: true
+
+# Isolated evaluation routes that are not part of the production GPU manifest.
+# These are intentionally unaliased and must not affect normal model routing.
+extra_model_list:
+  - model_name: heartcode-chat-qwen3-canary
+    litellm_params:
+      model: openai/Qwen3-8B-Q4_K_M.gguf
+      api_base: http://192.168.0.144:18085/v1
+      api_key: sk-local
+      max_tokens: 512
+      temperature: 0.7
+    model_info:
+      id: qwen3-canary-gpu5
+      mode: chat
 
 # General settings - PostgreSQL-backed API key management
 general_settings:
@@ -27,9 +41,9 @@ general_settings:
   database_url: os.environ/DATABASE_URL
 
   # Concurrency limits
-  # 6 chat GPUs * 2 concurrent each = 12, + 1 embed = 13 max safe
-  max_parallel_requests: 7
-  global_max_parallel_requests: 13
+  # 6 chat GPUs * 2 concurrent each = 12, + 1 embed + 4 speech = 17 max safe
+  max_parallel_requests: 9
+  global_max_parallel_requests: 17
 
   # Request timeout
   request_timeout: 90
@@ -47,6 +61,7 @@ general_settings:
 litellm_settings:
   set_verbose: false
   drop_params: true  # Drop unsupported params instead of erroring
+  callbacks: speech_correlation.speech_correlation_callback
 
 # Environment variables needed:
 #   LITELLM_MASTER_KEY - Master key for admin API access

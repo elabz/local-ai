@@ -1,5 +1,5 @@
 [Unit]
-Description=HeartCode GPU Watchdog Service
+Description=Pea durable GPU recovery and quarantine controller
 Documentation=https://github.com/heartcode
 After=docker.service nvidia-persistenced.service
 Requires=docker.service
@@ -7,22 +7,22 @@ PartOf=docker.service
 
 [Service]
 Type=simple
-ExecStart=/home/boss/heartcode/gpu-server/scripts/gpu-watchdog.sh --daemon
+ExecStart=/usr/bin/python3 /home/boss/local-ai/gpu-server/scripts/gpu_failure_controller.py
+EnvironmentFile=-/home/boss/local-ai/gpu-server/.gpu-watchdog.env
 Restart=always
 RestartSec=10
-Environment="POLL_INTERVAL=5"
-Environment="MIN_VRAM_MB=100"
-Environment="HEALTH_CHECK_TIMEOUT=3"
-Environment="LOG_FILE=/var/log/gpu-watchdog.log"
+Environment="GPU_CONTROLLER_POLL_SECONDS=60"
+Environment="GPU_RECOVERY_SETTLE_SECONDS=20"
 
 # Logging
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=gpu-watchdog
+SyslogIdentifier=pea-gpu-controller
 
 # Security
 User=root
 Group=docker
+StateDirectory=pea-gpu-controller
 
 [Install]
 WantedBy=multi-user.target

@@ -94,6 +94,23 @@ scrape_configs:
       - target_label: __address__
         replacement: pea-blackbox-exporter:9115
 
+  - job_name: 'speech-requests'
+    static_configs:
+      - targets: ['pea-speech-meter:8080']
+
+  - job_name: 'speech-gpu'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['pea-speech-gpu-exporter:9400']
+
+  # LiteLLM proxy aggregate request/failure metrics (no request content).
+  - job_name: 'litellm-proxy'
+    metrics_path: /metrics/
+    static_configs:
+      - targets: ['192.168.70.152:4000']
+        labels:
+          instance: 'elm'
+
   # Prometheus itself
   - job_name: 'prometheus'
     static_configs:
@@ -102,6 +119,6 @@ scrape_configs:
   # Node Exporter for CPU/system metrics
   - job_name: 'node-exporter'
     static_configs:
-      - targets: ['192.168.0.144:9100']
+      - targets: ['192.168.70.144:9100']
         labels:
           instance: 'pea'
