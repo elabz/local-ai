@@ -119,6 +119,57 @@ groups:
           summary: "HeartCode chat downstream failures increased"
           description: "LiteLLM recorded more than two failed HeartCode chat requests in ten minutes."
 
+      # --- queue-busy-chat-backends -------------------------------------------
+      # A busy replica now queues (up to ADMISSION_WAIT_SECONDS) and answers
+      # 429 BACKEND_BUSY only when the bound is exceeded. Sustained rejections
+      # mean demand exceeds slot capacity (or a client ignores its cap).
+      - alert: ChatAdmissionRejectedRateHigh
+        expr: sum by (instance) (rate(inference_admission_total{status="rejected"}[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Chat admission rejections on {{$labels.instance}}"
+          description: "{{ $value | humanize }} req/s exceeded the admission wait bound for 5 minutes (429 BACKEND_BUSY). Check per-key caps and docs/proxy-client-contract.md before adding capacity."
+
+      - alert: ChatAdmissionRejectedShareHigh
+        expr: |
+          sum by (instance) (rate(inference_admission_total{status="rejected"}[10m]))
+          / sum by (instance) (rate(inference_admission_total[10m])) > 0.10
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "More than 10% of chat admissions rejected on {{$labels.instance}}"
+          description: "Over ten minutes, more than one in ten arrivals waited the full admission bound and were turned away."
+
+      # LiteLLM only cools a deployment for real failures (503/connection,
+      # allowed_fails 3). Any cooldown is worth a look; a cooldown attributed
+      # to a 429 means the allowed_fails_policy regressed (see the router test).
+      - alert: LiteLLMDeploymentCooledDown
+        expr: increase(litellm_deployment_cooled_down_total{litellm_model_name=~"heartcode-.*"}[10m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "LiteLLM cooled down {{$labels.litellm_model_name}} ({{$labels.api_base}})"
+          description: "Deployment was removed from rotation after repeated failures (exception_status={{$labels.exception_status}})."
+
+      - alert: LiteLLMCooldownOnBusy
+        expr: increase(litellm_deployment_cooled_down_total{exception_status="429"}[10m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "LiteLLM cooled a deployment for a 429 (busy)"
+          description: "Busy must never cool a replica. Check router_settings.allowed_fails_policy in litellm/config.base.yaml and re-run gpu-server/tests/integration/test_litellm_gpu_routing.py."
+
+      - alert: LiteLLMCooldownStorm
+        expr: sum(increase(litellm_deployment_cooled_down_total{litellm_model_name=~"heartcode-chat.*"}[10m])) > 2
+        labels:
+          severity: critical
+        annotations:
+          summary: "Repeated chat deployment cooldowns"
+          description: "More than two HeartCode chat cooldowns in ten minutes; a model group may be losing all replicas."
+
       - alert: GPUReadinessLost
         expr: gpu_readiness == 0
         for: 30s

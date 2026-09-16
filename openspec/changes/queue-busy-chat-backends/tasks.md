@@ -12,6 +12,6 @@
 
 ## 3. Contract and observability
 
-- [ ] 3.1 Write `docs/proxy-client-contract.md` (bounded concurrency, `Retry-After`, jittered backoff, no fan-out beyond slot count) and link from CLAUDE.md
-- [ ] 3.2 Prometheus alert on admission `rejected` rate and on LiteLLM cooldown events
+- [x] 3.1 Write `docs/proxy-client-contract.md` (bounded concurrency, `Retry-After`, jittered backoff, no fan-out beyond slot count) and link from CLAUDE.md
+- [x] 3.2 Prometheus alert on admission `rejected` rate and on LiteLLM cooldown events
 - [ ] 3.3 Rolling deploy of chat replicas and LiteLLM; verify with a 7-way concurrent burst against `heartcode-chat-nsfw` that produces zero 503s and zero cooldowns

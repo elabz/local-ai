@@ -36,6 +36,7 @@ local-ai/
 │   └── monitor.sh
 └── docs/                 # Documentation
     ├── pea-server-setup.md   # Comprehensive setup guide
+    ├── proxy-client-contract.md  # Rules for proxy consumers: concurrency caps, 429/503, backoff
     └── load-test-findings.md # Capacity analysis
 ```
 
@@ -65,10 +66,14 @@ docker compose up -d                    # Start LiteLLM + PostgreSQL
 docker compose logs -f litellm          # View proxy logs
 docker compose restart litellm          # Restart after config changes
 
-# API Key Management
+# API Key Management — every key MUST carry max_parallel_requests no greater
+# than the total slot count of the model groups it may call (chat groups have
+# 3 slots each; batch consumers such as Rediska get 2). Send the consumer
+# docs/proxy-client-contract.md with the key.
 curl -X POST http://localhost:4000/key/generate \
   -H "Authorization: Bearer $MASTER_KEY" \
-  -d '{"models":["heartcode-chat-sfw","heartcode-chat-nsfw","heartcode-embed","heartcode-image"],"key_alias":"test"}'
+  -d '{"models":["heartcode-chat-sfw","heartcode-chat-nsfw","heartcode-embed","heartcode-image"],"key_alias":"test","max_parallel_requests":6}'
+python3 scripts/cap-key-concurrency.py --apply   # audit/apply caps on all issued keys
 ```
 
 ### Load Testing
@@ -159,8 +164,8 @@ Embed tier is **2 of each type**, co-located one-per-chat-GPU (`rebalance-embed-
 - Routing: `least-busy` strategy with 2 retries
 - Rate limits: 35 RPM SFW, 34 RPM NSFW, 60 RPM vision embed (3 backends), 40 RPM text embed (3 backends)
 - `heartcode-embed-vision` → 3 deployments (`:8101-8103`, GPU 1-3); `heartcode-embed` → 3 (`:8093-8095`, GPU 4-6); `heartcode-image` → 2 (`:5100`,`:5101`, GPU 7-8); BiQwen2.5 (`:8100`) shelved
-- Health checks every 15s, 2 allowed fails before 60s cooldown
-- Max 7 parallel requests per model, 13 global
+- Busy is not failure: chat wrappers queue up to `ADMISSION_WAIT_SECONDS=60` then answer `429 BACKEND_BUSY` + `Retry-After`; the router retries a sibling (`num_retries: 2`) and never cools a replica for 429 (`allowed_fails_policy`). Cooldown needs 3 real failures (503/connection) and lasts 20s. Chat deployment `timeout: 240`.
+- Health checks every 15s; per-key `max_parallel_requests` mandatory — see `docs/proxy-client-contract.md`
 
 ### Image Server (`gpu-server/models/heartcode-image.yaml`)
 - **2 instances** (`image-server` GPU 8 `:5100`, `image-server-2` GPU 7 `:5101`), load-balanced behind `heartcode-image`
