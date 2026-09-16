@@ -233,17 +233,39 @@ services:
               device_ids: ['${PEA_GPU_4_UUID:-GPU-48054f5b-0660-6e89-ec5b-9ac85db7b7b1}']
               capabilities: [gpu]
 
-  # gpu-server-5 (pea-gpu-5, NSFW replica on port 8084) is DELIBERATELY GONE.
-  #
-  # GPU 5 (GPU-d8525241..., PCI 0a:00.0) now serves the Qwen3 canary — see the
-  # qwen3-canary service below and configs/gpu-topology.json, which assigns that
-  # slot to `qwen3-canary`. An 8GB card cannot hold both an 8B chat replica and
-  # the canary, so re-adding this service means one of them OOMs on load.
-  #
-  # Do not restore it by pinning it to another card either: every other GPU is
-  # already at 6.6-7.7GB of 8GB. Freeing a slot is a capacity decision, not a
-  # compose edit. NSFW intentionally runs two replicas now (8083, 8085) and
-  # models.yaml no longer lists 8084, so nothing routes here.
+  # gpu-server-5 (pea-gpu-5, NSFW replica on port 8084) RESTORED 2026-09-16
+  # (change restore-nsfw-chat-capacity). It was removed 2026-08-27 for the Qwen3
+  # canary; that canary is retired and the SFW canary is pinned to GPU 6, so
+  # GPU 5 had only the 234 MiB text-embed on it. GPU 5 corrupts generation when a
+  # single process allocates >~7.6 GiB (see evaluate-modern-chat-model-canaries);
+  # this replica's llama-server measures ~6.4 GiB at the fleet config, which is
+  # why the same workload ran here before. Never place a >7 GiB occupant here.
+  gpu-server-5:
+    <<: *gpu-server-common
+    container_name: pea-gpu-5
+    runtime: nvidia
+    environment:
+      <<: *gpu-env-common
+      NVIDIA_VISIBLE_DEVICES: ${PEA_GPU_5_UUID:-GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b}
+      EXPECTED_GPU_UUID: ${PEA_GPU_5_UUID:-GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b}
+      SERVER_ID: gpu-5
+      MODEL_PATH: ${GPU_5_MODEL_PATH:-/models/model.gguf}
+      MODEL_TYPE: ${GPU_5_MODEL_TYPE:-nsfw}
+      MODEL_NAME: ${GPU_5_MODEL_NAME:-unknown}
+      CHAT_TEMPLATE_FILE: ${GPU_5_CHAT_TEMPLATE:-}
+    ports:
+      - "8084:8080"
+    # Same memcg headroom as gpu-server-4: sustained generation exceeds the
+    # shared 2GiB limit and the container gets killed mid-stream otherwise.
+    mem_limit: 8192m
+    memswap_limit: 9216m
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['${PEA_GPU_5_UUID:-GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b}']
+              capabilities: [gpu]
 
   gpu-server-6:
     <<: *gpu-server-common

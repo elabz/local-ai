@@ -63,14 +63,14 @@ models:
       file: Lumimaid-v0.2-8B-Q5_K_M-imat.gguf
       fallback_file: Lumimaid-v0.2-8B-Q4_K_M-imat.gguf
     deployments:
-      # NSFW replicas on 8084 (gpu5) and 8085 (gpu6) were removed 2026-08-27:
-      # those containers are deliberately gone (GPUs 5/6 now serve canaries on
-      # 18085/18086), and dead pool entries made least-busy routing periodically
-      # hit unreachable backends. A listed-but-dead port burns a real user
-      # request each time its failure cooldown expires — and again on every
-      # proxy restart, which resets cooldown state. Re-add a replica here only
-      # when its container is actually running.
+      # 8084 (gpu5) restored 2026-09-16 (restore-nsfw-chat-capacity): a single
+      # NSFW deployment + zero admission wait + 90s LiteLLM cooldown meant any
+      # two overlapping requests took the whole group offline. 8085 (gpu6) stays
+      # out while the SFW canary is pinned to that card. A listed-but-dead port
+      # burns a real user request each time its cooldown expires, so list a
+      # replica here only when its container is actually running.
       - {gpu: 4, port: 8083}
+      - {gpu: 5, port: 8084}
 
   # --- Text embeddings, nomic-embed-text-v1.5 GGUF (GPU 4-5, co-located) --------
   - api_name: heartcode-embed
@@ -89,9 +89,11 @@ models:
       repo: nomic-ai/nomic-embed-text-v1.5-GGUF
       file: nomic-embed-text-v1.5.Q8_0.gguf
     deployments:
-      # The second replica on 8094 (gpu5) was removed 2026-08-27 together with
-      # the NSFW replica on that card; GPU 5 serves a canary now.
+      # 8094 (gpu5) re-listed 2026-09-16: pea-embed-5 had been running healthy
+      # but unrouted since the 2026-08-27 canary removal (the canary ended up on
+      # GPU 6, not GPU 5).
       - {gpu: 4, port: 8093}
+      - {gpu: 5, port: 8094}
 
   # --- Vision embeddings, nomic CLIP pair, 768-d (GPU 1-2, co-located) ----------
   - api_name: heartcode-embed-vision

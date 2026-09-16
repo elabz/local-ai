@@ -41,7 +41,7 @@ local-ai/
 
 ## Deployment Topology
 
-- **PEA (192.168.70.144)**: All GPU servers — 3 SFW + 3 NSFW chat, each co-located with one embed server (vision on 1-2, DINOv2-visual on 3+6, text on 4-5) + 2 image — `gpu-server/docker-compose.yml`
+- **PEA (192.168.70.144)**: All GPU servers — 3 SFW + 2 NSFW chat (GPU 4-5; GPU 6 is held by the SFW model canary), each co-located with one embed server (vision on 1-2, DINOv2-visual on 3, text on 4-5) + image on 8, speech on 7 — `gpu-server/docker-compose.yml`. GPU 5 corrupts generation above ~7.6 GiB per process: only the fleet 8B config belongs there.
 - **Prod (192.168.70.152)**: LiteLLM proxy + monitoring — `litellm/docker-compose.yml`
 
 ## Common Commands
@@ -126,7 +126,7 @@ Embed tier is **2 of each type**, co-located one-per-chat-GPU (`rebalance-embed-
 | Ports | Service | GPU |
 |-------|---------|-----|
 | 8080-8082 | SFW chat servers | GPU 1-3 |
-| 8083-8085 | NSFW chat servers | GPU 4-6 |
+| 8083-8084 | NSFW chat servers (8085/GPU 6 stopped while the SFW canary holds that card) | GPU 4-5 |
 | 8101-8102 | Vision embedding servers (`nomic-embed-vision-v1.5` + text), co-located w/ SFW chat | GPU 1-2 |
 | 8093-8094 | Text-embed servers (`nomic-embed-text-v1.5`), co-located w/ NSFW chat | GPU 4-5 |
 | 8104-8105 | Visual embedding servers (DINOv2 ViT-L/14, image-only), co-located w/ chat | GPU 3, 6 |

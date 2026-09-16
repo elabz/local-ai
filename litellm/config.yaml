@@ -41,15 +41,34 @@ model_list:
   model_info:
     id: heartcode-gpu4
     mode: chat
+- model_name: heartcode-chat-nsfw
+  litellm_params:
+    model: openai/Lumimaid-v0.2-8B-Q5_K_M-imat.gguf
+    api_base: http://192.168.70.144:8084/v1
+    api_key: sk-local
+    max_tokens: 512
+    temperature: 0.8
+  model_info:
+    id: heartcode-gpu5
+    mode: chat
 - model_name: heartcode-embed
   litellm_params:
     model: openai/nomic-embed-text-v1.5.Q8_0.gguf
     api_base: http://192.168.70.144:8093/v1
     api_key: sk-local
-    extra_body:
+    extra_body: &id001
       encoding_format: float
   model_info:
     id: heartcode-embed1
+    mode: embedding
+- model_name: heartcode-embed
+  litellm_params:
+    model: openai/nomic-embed-text-v1.5.Q8_0.gguf
+    api_base: http://192.168.70.144:8094/v1
+    api_key: sk-local
+    extra_body: *id001
+  model_info:
+    id: heartcode-embed2
     mode: embedding
 - model_name: heartcode-embed-vision
   litellm_params:
@@ -57,7 +76,7 @@ model_list:
     api_base: http://192.168.70.144:8101/v1
     api_key: sk-local
     timeout: 60
-    extra_body: &id001
+    extra_body: &id002
       encoding_format: float
   model_info:
     id: heartcode-embed-vision1
@@ -68,7 +87,7 @@ model_list:
     api_base: http://192.168.70.144:8102/v1
     api_key: sk-local
     timeout: 60
-    extra_body: *id001
+    extra_body: *id002
   model_info:
     id: heartcode-embed-vision2
     mode: embedding
@@ -78,7 +97,7 @@ model_list:
     api_base: http://192.168.70.144:8104/v1
     api_key: sk-local
     timeout: 60
-    extra_body: &id002
+    extra_body: &id003
       encoding_format: float
   model_info:
     id: heartcode-embed-visual1
@@ -89,7 +108,7 @@ model_list:
     api_base: http://192.168.70.144:8105/v1
     api_key: sk-local
     timeout: 60
-    extra_body: *id002
+    extra_body: *id003
   model_info:
     id: heartcode-embed-visual2
     mode: embedding

@@ -1,13 +1,13 @@
 services:
   sfw-model-canary:
     image: ${CANARY_IMAGE:-local-ai-llama:v0.2.0}
-    container_name: pea-sfw-model-canary-gpu5
+    container_name: ${SFW_CANARY_CONTAINER:-pea-sfw-model-canary-gpu5}
     restart: "no"
     runtime: nvidia
     mem_limit: 8g
     memswap_limit: 10g
     environment:
-      NVIDIA_VISIBLE_DEVICES: ${PEA_GPU_5_UUID:-GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b}
+      NVIDIA_VISIBLE_DEVICES: ${SFW_CANARY_GPU_UUID:-${PEA_GPU_5_UUID:-GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b}}
     volumes:
       - ./models:/models:ro
     ports:
@@ -54,7 +54,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['${PEA_GPU_5_UUID:-GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b}']
+              device_ids: ['${SFW_CANARY_GPU_UUID:-${PEA_GPU_5_UUID:-GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b}}']
               capabilities: [gpu]
 
   nsfw-model-canary:
