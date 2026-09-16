@@ -65,12 +65,15 @@ models:
     deployments:
       # 8084 (gpu5) restored 2026-09-16 (restore-nsfw-chat-capacity): a single
       # NSFW deployment + zero admission wait + 90s LiteLLM cooldown meant any
-      # two overlapping requests took the whole group offline. 8085 (gpu6) stays
-      # out while the SFW canary is pinned to that card. A listed-but-dead port
-      # burns a real user request each time its cooldown expires, so list a
-      # replica here only when its container is actually running.
+      # two overlapping requests took the whole group offline. 8085 (gpu6) was
+      # re-listed the same day: the SFW canary is retired from that card and
+      # gpu-server-6 + dino-embed-2 are back (operator decision 2026-09-16). A
+      # listed-but-dead port burns a real user request each time its cooldown
+      # expires, so list a replica here only when its container is actually
+      # running.
       - {gpu: 4, port: 8083}
       - {gpu: 5, port: 8084}
+      - {gpu: 6, port: 8085}
 
   # --- Text embeddings, nomic-embed-text-v1.5 GGUF (GPU 4-5, co-located) --------
   - api_name: heartcode-embed
