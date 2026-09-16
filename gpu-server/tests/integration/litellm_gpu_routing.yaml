@@ -1,3 +1,5 @@
+# Router policy under test. Keep router_settings in step with
+# litellm/config.base.yaml (test_router_policy_matches_production asserts it).
 model_list:
   - model_name: gpu-routing-one-down
     litellm_params:
@@ -32,14 +34,73 @@ model_list:
       id: unavailable-b
       mode: embedding
 
+  # queue-busy-chat-backends: busy (429) must be retried elsewhere, never cooled.
+  - model_name: chat-busy-with-sibling
+    litellm_params:
+      model: openai/test-chat
+      api_base: http://gpu-test-busy:8080/v1
+      api_key: test
+      timeout: 10
+    model_info:
+      id: busy-replica
+      mode: chat
+  - model_name: chat-busy-with-sibling
+    litellm_params:
+      model: openai/test-chat
+      api_base: http://gpu-test-healthy:8080/v1
+      api_key: test
+      timeout: 10
+    model_info:
+      id: healthy-chat-sibling
+      mode: chat
+
+  # Single replica that is busy: the 429 must surface, and the replica must
+  # still be routable for the next request (no cooldown).
+  - model_name: chat-busy-only
+    litellm_params:
+      model: openai/test-chat
+      api_base: http://gpu-test-busy:8080/v1
+      api_key: test
+      timeout: 10
+    model_info:
+      id: busy-only-replica
+      mode: chat
+
+  # One transient 503 with a healthy sibling: retried elsewhere, stays routable.
+  - model_name: chat-flaky-with-sibling
+    litellm_params:
+      model: openai/test-chat
+      api_base: http://gpu-test-flaky:8080/v1
+      api_key: test
+      timeout: 10
+    model_info:
+      id: flaky-replica
+      mode: chat
+  - model_name: chat-flaky-with-sibling
+    litellm_params:
+      model: openai/test-chat
+      api_base: http://gpu-test-healthy:8080/v1
+      api_key: test
+      timeout: 10
+    model_info:
+      id: healthy-chat-sibling-2
+      mode: chat
+
 router_settings:
   routing_strategy: least-busy
   enable_health_check: true
-  allowed_fails: 1
-  cooldown_time: 90
-  num_retries: 1
-  timeout: 5
+  allowed_fails: 3
+  cooldown_time: 20
+  allowed_fails_policy:
+    RateLimitErrorAllowedFails: 1000000
+  num_retries: 2
+  retry_after: 3
+  timeout: 10
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   health_check_interval: 2
+
+litellm_settings:
+  callbacks:
+    - prometheus

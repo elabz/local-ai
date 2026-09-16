@@ -1,30 +1,47 @@
+# Disposable LiteLLM routing stack. Exercised by test_litellm_gpu_routing.py.
+#
+#   docker compose -f docker-compose.litellm-routing-test.yml up -d --wait
+#   LITELLM_GPU_TEST_URL=http://localhost:4410 pytest test_litellm_gpu_routing.py
+#   docker compose -f docker-compose.litellm-routing-test.yml down -v
+#
+# LITELLM_IMAGE defaults to the same pinned digest as litellm/docker-compose.yml
+# so the router semantics proven here are the ones running on Prod.
+
+x-fake-backend: &fake-backend
+  image: python:3.11-slim
+  entrypoint: ["sh", "-c", "pip install -q fastapi uvicorn && exec python3 -m uvicorn fake_openai_backend:app --host 0.0.0.0 --port 8080"]
+  working_dir: /test
+  volumes:
+    - ./fake_openai_backend.py:/test/fake_openai_backend.py:ro
+
 services:
   gpu-test-healthy:
-    image: python:3.11-slim
-    entrypoint: ["sh", "-c", "pip install -q fastapi uvicorn && exec python3 -m uvicorn fake_openai_backend:app --host 0.0.0.0 --port 8080"]
-    working_dir: /test
-    environment: {BACKEND_AVAILABLE: "1"}
-    volumes:
-      - ./fake_openai_backend.py:/test/fake_openai_backend.py:ro
+    <<: *fake-backend
+    environment: {BACKEND_MODE: healthy}
+    ports: ["4411:8080"]
 
   gpu-test-unavailable:
-    image: python:3.11-slim
-    entrypoint: ["sh", "-c", "pip install -q fastapi uvicorn && exec python3 -m uvicorn fake_openai_backend:app --host 0.0.0.0 --port 8080"]
-    working_dir: /test
-    environment: {BACKEND_AVAILABLE: "0"}
-    volumes:
-      - ./fake_openai_backend.py:/test/fake_openai_backend.py:ro
+    <<: *fake-backend
+    environment: {BACKEND_MODE: unavailable}
 
   gpu-test-unavailable-2:
-    image: python:3.11-slim
-    entrypoint: ["sh", "-c", "pip install -q fastapi uvicorn && exec python3 -m uvicorn fake_openai_backend:app --host 0.0.0.0 --port 8080"]
-    working_dir: /test
-    environment: {BACKEND_AVAILABLE: "0"}
-    volumes:
-      - ./fake_openai_backend.py:/test/fake_openai_backend.py:ro
+    <<: *fake-backend
+    environment: {BACKEND_MODE: unavailable}
+
+  # Alive but its single inference slot is taken: 429 BACKEND_BUSY on chat.
+  gpu-test-busy:
+    <<: *fake-backend
+    environment: {BACKEND_MODE: busy}
+    ports: ["4412:8080"]
+
+  # One transient 503, then healthy.
+  gpu-test-flaky:
+    <<: *fake-backend
+    environment: {BACKEND_MODE: flaky}
+    ports: ["4413:8080"]
 
   litellm-routing-test:
-    image: ghcr.io/berriai/litellm:main-latest
+    image: ${LITELLM_IMAGE:-ghcr.io/berriai/litellm:main-latest@sha256:bb0639701796218a3447160e55c0f1097446e4e6085df7dfd39f476d4143743f}
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     environment:
       LITELLM_MASTER_KEY: test-gpu-routing-key
@@ -36,3 +53,5 @@ services:
       - gpu-test-healthy
       - gpu-test-unavailable
       - gpu-test-unavailable-2
+      - gpu-test-busy
+      - gpu-test-flaky

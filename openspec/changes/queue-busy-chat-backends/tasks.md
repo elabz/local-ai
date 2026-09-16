@@ -6,8 +6,8 @@
 
 ## 2. Proxy
 
-- [ ] 2.1 Router settings in `litellm/config.base.yaml`: `allowed_fails: 3`, `cooldown_time: 20`, `num_retries: 2`, chat `timeout: 240`; re-render `litellm/config.yaml`
-- [ ] 2.2 Router test against the pinned LiteLLM image proving a 429 from a deployment does not cool it and is retried elsewhere
+- [x] 2.1 Router settings in `litellm/config.base.yaml`: `allowed_fails: 3`, `cooldown_time: 20`, `num_retries: 2`, chat `timeout: 240`; re-render `litellm/config.yaml`
+- [x] 2.2 Router test against the pinned LiteLLM image proving a 429 from a deployment does not cool it and is retried elsewhere
 - [ ] 2.3 Set `max_parallel_requests` on every issued key (Rediska = 2); document the cap in the key-generation procedure
 
 ## 3. Contract and observability

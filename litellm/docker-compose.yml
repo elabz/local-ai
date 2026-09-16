@@ -33,7 +33,12 @@ services:
       retries: 5
 
   litellm:
-    image: ghcr.io/berriai/litellm:main-latest
+    # Pinned to the build Prod has been running (litellm 1.81.9). The router
+    # semantics in config.base.yaml (allowed_fails_policy, cooldowns) are
+    # verified against this exact digest by
+    # gpu-server/tests/integration/test_litellm_gpu_routing.py; bump both
+    # places together and re-run that test before deploying a newer image.
+    image: ghcr.io/berriai/litellm:main-latest@sha256:bb0639701796218a3447160e55c0f1097446e4e6085df7dfd39f476d4143743f
     container_name: local-ai-litellm
     restart: unless-stopped
     ports:

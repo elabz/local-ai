@@ -12,15 +12,33 @@
 # Router settings for load balancing
 router_settings:
   routing_strategy: "least-busy"
-  # One bounded retry permits a healthy sibling without amplifying an outage.
-  num_retries: 1
+  # Two bounded retries: a busy replica (429 BACKEND_BUSY) or one transient
+  # 503 is retried on a sibling without amplifying a real outage.
+  num_retries: 2
   retry_after: 3
+  # Default per-request timeout for non-chat routes. Chat deployments carry
+  # their own `timeout: 240` (60s admission wait + 180s generation ceiling)
+  # via models.yaml params; general_settings.request_timeout must be >= that.
   timeout: 180
-  # A chat group has multiple replicas. Cool down a failed deployment after
-  # its first connection error so request retries move to a healthy sibling.
-  allowed_fails: 1
-  # P104-100 model startup measured 38-47s; retain margin before re-admission.
-  cooldown_time: 90
+  # Busy is not failure. Backends answer 429 BACKEND_BUSY when their bounded
+  # admission queue overflows, which the router treats as a routing hint, not
+  # a deployment failure. Cooldown is reserved for connection-level / 503
+  # failures and needs three of them in the window; the cooldown itself is no
+  # longer than a typical generation so a transient blip does not remove a
+  # replica for longer than the request it interrupted.
+  # (queue-busy-chat-backends; verified against the pinned image in
+  # gpu-server/tests/integration/test_litellm_gpu_routing.py)
+  allowed_fails: 3
+  cooldown_time: 20
+  # REQUIRED for the above to mean what it says. LiteLLM (1.81.9) only uses
+  # count-based cooldowns when allowed_fails differs from its default (3) or an
+  # allowed_fails_policy is present; otherwise it falls back to a heuristic
+  # that cools a deployment on its FIRST 429 whenever a sibling exists, which
+  # is exactly the busy->outage amplification this change removes. With a
+  # policy set, 429 BACKEND_BUSY effectively never cools a replica, and every
+  # other failure class (503, timeout, connection) uses allowed_fails above.
+  allowed_fails_policy:
+    RateLimitErrorAllowedFails: 1000000
 
   # Health check settings
   enable_health_check: true
@@ -69,8 +87,9 @@ general_settings:
   max_parallel_requests: 9
   global_max_parallel_requests: 17
 
-  # Request timeout
-  request_timeout: 180
+  # Request timeout: >= chat deployment timeout (240 = 60s admission wait +
+  # 180s generation ceiling) so the proxy does not cut a queued request first.
+  request_timeout: 240
 
   # Logging
   json_logs: true
