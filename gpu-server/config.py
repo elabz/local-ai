@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     watchdog_restart_window_seconds: float = Field(default=900.0)
     watchdog_state_dir: str = Field(default="/var/lib/pea-gpu-state")
     max_in_flight_requests: int = Field(default=1)
+    # Bounded admission queue: seconds a request may wait for a free inference
+    # slot before the wrapper answers 429 BACKEND_BUSY. 0 = reject immediately.
+    admission_wait_seconds: float = Field(default=60.0)
+    # Upper bound for the Retry-After hint sent with a 429 BACKEND_BUSY.
+    admission_retry_after_max_seconds: int = Field(default=30)
 
     # Metrics
     enable_metrics: bool = Field(default=True)

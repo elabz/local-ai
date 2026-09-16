@@ -82,6 +82,11 @@ x-gpu-env-common: &gpu-env-common
   WATCHDOG_RESTART_LIMIT: ${WATCHDOG_RESTART_LIMIT:-3}
   WATCHDOG_RESTART_WINDOW_SECONDS: ${WATCHDOG_RESTART_WINDOW_SECONDS:-900}
   MAX_IN_FLIGHT_REQUESTS: ${MAX_IN_FLIGHT_REQUESTS:-1}
+  # Queue instead of reject: a request that finds the slot busy waits up to
+  # this many seconds for it to free (sized to one worst-case generation)
+  # before the wrapper answers 429 BACKEND_BUSY + Retry-After. 0 restores the
+  # old fail-fast behaviour. See openspec change queue-busy-chat-backends.
+  ADMISSION_WAIT_SECONDS: ${ADMISSION_WAIT_SECONDS:-60}
 
 x-embedding-server-common: &embedding-server-common
   image: local-ai-llama:latest

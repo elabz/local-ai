@@ -34,6 +34,18 @@ inference_tokens_total = Counter(
     ["type"],
 )
 
+# Admission control (bounded queue in front of the single inference slot)
+inference_admission_total = Counter(
+    "inference_admission_total",
+    "Admission decisions: admitted (slot free on arrival), queued (waited for a slot), rejected (wait bound exceeded)",
+    ["status"],
+)
+inference_admission_wait_seconds = Histogram(
+    "inference_admission_wait_seconds",
+    "Seconds a request waited for an inference slot before being admitted or rejected",
+    buckets=[0.05, 0.25, 1.0, 2.5, 5.0, 10.0, 20.0, 30.0, 45.0, 60.0, 90.0],
+)
+
 # Server metrics
 active_requests_gauge = Gauge(
     "active_requests",

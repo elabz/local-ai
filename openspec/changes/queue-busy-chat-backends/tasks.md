@@ -1,8 +1,8 @@
 ## 1. Backend wrapper
 
-- [ ] 1.1 Default `ADMISSION_WAIT_SECONDS` to 60 for chat replicas in `x-gpu-env-common`; keep `config.py` override
-- [ ] 1.2 Change bound-exceeded response to 429 with `Retry-After` and `BACKEND_BUSY`; keep 503 for `GPU_UNAVAILABLE`/`BACKEND_UNAVAILABLE`
-- [ ] 1.3 Add admission metrics (`admitted|queued|rejected`, wait histogram); commit and extend `tests/test_chat_admission.py`
+- [x] 1.1 Default `ADMISSION_WAIT_SECONDS` to 60 for chat replicas in `x-gpu-env-common`; keep `config.py` override
+- [x] 1.2 Change bound-exceeded response to 429 with `Retry-After` and `BACKEND_BUSY`; keep 503 for `GPU_UNAVAILABLE`/`BACKEND_UNAVAILABLE`
+- [x] 1.3 Add admission metrics (`admitted|queued|rejected`, wait histogram); commit and extend `tests/test_chat_admission.py`
 
 ## 2. Proxy
 

@@ -18,6 +18,8 @@ from metrics import (
     inference_requests_total,
     inference_duration_seconds,
     inference_tokens_total,
+    inference_admission_total,
+    inference_admission_wait_seconds,
     active_requests_gauge,
     backend_in_flight_requests,
 )
@@ -153,25 +155,54 @@ def require_gpu_ready(request: Request) -> None:
 
 
 def _admission_wait_seconds() -> float:
+    """Bounded admission queue length. Env wins so tests and canaries can pin it
+    per process; otherwise the Settings default (sized to one generation)."""
+    raw = os.getenv("ADMISSION_WAIT_SECONDS")
+    if raw is None:
+        return max(0.0, float(settings.admission_wait_seconds))
     try:
-        return max(0.0, float(os.getenv("ADMISSION_WAIT_SECONDS", "0")))
+        return max(0.0, float(raw))
     except ValueError:
-        return 0.0
+        return max(0.0, float(settings.admission_wait_seconds))
+
+
+def _retry_after_seconds(availability) -> int:
+    """Hint for a client that was turned away: the remaining generation estimate
+    of the oldest occupant, clamped to [1, admission_retry_after_max_seconds].
+    The wait bound is sized to one generation, so `bound - oldest_age` is the
+    best content-free estimate of when the slot frees."""
+    ceiling = max(1, int(settings.admission_retry_after_max_seconds))
+    oldest = availability.snapshot().oldest_request_seconds
+    remaining = _admission_wait_seconds() - oldest
+    return int(min(ceiling, max(1.0, remaining)))
 
 
 async def begin_inference(request: Request) -> None:
     availability = getattr(request.app.state, "backend_availability", None)
     if availability is not None:
-        deadline = asyncio.get_running_loop().time() + _admission_wait_seconds()
+        loop = asyncio.get_running_loop()
+        arrived = loop.time()
+        deadline = arrived + _admission_wait_seconds()
+        waited = False
         while not availability.begin_request():
-            remaining = deadline - asyncio.get_running_loop().time()
+            waited = True
+            remaining = deadline - loop.time()
             if remaining <= 0:
+                inference_admission_total.labels(status="rejected").inc()
+                inference_admission_wait_seconds.observe(loop.time() - arrived)
+                # Kept for dashboards that predate inference_admission_total.
                 inference_requests_total.labels(endpoint="admission", status="rejected").inc()
+                # Busy is not failure: 429 + Retry-After is a routing hint for
+                # LiteLLM (try a sibling, do not cool this deployment). 503 is
+                # reserved for GPU_UNAVAILABLE / BACKEND_UNAVAILABLE.
                 raise HTTPException(
-                    status_code=503,
+                    status_code=429,
                     detail={"code": "BACKEND_BUSY", "reason": "capacity_exhausted"},
+                    headers={"Retry-After": str(_retry_after_seconds(availability))},
                 )
             await asyncio.sleep(min(0.05, remaining))
+        inference_admission_total.labels(status="queued" if waited else "admitted").inc()
+        inference_admission_wait_seconds.observe(loop.time() - arrived)
         active = availability.snapshot().in_flight
         active_requests_gauge.set(active)
         backend_in_flight_requests.set(active)
