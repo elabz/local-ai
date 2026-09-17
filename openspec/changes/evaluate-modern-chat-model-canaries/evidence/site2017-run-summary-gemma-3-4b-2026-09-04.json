@@ -1,0 +1,60 @@
+{
+  "calls": 125,
+  "error_kinds": {
+    "invalid stakes": 20,
+    "response is not an object": 11
+  },
+  "exported_threads": 80,
+  "failure_by_prompt_size": {
+    "2k-5k": {
+      "calls": 66,
+      "failed": 15
+    },
+    "5k-10k": {
+      "calls": 24,
+      "failed": 3
+    },
+    "<2k": {
+      "calls": 19,
+      "failed": 2
+    },
+    ">=10k": {
+      "calls": 16,
+      "failed": 11
+    }
+  },
+  "latency_s": {
+    "max": 209.8,
+    "mean": 49.1,
+    "median": 36.2,
+    "p95": 108.2
+  },
+  "native_first_response_rate": 0.0,
+  "output_tokens_total": 111404,
+  "prompt_tokens": {
+    "max": 16713,
+    "mean": 4791,
+    "total": 598881
+  },
+  "reconciliation": {
+    "completed_threads": 80,
+    "failed_calls": 31,
+    "privacy_rejections": 1,
+    "prompt_version": "tool-demand-extractor-1.3.0",
+    "redaction_version": "community-redactor-1.0.0",
+    "schema_version": "tool-demand-extraction-1.3.0",
+    "stop_reason": null,
+    "successful_calls": 94
+  },
+  "run": "canary-gemma-3-4b-q8-16k-prompt-v1.3-2048-gpu5",
+  "success_rate": 0.752,
+  "successful_calls": 94,
+  "validity_split": {
+    "cleanup": 66,
+    "irrecoverable": 31,
+    "native": 0,
+    "repair": 28,
+    "transport": 0
+  },
+  "wall_time_s": 6135
+}
