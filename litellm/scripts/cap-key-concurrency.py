@@ -6,7 +6,8 @@
     python3 scripts/cap-key-concurrency.py --apply    # apply CAPS below
 
 Every key must carry a cap no greater than the total slot count of the model
-groups it may call (docs/proxy-client-contract.md). Batch consumers get 1-2.
+groups it may call (docs/proxy-client-contract.md). Batch consumers stay
+at their agreed worker count (Rediska: 4).
 Unknown aliases are listed but never modified; add them to CAPS deliberately.
 """
 
@@ -23,7 +24,7 @@ CAPS = {
     "heartcode-backend": 8,   # sfw 3 + nsfw 3 + embed 2 (speech/canaries share)
     "manuals-pilot": 3,       # heartcode-chat-sfw only (3 slots)
     "vox-speech": 4,          # stt + tts
-    "rediska": 2,             # batch consumer: 1-2 by contract
+    "rediska": 4,             # batch consumer; sends up to 4 in parallel (operator, 2026-09-16)
 }
 
 

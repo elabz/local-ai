@@ -68,7 +68,7 @@ docker compose restart litellm          # Restart after config changes
 
 # API Key Management — every key MUST carry max_parallel_requests no greater
 # than the total slot count of the model groups it may call (chat groups have
-# 3 slots each; batch consumers such as Rediska get 2). Send the consumer
+# 3 slots each; Rediska is capped at 4, its agreed worker count). Send the consumer
 # docs/proxy-client-contract.md with the key.
 curl -X POST http://localhost:4000/key/generate \
   -H "Authorization: Bearer $MASTER_KEY" \

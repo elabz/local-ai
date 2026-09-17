@@ -26,8 +26,9 @@ The proxy retries a busy or transiently failing replica on a sibling for you
    group than that group has slots (3 for each chat group today). Your key is
    capped at the proxy with `max_parallel_requests`; treat that as a ceiling,
    not a target. Interactive apps should run well under it.
-2. **Batch consumers use 1–2 workers.** Backfills, re-embeds, bulk generation
-   (Rediska and anything like it) get a key capped at 2 and must not run wider.
+2. **Batch consumers run a fixed, agreed worker count.** Backfills, re-embeds,
+   bulk generation get a key capped at that count and must not run wider.
+   Rediska is agreed at 4 parallel requests and its key is capped at 4.
 3. **Honour `Retry-After`** when present. Otherwise use the backoff below.
 4. **Jittered exponential backoff** on `429` and `503`:
    `sleep = min(60, base * 2**attempt) * uniform(0.5, 1.5)` with `base = 5 s`,

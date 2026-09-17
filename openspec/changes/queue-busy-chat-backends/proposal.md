@@ -9,7 +9,7 @@ A busy chat backend is currently indistinguishable from a dead one. The wrapper'
 - **Queue instead of reject**: chat backends wait a bounded time for a slot (`ADMISSION_WAIT_SECONDS` > 0 by default, sized to one generation) before returning a busy response.
 - **Busy is not failure**: a request that exceeds the admission wait returns 429 with `Retry-After`, and LiteLLM treats that as a routing hint, not a deployment failure. 503 is reserved for a backend that is actually unavailable (GPU gone, child dead, downstream timeout). Cooldown thresholds are raised so a single transient busy/503 does not remove a deployment.
 - **Timeouts made consistent**: LiteLLM per-model timeout ≥ admission wait + worst-case generation; wrapper downstream timeout ≥ generation.
-- **Per-key concurrency**: every LiteLLM key gets `max_parallel_requests` no greater than the slot count of the model groups it may call; batch consumers (Rediska) get 1-2.
+- **Per-key concurrency**: every LiteLLM key gets `max_parallel_requests` no greater than the slot count of the model groups it may call; batch consumers get their agreed worker count (Rediska: 4).
 - **Client contract**: a short documented rule set for proxy consumers — bounded concurrency, honour `Retry-After`, jittered exponential backoff, never fan out beyond the group's slot count.
 
 ## Capabilities

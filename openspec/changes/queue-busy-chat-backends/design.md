@@ -14,7 +14,7 @@
 1. **Wait bound = one generation.** Default `ADMISSION_WAIT_SECONDS=60` for chat (512 max_tokens at ~30 tok/s plus prompt processing ≈ 30-45 s). Set in `x-gpu-env-common` so every chat replica inherits it; canaries keep their own value.
 2. **Busy → 429 + Retry-After, not 503.** LiteLLM's router treats 429 as rate-limit: it tries another deployment and, when none is free, surfaces the 429 rather than cooling the deployment (verify against the pinned LiteLLM version in a router unit test; if the version cools on 429, set `disable_cooldowns` for busy via `cooldown_time` on the 429 path or a custom `allowed_fails_policy`). `Retry-After` = min(remaining generation estimate, 30).
 3. **Cooldown tuning in `litellm/config.base.yaml`**: `allowed_fails: 3`, `cooldown_time: 20`, `num_retries: 2`, per-chat-model `timeout: 240` (60 wait + 180 generation ceiling). The wrapper's downstream httpx timeout stays ≥ 180.
-4. **Per-key caps via LiteLLM key metadata** (`max_parallel_requests`), documented in the key-generation command in CLAUDE.md. Rediska key: 2.
+4. **Per-key caps via LiteLLM key metadata** (`max_parallel_requests`), documented in the key-generation command in CLAUDE.md. Rediska key: 4 (it sends up to 4 in parallel).
 5. **Metrics**: `inference_admission_total{status=admitted|queued|rejected}` and `inference_admission_wait_seconds` histogram; alert on rejected rate.
 
 ## Risks / Trade-offs

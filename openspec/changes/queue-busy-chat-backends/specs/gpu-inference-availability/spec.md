@@ -27,8 +27,8 @@ LiteLLM SHALL NOT place a deployment into cooldown because it reported busy (429
 
 ### Requirement: Consumer keys are concurrency-capped
 
-Every LiteLLM API key SHALL carry `max_parallel_requests` no greater than the total slot count of the model groups it may call. Batch consumers SHALL be capped at 1-2. The client contract (bounded concurrency, honour `Retry-After`, jittered exponential backoff, no fan-out beyond slot count) SHALL be documented and linked from the key-issuance procedure.
+Every LiteLLM API key SHALL carry `max_parallel_requests` no greater than the total slot count of the model groups it may call. Batch consumers SHALL be capped at their agreed worker count (Rediska: 4). The client contract (bounded concurrency, honour `Retry-After`, jittered exponential backoff, no fan-out beyond slot count) SHALL be documented and linked from the key-issuance procedure.
 
 #### Scenario: Batch client fans out
-- **WHEN** a key capped at 2 issues 7 concurrent requests
-- **THEN** at most 2 reach backends at once and the rest receive 429 with `Retry-After` from the proxy without touching any deployment
+- **WHEN** a key capped at 4 issues 7 concurrent requests
+- **THEN** at most 4 reach backends at once and the rest receive 429 with `Retry-After` from the proxy without touching any deployment

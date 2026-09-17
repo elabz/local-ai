@@ -8,7 +8,7 @@
 
 - [x] 2.1 Router settings in `litellm/config.base.yaml`: `allowed_fails: 3`, `cooldown_time: 20`, `num_retries: 2`, chat `timeout: 240`; re-render `litellm/config.yaml`
 - [x] 2.2 Router test against the pinned LiteLLM image proving a 429 from a deployment does not cool it and is retried elsewhere
-- [x] 2.3 Set `max_parallel_requests` on every issued key (Rediska = 2); document the cap in the key-generation procedure
+- [x] 2.3 Set `max_parallel_requests` on every issued key (Rediska = 4); document the cap in the key-generation procedure
 
 ## 3. Contract and observability
 
@@ -18,7 +18,7 @@
 
 ## Deploy record (2026-09-16)
 
-- Keys capped on Prod via `litellm/scripts/cap-key-concurrency.py --apply`: heartcode-backend 8, manuals-pilot 3, vox-speech 4. No Rediska key exists yet; issue it with `max_parallel_requests: 2`.
+- Keys capped on Prod via `litellm/scripts/cap-key-concurrency.py --apply`: heartcode-backend 8, manuals-pilot 3, vox-speech 4. No Rediska key exists yet; issue it with `max_parallel_requests: 4` (it sends up to 4 in parallel).
 - LiteLLM recreated on Prod with the rendered config and pinned digest (litellm 1.81.9); `heartcode-chat-nsfw` 3/3 healthy.
 - Rolling recreate of `gpu-server-1..6` on PEA, each health-gated (40-55s to healthy); every replica reports `ADMISSION_WAIT_SECONDS=60`.
 - 7-way concurrent burst at `heartcode-chat-nsfw` through the proxy: 7/7 HTTP 200, zero 503, zero `litellm_deployment_cooled_down_total` increments. Replica counters afterwards: admitted 6, queued 1, rejected 0 (the queue was exercised).
