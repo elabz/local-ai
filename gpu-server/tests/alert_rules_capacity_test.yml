@@ -1,0 +1,118 @@
+# promtool unit tests for the capacity-loss alert rules (enforce-capacity-guardrails).
+#
+# Run (promtool ships inside the Prometheus image):
+#   docker run --rm -v "$PWD/gpu-server:/work" prom/prometheus:latest \
+#     promtool test rules /work/tests/alert_rules_capacity_test.yml
+#
+# Label sets below are copied from live LiteLLM metrics on Prod, which matter:
+# `litellm_deployment_cooled_down_total` carries the model *group* in
+# `litellm_model_name`, while `litellm_deployment_failure_responses_total` carries
+# the group in `requested_model` and the backing model file in
+# `litellm_model_name` — so a `litellm_model_name=~"heartcode-.*"` matcher on the
+# failure counter would never match anything.
+rule_files:
+  - ../configs/alert_rules.yml
+
+evaluation_interval: 1m
+
+tests:
+  # Synthetic cooldown on a canary deployment: the check task 4.2 asks for.
+  - interval: 1m
+    name: cooldown on a canary deployment alerts
+    input_series:
+      - series: 'litellm_deployment_cooled_down_total{litellm_model_name="heartcode-chat-gemma4-luchador-nsfw-canary",model_id="gemma4-luchador-nsfw-canary-gpu6",api_base="http://192.168.70.144:18086/v1",exception_status="503",job="litellm-proxy",instance="elm"}'
+        values: '0x5 1x20'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: LiteLLMDeploymentCooledDown
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              litellm_model_name: heartcode-chat-gemma4-luchador-nsfw-canary
+              model_id: gemma4-luchador-nsfw-canary-gpu6
+              api_base: http://192.168.70.144:18086/v1
+              exception_status: "503"
+              job: litellm-proxy
+              instance: elm
+            exp_annotations:
+              summary: "LiteLLM cooled down heartcode-chat-gemma4-luchador-nsfw-canary (http://192.168.70.144:18086/v1)"
+              description: "Deployment was removed from rotation after repeated failures (exception_status=503)."
+      # A cooldown attributed to 429 is a different, critical alert; a 503
+      # cooldown must not trip it.
+      - eval_time: 12m
+        alertname: LiteLLMCooldownOnBusy
+        exp_alerts: []
+
+  # Half of a group's traffic answered 429: both the group-level rate rule and
+  # the per-deployment rule fire, and the zero-success rule does not (2xx exist).
+  - interval: 1m
+    name: busy share above ten percent alerts per group and deployment
+    input_series:
+      - series: 'litellm_proxy_total_requests_metric_total{requested_model="heartcode-chat-sfw",status_code="200",job="litellm-proxy",instance="elm"}'
+        values: '0+5x60'
+      - series: 'litellm_proxy_total_requests_metric_total{requested_model="heartcode-chat-sfw",status_code="429",job="litellm-proxy",instance="elm"}'
+        values: '0+5x60'
+      - series: 'litellm_deployment_failure_responses_total{requested_model="heartcode-chat-sfw",model_id="heartcode-gpu1",api_base="http://192.168.70.144:8080/v1",exception_status="429",litellm_model_name="Llama-3.1-8B-Stheno-v3.4-Q5_K_M-imat.gguf",job="litellm-proxy",instance="elm"}'
+        values: '0+5x60'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: LiteLLMModelGroupBusyUnavailableRateHigh
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              requested_model: heartcode-chat-sfw
+            exp_annotations:
+              summary: "heartcode-chat-sfw: more than 10% of requests answered 429/503"
+              description: "50% of heartcode-chat-sfw requests got 429/503 over 15m. See LiteLLMDeploymentBusyUnavailable for the deployments involved and docs/proxy-client-contract.md for client caps."
+      - eval_time: 30m
+        alertname: LiteLLMDeploymentBusyUnavailable
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              requested_model: heartcode-chat-sfw
+              model_id: heartcode-gpu1
+              api_base: http://192.168.70.144:8080/v1
+              exception_status: "429"
+            exp_annotations:
+              summary: "heartcode-chat-sfw deployment heartcode-gpu1 returned 429"
+              description: "75 429 responses from http://192.168.70.144:8080/v1 in 15m."
+      - eval_time: 30m
+        alertname: LiteLLMModelGroupZeroSuccess
+        exp_alerts: []
+
+  # The silent failure this change exists for: requests arrive for an hour and
+  # nothing succeeds.
+  - interval: 1m
+    name: traffic with zero successes alerts
+    input_series:
+      - series: 'litellm_proxy_total_requests_metric_total{requested_model="heartcode-chat-nsfw",status_code="503",job="litellm-proxy",instance="elm"}'
+        values: '0+2x90'
+    alert_rule_test:
+      - eval_time: 70m
+        alertname: LiteLLMModelGroupZeroSuccess
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              requested_model: heartcode-chat-nsfw
+            exp_annotations:
+              summary: "heartcode-chat-nsfw: requests received but zero succeeded in the last hour"
+              description: "120 requests to heartcode-chat-nsfw in 1h and no 2xx response. Check deployment cooldowns (litellm_deployment_state), gpu-server/scripts/check-placement.py on PEA, and that routed replicas are running."
+
+  # Negative control: a healthy group with a 2% busy share stays quiet.
+  - interval: 1m
+    name: healthy traffic does not alert
+    input_series:
+      - series: 'litellm_proxy_total_requests_metric_total{requested_model="heartcode-chat-sfw",status_code="200",job="litellm-proxy",instance="elm"}'
+        values: '0+49x90'
+      - series: 'litellm_proxy_total_requests_metric_total{requested_model="heartcode-chat-sfw",status_code="429",job="litellm-proxy",instance="elm"}'
+        values: '0+1x90'
+    alert_rule_test:
+      - eval_time: 70m
+        alertname: LiteLLMModelGroupBusyUnavailableRateHigh
+        exp_alerts: []
+      - eval_time: 70m
+        alertname: LiteLLMModelGroupZeroSuccess
+        exp_alerts: []
+      - eval_time: 70m
+        alertname: LiteLLMDeploymentBusyUnavailable
+        exp_alerts: []

@@ -193,3 +193,87 @@ def test_quarantine_bind_conflict_does_not_crash(tmp_path):
     finally:
         quarantine.stop()
         blocker.close()
+
+
+CANARY = {"container": "pea-sfw-model-canary-gpu2", "compose_file": "docker-compose.model-canaries.yml",
+          "uuid": "GPU-old"}
+
+
+def canary_controller(tmp_path, runner, alerts, monkeypatch, quarantine=None):
+    path = topology(tmp_path)
+    data = json.loads(path.read_text())
+    data["schema_version"] = 2
+    data["slots"]["0000:04:00.0"]["canary"] = dict(CANARY)
+    path.write_text(json.dumps(data))
+    compose = tmp_path / "compose"
+    compose.mkdir()
+    ctl = gpu.Controller(path, tmp_path / "state", compose, runner=runner,
+                         quarantine=quarantine or FakeQuarantine(), sleep=lambda _n: None)
+    monkeypatch.setattr(ctl, "alert", lambda pci, slot, reason, text=None: alerts.append(text) or True)
+    return ctl
+
+
+def compose_commands(commands):
+    return [command for command in commands if command[:2] == ["docker", "compose"]]
+
+
+def test_v1_topology_without_canary_is_still_accepted(tmp_path):
+    ctl = controller(tmp_path, lambda args, **kw: completed(args))
+    assert ctl.inventory["schema_version"] == 1
+
+
+@pytest.mark.parametrize("data", [
+    {"schema_version": 3, "slots": {}},
+    {"schema_version": 1, "slots": {"0000:04:00.0": {"canary": dict(CANARY)}}},
+    {"schema_version": 2, "slots": {"0000:04:00.0": {"canary": {"compose_file": "x.yml"}}}},
+])
+def test_invalid_topology_schema_is_rejected(data):
+    with pytest.raises(ValueError):
+        gpu.validate_inventory(data)
+
+
+def test_recovering_slot_with_recorded_canary_restores_gpu_and_alerts_without_compose_up(tmp_path, monkeypatch):
+    commands, alerts, quarantine = [], [], FakeQuarantine()
+    def runner(args, **kw):
+        commands.append(args)
+        if args[0] == "nvidia-smi" and "--gpu-reset" not in args:
+            return completed(args, stdout="GPU-old, 00000000:04:00.0\n")
+        return completed(args)
+    ctl = canary_controller(tmp_path, runner, alerts, monkeypatch, quarantine)
+    ctl.recovery["slots"]["0000:04:00.0"] = {"uuid": "GPU-old", "attempts": 1, "notified": False}
+    assert ctl.cycle()["0000:04:00.0"] is True
+    assert compose_commands(commands) == []
+    assert quarantine.started == []
+    assert any("--gpu-reset" in command for command in commands)
+    assert len(alerts) == 1
+    assert "pea-sfw-model-canary-gpu2" in alerts[0] and "gpu-server-2,vision-embed-2 left stopped" in alerts[0]
+    assert "0000:04:00.0" not in ctl.recovery["slots"]
+
+
+def test_absent_canary_slot_alerts_once_and_stops_after_max_attempts(tmp_path, monkeypatch):
+    commands, alerts = [], []
+    def runner(args, **kw):
+        commands.append(args)
+        return completed(args, 1) if args[0] == "nvidia-smi" else completed(args)
+    ctl = canary_controller(tmp_path, runner, alerts, monkeypatch)
+    slot = ctl.inventory["slots"]["0000:04:00.0"]
+    for _ in range(gpu.MAX_ATTEMPTS + 1):
+        assert ctl.attempt("0000:04:00.0", slot, {}) is False
+    assert ctl.recovery["slots"]["0000:04:00.0"]["attempts"] == gpu.MAX_ATTEMPTS
+    assert len(alerts) == 1
+    assert compose_commands(commands) == []
+
+
+def test_healthy_canary_slot_never_starts_displaced_services(tmp_path, monkeypatch):
+    commands, alerts = [], []
+    def runner(args, **kw):
+        commands.append(args)
+        if args[0] == "nvidia-smi": return completed(args, stdout="GPU-old, 00000000:04:00.0\n")
+        if args[:3] == ["docker", "inspect", "-f"]: return completed(args, stdout="false\n")
+        return completed(args)
+    ctl = canary_controller(tmp_path, runner, alerts, monkeypatch)
+    assert ctl.cycle()["0000:04:00.0"] is False
+    inspected = [command[-1] for command in commands if command[:3] == ["docker", "inspect", "-f"]]
+    assert inspected == ["pea-sfw-model-canary-gpu2"]
+    assert compose_commands(commands) == []
+    assert alerts == []

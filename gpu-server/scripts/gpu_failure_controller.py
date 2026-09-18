@@ -21,6 +21,11 @@ from pathlib import Path
 
 LOG = logging.getLogger("gpu-failure-controller")
 MAX_ATTEMPTS = 3
+# v1: slots with id/uuid/services/containers/ports.
+# v2: adds an optional per-slot `canary: {container, compose_file, uuid}` recording
+#     a canary (from a second compose file) that has displaced the slot's
+#     main-compose services. v1 files are read unchanged.
+SUPPORTED_SCHEMA_VERSIONS = {1, 2}
 
 
 def utc_now():
@@ -97,6 +102,20 @@ class Quarantine:
                 server.server_close()
 
 
+def validate_inventory(inventory):
+    version = inventory.get("schema_version", 1)
+    if version not in SUPPORTED_SCHEMA_VERSIONS:
+        raise ValueError(f"unsupported gpu topology schema_version {version!r}")
+    for pci, slot in inventory.get("slots", {}).items():
+        canary = slot.get("canary")
+        if canary is None:
+            continue
+        if version < 2:
+            raise ValueError(f"slot {pci}: canary requires schema_version 2")
+        if not isinstance(canary, dict) or not canary.get("container"):
+            raise ValueError(f"slot {pci}: canary must record at least a container name")
+
+
 class Controller:
     def __init__(self, topology: Path, state_dir: Path, compose_dir: Path,
                  runner=subprocess.run, quarantine=None, sleep=time.sleep):
@@ -109,6 +128,7 @@ class Controller:
         self.runner, self.quarantine, self.sleep = runner, quarantine or Quarantine(), sleep
         state_dir.mkdir(parents=True, exist_ok=True)
         self.inventory = self._load_or_copy_inventory()
+        validate_inventory(self.inventory)
         self.recovery = self._load(self.recovery_path, {"slots": {}})
         self.failed = self._load(self.failed_path, {"failed": []})
 
@@ -191,12 +211,12 @@ class Controller:
                 return False
         return True
 
-    def alert(self, pci, slot, reason):
+    def alert(self, pci, slot, reason, text=None):
         webhook = os.getenv("SLACK_WEBHOOK_URL", "")
         if not webhook:
             LOG.error("Slack webhook is not configured")
             return False
-        payload = {"channel": "#hardware-alerts", "text": (
+        payload = {"channel": "#hardware-alerts", "text": text or (
             f"GPU hardware recovery exhausted: id={slot['id']} uuid={slot['uuid']} "
             f"pci={pci} attempts={MAX_ATTEMPTS} reason={reason}")}
         request = urllib.request.Request(webhook, json.dumps(payload).encode(), {"Content-Type": "application/json"})
@@ -207,10 +227,43 @@ class Controller:
             LOG.error("Slack hardware alert delivery failed")
             return False
 
-    def attempt(self, pci, slot, discovered, force=False):
+    def _recovery_record(self, pci, slot):
         record = self.recovery.setdefault("slots", {}).setdefault(pci, {"uuid": slot["uuid"], "attempts": 0, "notified": False})
         if record.get("uuid") != slot["uuid"]:
             record.clear(); record.update({"uuid": slot["uuid"], "attempts": 0, "notified": False})
+        return record
+
+    def attempt_canary_slot(self, pci, slot, discovered, force=False):
+        """Recover the card under a recorded canary without touching the main
+        compose: its services were displaced on purpose, and starting them next
+        to the canary OOMs the card. The canary itself belongs to another compose
+        file and is left to the operator, who is alerted once per fault."""
+        canary = slot["canary"]
+        record = self._recovery_record(pci, slot)
+        if record["attempts"] >= MAX_ATTEMPTS and not force:
+            return False
+        if pci in discovered:
+            self.command(["nvidia-smi", "--gpu-reset", "-i", slot["uuid"]], timeout=60)
+        record["attempts"] += 1
+        record["last_attempt_at"] = utc_now()
+        record["reason"] = "gpu_absent" if pci not in discovered else "restart_failed"
+        restored = normalize_pci(pci) in self.discover()
+        if not record.get("notified"):
+            record["notified"] = self.alert(pci, slot, record["reason"], text=(
+                f"GPU fault on canary slot: id={slot['id']} uuid={slot['uuid']} pci={pci} "
+                f"gpu_restored={str(restored).lower()} canary={canary['container']} "
+                f"compose_file={canary.get('compose_file', '?')}. Displaced services "
+                f"{','.join(slot['services'])} left stopped; restart the canary or remove "
+                f"it from the topology manually."))
+        if restored:
+            self.recovery["slots"].pop(pci, None)
+        atomic_json(self.recovery_path, self.recovery)
+        return restored
+
+    def attempt(self, pci, slot, discovered, force=False):
+        if slot.get("canary"):
+            return self.attempt_canary_slot(pci, slot, discovered, force=force)
+        record = self._recovery_record(pci, slot)
         if record["attempts"] >= MAX_ATTEMPTS and not force:
             self.quarantine.start(slot["ports"])
             return False
@@ -273,6 +326,12 @@ class Controller:
             failed = key not in discovered or existing.get("attempts", 0) > 0
             if failed:
                 results[pci] = self.attempt(pci, slot, discovered, force=force)
+            elif slot.get("canary"):
+                # Never `compose up` displaced main services under a canary.
+                results[pci] = self.containers_ready([slot["canary"]["container"]])
+                if not results[pci]:
+                    LOG.warning("Canary %s on %s is not running; displaced services left stopped",
+                                slot["canary"]["container"], slot["id"])
             else:
                 self.quarantine.stop(slot["ports"])
                 # On a normal daemon poll, leave healthy running workloads alone.

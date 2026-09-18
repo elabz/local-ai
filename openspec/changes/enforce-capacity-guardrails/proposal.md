@@ -30,3 +30,4 @@ Capacity was lost silently: canaries displaced two of three NSFW replicas, routi
 
 - No automatic re-placement or self-healing of capacity; the guardrails block and alert, humans decide.
 - No change to canary evaluation procedure itself.
+- **No alert delivery path.** This change writes and deploys the rules; it does not build the channel that carries them. Verified 2026-09-18: PEA's Prometheus has no `alerting:` block and zero active/dropped alertmanagers, and no Alertmanager runs on PEA or Prod, so "alert to the operator channel" today means "visible in the Prometheus UI and Grafana". Standing up Alertmanager and a receiver needs its own change; until then these rules detect capacity loss but do not announce it.

@@ -1,0 +1,229 @@
+[
+  {
+    "Name": "/pea-gpu-6",
+    "Id": "7fea65437e89f1014d7fde2f4df3002713c4b6c266b69ac8563a2373109c0b03",
+    "State": {
+      "Status": "running",
+      "Health": {
+        "Status": "healthy"
+      }
+    },
+    "Config": {
+      "Env": [
+        "NVIDIA_VISIBLE_DEVICES=GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9"
+      ]
+    },
+    "HostConfig": {
+      "DeviceRequests": [
+        {
+          "Driver": "nvidia",
+          "Count": 0,
+          "DeviceIDs": [
+            "GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9"
+          ],
+          "Capabilities": [
+            [
+              "gpu"
+            ]
+          ],
+          "Options": null
+        }
+      ],
+      "PortBindings": {
+        "8080/tcp": [
+          {
+            "HostIp": "",
+            "HostPort": "8085"
+          }
+        ]
+      }
+    },
+    "NetworkSettings": {
+      "Ports": {
+        "8080/tcp": [
+          {
+            "HostIp": "0.0.0.0",
+            "HostPort": "8085"
+          },
+          {
+            "HostIp": "::",
+            "HostPort": "8085"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "Name": "/pea-embed-5",
+    "Id": "0efe14fbd63ad68f1e672577dd7264d64e47be306588254a665b83f5c0a3c629",
+    "State": {
+      "Status": "running",
+      "Health": {
+        "Status": "healthy"
+      }
+    },
+    "Config": {
+      "Env": [
+        "NVIDIA_VISIBLE_DEVICES=GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b"
+      ]
+    },
+    "HostConfig": {
+      "DeviceRequests": [
+        {
+          "Driver": "nvidia",
+          "Count": 0,
+          "DeviceIDs": [
+            "GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b"
+          ],
+          "Capabilities": [
+            [
+              "gpu"
+            ]
+          ],
+          "Options": null
+        }
+      ],
+      "PortBindings": {
+        "8090/tcp": [
+          {
+            "HostIp": "",
+            "HostPort": "8094"
+          }
+        ]
+      }
+    },
+    "NetworkSettings": {
+      "Ports": {
+        "8080/tcp": null,
+        "8090/tcp": [
+          {
+            "HostIp": "0.0.0.0",
+            "HostPort": "8094"
+          },
+          {
+            "HostIp": "::",
+            "HostPort": "8094"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "Name": "/pea-sfw-model-canary-gpu6",
+    "Id": "92ac97eb8fa6491c2aad1ddf34e71427d92d3ca316a5902e62b85affa768c316",
+    "State": {
+      "Status": "exited",
+      "Health": {
+        "Status": "unhealthy"
+      }
+    },
+    "Config": {
+      "Env": [
+        "NVIDIA_VISIBLE_DEVICES=GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9"
+      ]
+    },
+    "HostConfig": {
+      "DeviceRequests": [
+        {
+          "Driver": "nvidia",
+          "Count": 0,
+          "DeviceIDs": [
+            "GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9"
+          ],
+          "Capabilities": [
+            [
+              "gpu"
+            ]
+          ],
+          "Options": null
+        }
+      ],
+      "PortBindings": {
+        "8080/tcp": [
+          {
+            "HostIp": "",
+            "HostPort": "18085"
+          }
+        ]
+      }
+    },
+    "NetworkSettings": {
+      "Ports": {}
+    }
+  },
+  {
+    "Name": "/pea-speech-meter",
+    "Id": "a7b4768e30b43437668157e3a9720fc6273574943116a4a32706f49643852b57",
+    "State": {
+      "Status": "running",
+      "Health": {
+        "Status": "healthy"
+      }
+    },
+    "Config": {
+      "Env": [
+        "NVIDIA_VISIBLE_DEVICES=GPU-f417c539-26db-94e9-4c8f-c5a775291988"
+      ]
+    },
+    "HostConfig": {
+      "DeviceRequests": null,
+      "PortBindings": {
+        "8080/tcp": [
+          {
+            "HostIp": "",
+            "HostPort": "8200"
+          }
+        ]
+      }
+    },
+    "NetworkSettings": {
+      "Ports": {
+        "8080/tcp": [
+          {
+            "HostIp": "0.0.0.0",
+            "HostPort": "8200"
+          },
+          {
+            "HostIp": "::",
+            "HostPort": "8200"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "Name": "/pea-prometheus",
+    "Id": "e20f32749aab764b51152a55e82a7cedcacf1c305ddce2ec030bd8fdc8584315",
+    "State": {
+      "Status": "running"
+    },
+    "Config": {
+      "Env": []
+    },
+    "HostConfig": {
+      "DeviceRequests": null,
+      "PortBindings": {
+        "9090/tcp": [
+          {
+            "HostIp": "",
+            "HostPort": "9099"
+          }
+        ]
+      }
+    },
+    "NetworkSettings": {
+      "Ports": {
+        "9090/tcp": [
+          {
+            "HostIp": "0.0.0.0",
+            "HostPort": "9099"
+          },
+          {
+            "HostIp": "::",
+            "HostPort": "9099"
+          }
+        ]
+      }
+    }
+  }
+]

@@ -106,4 +106,9 @@ jobs:
               done
               [ "$ok" = 1 ] || { echo "gpu-server-$i unhealthy on :$port"; exit 1; }
             done
+
+            # Placement truth: fail the deploy when live GPU tenancy, pins or
+            # routing drifted from gpu-topology.json / litellm/config.yaml.
+            # Exit 1 = drift, 2 = could not collect (both fail the job).
+            python3 scripts/check-placement.py
             docker image prune -f

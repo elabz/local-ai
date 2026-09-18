@@ -99,6 +99,8 @@ python3 scripts/render-config.py --check              # what CI runs (fails on d
 ```
 This renders (all **generated — do not hand-edit**): `gpu-server/models.generated.env` (chat `GPU_N_MODEL_*`), `litellm/config.yaml` (merged from `litellm/config.base.yaml` + the manifest), and `gpu-server/models.download.tsv` (consumed by `scripts/download-models.sh`). Secrets stay in the gitignored `gpu-server/.env`. Edit routing/retry/auth knobs in `litellm/config.base.yaml`. Structural changes (a GPU's *service kind*, e.g. chat→embed) are still manual `docker-compose.yml` edits.
 
+**Capacity floor (`min_replicas`)**: every model group declares `min_replicas`, and `render-config.py` (and so CI) fails when fewer deployments are listed. Removing a replica for a canary, maintenance or a dead card is only allowed in an edit that **also lowers `min_replicas` with a comment giving the date and reason**, e.g. `min_replicas: 2  # lowered 2026-09-16 from 3: GPU 6 hosts the SFW canary`. Never lower it without that comment, and raise it back in the edit that restores the replica.
+
 Then deploy via `deploy.yml`, or **manually** (fallback if the runner is down):
 ```bash
 # Prod (LiteLLM):  git pull && docker compose -f litellm/docker-compose.yml up -d litellm

@@ -19,6 +19,15 @@
 host: 192.168.70.144
 
 models:
+  # Required per-model key:
+  #     min_replicas: <int >= 1>
+  # The capacity floor for the group. render-config.py (and --check in CI) fails
+  # when fewer deployments are listed. To drop a replica on purpose (canary,
+  # maintenance, dead card), lower min_replicas in the same edit with a comment
+  # giving the date and reason, e.g.
+  #     min_replicas: 2  # lowered 2026-09-16 from 3: GPU 6 hosts the SFW canary
+  # Restore the floor when the replica returns.
+  #
   # Optional per-model key, valid on `kind: chat` only:
   #     chat_template: llama3 | gemma | qwen3
   # Pins the Jinja chat template from gpu-server/chat-templates/ rather than
@@ -30,6 +39,7 @@ models:
   # --- SFW chat (GPU 1-3) ------------------------------------------------------
   - api_name: heartcode-chat-sfw
     kind: chat
+    min_replicas: 3
     mode: chat
     litellm_model: Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf
     model_type: sfw
@@ -51,6 +61,7 @@ models:
   # --- NSFW chat (GPU 4-6) -----------------------------------------------------
   - api_name: heartcode-chat-nsfw
     kind: chat
+    min_replicas: 3
     mode: chat
     litellm_model: Lumimaid-v0.2-8B-Q5_K_M-imat.gguf
     model_type: nsfw
@@ -80,6 +91,7 @@ models:
   # --- Text embeddings, nomic-embed-text-v1.5 GGUF (GPU 4-5, co-located) --------
   - api_name: heartcode-embed
     kind: text-embed
+    min_replicas: 2
     mode: embedding
     litellm_model: nomic-embed-text-v1.5.Q8_0.gguf
     id_prefix: heartcode-embed
@@ -103,6 +115,7 @@ models:
   # --- Vision embeddings, nomic CLIP pair, 768-d (GPU 1-2, co-located) ----------
   - api_name: heartcode-embed-vision
     kind: vision-embed
+    min_replicas: 2
     mode: embedding
     litellm_model: heartcode-embed-vision
     id_prefix: heartcode-embed-vision
@@ -120,6 +133,7 @@ models:
   # --- Visual embeddings, DINOv2 ViT-L/14, 1024-d image-only (GPU 3, 6) ---------
   - api_name: heartcode-embed-visual
     kind: visual-embed
+    min_replicas: 2
     mode: embedding
     litellm_model: heartcode-embed-visual
     id_prefix: heartcode-embed-visual
@@ -140,6 +154,7 @@ models:
   # the former second SSD-1B replica.
   - api_name: heartcode-image
     kind: image
+    min_replicas: 1
     mode: image_generation
     litellm_model: heartcode-image
     id_prefix: heartcode-image
@@ -151,6 +166,7 @@ models:
   # --- Speech-to-text, faster-whisper on dedicated GPU 7 -----------------------
   - api_name: heartcode-stt
     kind: stt
+    min_replicas: 1
     mode: audio_transcription
     litellm_model: guillaumekln/faster-whisper-small.en
     id_prefix: heartcode-stt
@@ -163,6 +179,7 @@ models:
   # --- Text-to-speech, Kokoro-82M on dedicated GPU 7 --------------------------
   - api_name: heartcode-tts
     kind: tts
+    min_replicas: 1
     mode: audio_speech
     litellm_model: kokoro
     id_prefix: heartcode-tts

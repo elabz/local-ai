@@ -170,6 +170,55 @@ groups:
           summary: "Repeated chat deployment cooldowns"
           description: "More than two HeartCode chat cooldowns in ten minutes; a model group may be losing all replicas."
 
+      # Capacity loss per model group (enforce-capacity-guardrails). Labels come
+      # from LiteLLM's aggregate counters only: requested_model is the model
+      # group, model_id/api_base the deployment. No request content.
+      #
+      # Busy (429) and unavailable (503) share of a group's traffic. Threshold:
+      # 10% over 15 minutes with at least ~1 request/min, so a single overlap
+      # burst does not page.
+      - alert: LiteLLMModelGroupBusyUnavailableRateHigh
+        expr: |
+          (
+            sum by (requested_model) (rate(litellm_proxy_total_requests_metric_total{requested_model=~"heartcode-.*", status_code=~"429|503"}[15m]))
+            / sum by (requested_model) (rate(litellm_proxy_total_requests_metric_total{requested_model=~"heartcode-.*"}[15m]))
+          ) > 0.10
+          and on (requested_model)
+          sum by (requested_model) (rate(litellm_proxy_total_requests_metric_total{requested_model=~"heartcode-.*"}[15m])) > 1/60
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{$labels.requested_model}}: more than 10% of requests answered 429/503"
+          description: "{{ $value | humanizePercentage }} of {{$labels.requested_model}} requests got 429/503 over 15m. See LiteLLMDeploymentBusyUnavailable for the deployments involved and docs/proxy-client-contract.md for client caps."
+
+      # Which deployments are returning 429/503 (names group + deployment).
+      - alert: LiteLLMDeploymentBusyUnavailable
+        expr: |
+          sum by (requested_model, model_id, api_base, exception_status) (
+            increase(litellm_deployment_failure_responses_total{requested_model=~"heartcode-.*", exception_status=~"429|503"}[15m])
+          ) >= 5
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{$labels.requested_model}} deployment {{$labels.model_id}} returned {{$labels.exception_status}}"
+          description: "{{ $value | humanize }} {{$labels.exception_status}} responses from {{$labels.api_base}} in 15m."
+
+      # The silent failure this guards against: traffic arrives, nothing
+      # succeeds, every health check stays green. Group-level; the matching
+      # LiteLLMDeploymentCooledDown / LiteLLMDeploymentBusyUnavailable alerts
+      # name the deployment.
+      - alert: LiteLLMModelGroupZeroSuccess
+        expr: |
+          sum by (requested_model) (increase(litellm_proxy_total_requests_metric_total{requested_model=~"heartcode-.*"}[1h])) > 0
+          unless on (requested_model)
+          sum by (requested_model) (increase(litellm_proxy_total_requests_metric_total{requested_model=~"heartcode-.*", status_code=~"2.."}[1h])) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{$labels.requested_model}}: requests received but zero succeeded in the last hour"
+          description: "{{ $value | humanize }} requests to {{$labels.requested_model}} in 1h and no 2xx response. Check deployment cooldowns (litellm_deployment_state), gpu-server/scripts/check-placement.py on PEA, and that routed replicas are running."
+
       - alert: GPUReadinessLost
         expr: gpu_readiness == 0
         for: 30s

@@ -85,6 +85,19 @@ def validate(manifest: dict) -> None:
             else:
                 seen_ports[port] = name
 
+        # Capacity floor: dropping a routed replica (canary, maintenance) must be
+        # a deliberate manifest edit that also lowers min_replicas with a dated
+        # reason comment, never a silent side effect.
+        min_replicas = m.get("min_replicas")
+        if not isinstance(min_replicas, int) or isinstance(min_replicas, bool) or min_replicas < 1:
+            errors.append(f"{name}: min_replicas must be an integer >= 1 (got {min_replicas!r})")
+        elif len(deployments) < min_replicas:
+            errors.append(
+                f"{name}: {len(deployments)} routed deployment(s) is below "
+                f"min_replicas {min_replicas}; if intentional, lower min_replicas "
+                f"with a dated reason comment"
+            )
+
         src = m.get("source") or {}
         if kind == "chat":
             if src.get("type") != "gguf" or not src.get("file"):
