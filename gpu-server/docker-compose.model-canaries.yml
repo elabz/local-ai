@@ -43,6 +43,7 @@ services:
       - "--cache-reuse"
       - "${CANARY_CACHE_REUSE:-256}"
       - "--jinja"
+      - "--metrics"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s

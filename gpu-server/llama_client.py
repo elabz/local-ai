@@ -33,6 +33,13 @@ class LlamaClient:
             response = await client.get(f"{self.base_url}/health")
             return response.json()
 
+    async def metrics(self) -> str:
+        """llama.cpp's Prometheus exposition (requires llama-server --metrics)."""
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(f"{self.base_url}/metrics")
+            response.raise_for_status()
+            return response.text
+
     async def get_model_info(self) -> dict:
         """Get loaded model information."""
         async with httpx.AsyncClient(timeout=self.timeout) as client:

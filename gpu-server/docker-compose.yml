@@ -129,6 +129,7 @@ x-embedding-server-common: &embedding-server-common
     - "--host"
     - "0.0.0.0"
     - "--embedding"
+    - "--metrics"
     - "--ctx-size"
     - "2048"
     - "--batch-size"
@@ -870,6 +871,7 @@ services:
       - --parallel
       - "1"
       - --cont-batching
+      - --metrics
       - --cache-reuse
       - "256"
       - --cache-type-k

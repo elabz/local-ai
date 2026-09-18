@@ -36,6 +36,30 @@ scrape_configs:
           gpu_id: '6'
           model_type: 'nsfw'
 
+  # llama.cpp's own metrics (llamacpp:* — tokens, KV cache, slots, queue) from
+  # every llama-server (--metrics). Chat workers bind llama-server to loopback,
+  # so the wrapper relays it at /llama/metrics; text-embed servers serve it directly.
+  - job_name: 'llama-server'
+    static_configs:
+      - targets: ['pea-gpu-1:8080', 'pea-gpu-2:8080', 'pea-gpu-3:8080']
+        labels:
+          __metrics_path__: /llama/metrics
+          model_type: 'sfw'
+      - targets: ['pea-gpu-4:8080', 'pea-gpu-5:8080', 'pea-gpu-6:8080']
+        labels:
+          __metrics_path__: /llama/metrics
+          model_type: 'nsfw'
+      - targets: ['pea-embed-4:8090', 'pea-embed-5:8090']
+        labels:
+          __metrics_path__: /metrics
+          model_type: 'embed-text'
+    relabel_configs:
+      # gpu_id from the container name (pea-gpu-N / pea-embed-N), matching the other jobs
+      - source_labels: [__address__]
+        regex: 'pea-(?:gpu|embed)-(\d+):\d+'
+        target_label: gpu_id
+        replacement: '$1'
+
   # Vision Embedding Servers (nomic-embed-vision-v1.5 + text-v1.5), co-located on SFW chat GPU 1-2
   - job_name: 'vision-embed'
     static_configs:

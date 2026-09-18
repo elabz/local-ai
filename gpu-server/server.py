@@ -51,6 +51,7 @@ def start_llama_server() -> subprocess.Popen:
         "--threads", str(settings.n_threads),
         "--parallel", str(settings.max_concurrent_requests),
         "--cont-batching",
+        "--metrics",  # llama.cpp Prometheus metrics, relayed at /llama/metrics
         "--cache-reuse", str(settings.cache_reuse),  # Enable prompt caching for faster TTFT
         "--cache-ram", str(settings.cache_ram),  # Bound the host-RAM prompt cache (MiB)
         "--cache-type-k", settings.cache_type_k,  # Quantize KV cache

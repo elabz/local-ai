@@ -63,3 +63,8 @@ def test_disabled_or_unlimited_cache_is_refused(monkeypatch, tmp_path, value):
     monkeypatch.setenv("CACHE_RAM", value)
     with pytest.raises(ValidationError):
         _settings(monkeypatch, tmp_path)
+
+
+def test_metrics_endpoint_enabled(monkeypatch):
+    # Prometheus scrapes llama.cpp's own metrics through the wrapper's /llama/metrics.
+    assert "--metrics" in _command(monkeypatch)

@@ -469,6 +469,24 @@ async def tokenize(request: Request, body: TokenizeRequest):
     return result
 
 
+@router.get("/llama/metrics")
+async def get_llama_metrics(request: Request):
+    """Relay llama-server's own Prometheus metrics (llamacpp:*).
+
+    llama-server binds to loopback so clients cannot bypass admission; this
+    read-only relay is how Prometheus reaches its metrics. It takes no
+    admission slot and does not require GPU readiness, so it keeps reporting
+    while the worker is busy or degraded.
+    """
+    from fastapi.responses import Response
+
+    try:
+        text = await request.app.state.llama_client.metrics()
+    except (httpx.HTTPError, AttributeError) as exc:
+        raise HTTPException(status_code=503, detail=f"llama-server metrics unavailable: {type(exc).__name__}")
+    return Response(content=text, media_type="text/plain; version=0.0.4; charset=utf-8")
+
+
 @router.get("/metrics")
 async def get_metrics():
     """Get Prometheus metrics."""
