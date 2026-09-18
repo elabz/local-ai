@@ -72,7 +72,7 @@ x-host-memory:
 
 Use `pea-gpu-3` (SFW, lowest traffic, 0.6 GiB). Two measurements, taken **direct** against `:8082`, not through LiteLLM:
 1. **Is the growth the cache?** With `CACHE_RAM=1024`, drive ≥ 30 distinct multi-turn sessions (`load-tests/` or a small script) and sample `llama-server` VmRSS each minute. Pass when RSS plateaus at ≈ baseline + 1,024 MiB. If RSS keeps climbing past the bound, the growth is not the prompt cache: stop and re-diagnose.
-2. **Does reuse still pay?** Alternate two conversations A, B, A, B … (so each return to A must come from the host cache, not the slot). Record the TTFT of each returning turn at `CACHE_RAM=8192` (today) and at `1024`. Pass when the median TTFT at 1,024 is within 10% of 8,192 for 2 active sessions, and record the curve at 4 and 8 sessions so the cost of thrash is known. If 1,024 fails, try 1,536 and re-run D2.
+2. **Does reuse still pay?** Alternate two conversations A, B, A, B … (so each return to A must come from the host cache, not the slot). Record the TTFT of each returning turn at `CACHE_RAM=8192` (today) and at `1024`. TTFT is the client wall time of a `max_tokens: 1` request, **not** llama.cpp's `timings.prompt_ms`: the baseline showed `prompt_ms` ≈ 0.12 s on a hit while restoring the cached state takes another ~2.5 s that `prompt_ms` leaves out. `timings.cache_n` still proves hit or miss. Pass when the median TTFT at 1,024 is within 10% of 8,192 for 2 active sessions, and record the curve at 4 and 8 sessions so the cost of thrash is known. If 1,024 fails, try 1,536 and re-run D2.
 
 ### D6. Rollout is one worker at a time, through compose
 
@@ -92,4 +92,4 @@ Order: `gpu-server-3` (qualified in D5), then 6, then 2, 1, 5, 4. For each worke
 ## Open Questions
 
 - Final `CACHE_RAM` and chat `mem_limit`: 1,024/2,048 is the candidate, and D5 decides.
-- Does build 8027 store host-cache entries at the KV cache type (q8_0) or at f16? That doubles or halves the token capacity estimate in D2. D5's plateau measurement answers it empirically.
+- ~~Does build 8027 store host-cache entries at q8_0 or f16?~~ Answered by the 2026-09-18 baseline: RSS grew ≈ 65 KiB per cached token, which matches q8_0. 1,024 MiB therefore holds ≈ 16,000 tokens, about 7 sessions of ~2,300 tokens, so the 8-session run is expected to miss.

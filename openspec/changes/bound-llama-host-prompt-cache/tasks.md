@@ -12,7 +12,7 @@
 
 ## 2. Qualify on one worker (design D5, `pea-gpu-3`)
 
-- [ ] 2.1 Record the baseline: RSS, and alternating-conversation TTFT direct against `:8082` at today's default (8,192) for 2, 4 and 8 sessions
+- [x] 2.1 Record the baseline: RSS, and alternating-conversation TTFT direct against `:8082` at today's default (8,192) for 2, 4 and 8 sessions _(2026-09-18, `evidence/2026-09-18-ttft-cache-ram-8192.json`: ~2,330-token prompts, cold 6.2–6.3 s server-side; returning turns 28/28 cache hits, median wall 2.63–2.67 s, of which only 0.12 s is `prompt_ms` and the rest is restoring the cached state. RSS 859 → 2,920 MiB over 14 sessions ≈ 65 KiB/token, i.e. the cache stores q8_0 KV)_
 - [ ] 2.2 Recreate `gpu-server-3` with `CACHE_RAM=1024` (compose override only for this worker); confirm `docker inspect` shows `--cache-ram 1024`
 - [ ] 2.3 Drive ≥ 30 distinct sessions; confirm RSS plateaus at ≈ baseline + 1,024 MiB. If not, stop and re-diagnose (the growth is not the cache)
 - [ ] 2.4 Repeat the TTFT runs at 1,024; pass if the 2-session median is within 10% of 2.1. Otherwise try 1,536 and redo the D2 arithmetic

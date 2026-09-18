@@ -12,7 +12,7 @@ Every chat worker SHALL start `llama-server` with an explicit `--cache-ram` valu
 - **THEN** its `llama-server` resident memory levels off at no more than its baseline plus `CACHE_RAM` plus 256 MiB, and stays below the container's `mem_limit`
 
 ### Requirement: Prompt-cache reuse keeps its latency benefit
-The chosen `CACHE_RAM` SHALL keep repeated-prompt time-to-first-token, measured directly against a worker, within 10% of the value measured with llama.cpp's previous 8,192 MiB default, for two alternating active sessions.
+The chosen `CACHE_RAM` SHALL keep repeated-prompt time-to-first-token (client-measured wall time of a one-token completion, which includes restoring cached state), measured directly against a worker, within 10% of the value measured with llama.cpp's previous 8,192 MiB default, for two alternating active sessions.
 
 #### Scenario: Returning conversation is restored from the host cache
 - **WHEN** two conversations alternate on one worker, so each return evicts the other from the slot
