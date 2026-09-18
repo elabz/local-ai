@@ -26,9 +26,9 @@
 ## 4. Alerts
 
 - [x] 4.1 Prometheus rules: cooldown events, 429/503 rate per model group, zero-success-with-traffic per model group over 1 h
-- [ ] 4.2 Verify alert delivery with a synthetic cooldown on a canary deployment _(UNCHECKED at triage 2026-09-18: PEA Prometheus `/api/v1/alertmanagers` returns no active Alertmanager, so no alert can have been delivered. Closes via `project-health-improvements` section 3.)_
-      — **verified as far as it can be (2026-09-18); end-to-end delivery is
-      impossible today.** What was verified:
+- [x] 4.2 Verify alert delivery with a synthetic cooldown on a canary deployment _(UNCHECKED at triage 2026-09-18: PEA Prometheus `/api/v1/alertmanagers` returns no active Alertmanager, so no alert can have been delivered. **Re-checked 2026-09-18** with `project-health-improvements` 3.4 evidence: `pea-alertmanager` is registered as active on PEA's Prometheus, and a synthetic alert (`SyntheticDeliveryTest`, posted 21:30:31Z) was delivered to Slack `#hardware-alerts` by 21:31:42Z, with Slack notifications 2→3 and 0 failures. The rule half remains the promtool synthetic cooldown below. The canary route it names was removed from LiteLLM the same day, so no live canary cooldown is possible.)_
+      — **earlier note, superseded by the re-check above:** verified as far as
+      it could be before Alertmanager existed. What was verified:
       - `gpu-server/tests/alert_rules_capacity_test.yml` (promtool unit tests,
         `promtool test rules`) drives a synthetic cooldown on the
         `gemma4-luchador-nsfw-canary-gpu6` deployment and asserts

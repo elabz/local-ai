@@ -89,3 +89,12 @@ Every LiteLLM API key SHALL carry `max_parallel_requests` no greater than the to
 #### Scenario: Batch client fans out
 - **WHEN** a key capped at 4 issues 7 concurrent requests
 - **THEN** at most 4 reach backends at once and the rest receive 429 with `Retry-After` from the proxy without touching any deployment
+
+### Requirement: Capacity loss is alerted per model group
+
+Monitoring SHALL alert when, for any model group over a 1-hour window, requests were received and zero completions succeeded, and SHALL alert on deployment cooldown events and on 429/503 rates above a configured threshold. Alerts SHALL name the model group and deployment and contain no request content.
+
+#### Scenario: Only deployment in cooldown loop
+- **WHEN** a model group's sole deployment cycles through cooldown so that no request succeeds for an hour
+- **THEN** an alert names the group and deployment within that hour
+
