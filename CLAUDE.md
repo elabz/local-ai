@@ -149,6 +149,7 @@ Embed tier is **2 of each type**, co-located one-per-chat-GPU (`rebalance-embed-
 - KV cache: `q8_0` quantization for both keys and values
 - `EXTRA_ARGS: "--jinja"` — enables Jinja chat templates for Llama 3.1 models
 - `CACHE_REUSE=256` — prompt caching for faster TTFT
+- `--metrics` on every llama-server: chat workers relay llama.cpp's `llamacpp:*` series at `:8080/llama/metrics` (llama-server stays on loopback), text-embed at `:8090/metrics`; Prometheus job `llama-server` (spec `inference-metrics`)
 - `CACHE_RAM=1024` — llama-server `--cache-ram`: bounds the host-RAM prompt cache per worker (~4 HeartCode 4k-token sessions). Never unset: llama.cpp's implicit 8192 MiB let six workers OOM the host on 2026-09-18. Never `0`: it may disable `--cache-reuse`
 - Power limit: 120W per GPU (`nvidia-power-limit.service`)
 

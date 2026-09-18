@@ -48,3 +48,11 @@
 - Kernel log: 0 `llama-server` OOM kills since the rollout began (16:40Z).
 - Memory sampler under live traffic, 17:48–18:09Z (`evidence/2026-09-18-soak-2h.log`; stopped early when the workstation ran low on memory): host available never below 17.9 GiB, per-worker memory flat, no container or kernel OOM kills. For acceptance, query PEA Prometheus instead (`min_over_time(node_memory_MemAvailable_bytes[2h])`); 5.1 still needs a real load run on both routes (the next HeartCode evaluation, or `load-tests/`).
 - **Rollout finding:** `pea-gpu-2` was *recreated* at 17:30:07Z by something other than the rollout script, at the moment its GPU 2 neighbour `vision-embed-2` was being recreated. It came back correct (Stheno, `--cache-ram 1024`, 1792m). Confirmed from `scripts/gpu_failure_controller.py` (the journal is root-only): on a normal poll, if any of a slot's containers is not ready, the controller runs `compose up` for **all** of the slot's services, adding `-f docker-compose.gpu-health-canary.yml -f <gpu-uuid override>`. That config differs from a plain deploy invocation, so Compose recreated the healthy chat container too. Future rollouts should recreate co-located slot services together, or check with root whether the controller's compose invocation matches the deploy one.
+
+## Spec sync (2026-09-18)
+
+- [x] 6.1 Synced `specs/host-memory-budget` into `openspec/specs/host-memory-budget/spec.md` so the main specs describe the deployed configuration while 5.1/5.2/5.4 remain open. **When archiving, use `openspec archive bound-llama-host-prompt-cache --skip-specs`**; the requirements are already in the main spec, and a normal archive would try to add them twice.
+
+## Deploy alignment (2026-09-18)
+
+- [x] 7.1 `docker compose up -d --dry-run` on PEA showed a plain deploy would recreate `pea-gpu-2` and `pea-embed-vision-2` (containers the GPU controller had recreated at 17:30 with its own compose overlay). Recreated both together at 18:50Z with the deploy invocation; the dry run is now empty, so a normal deploy changes nothing. A stale untracked `gpu-server/model-canary-operations.sh` (an older copy of `scripts/model-canary-operations.sh`) was moved out of the checkout to `~/stray-backups/` on PEA.
