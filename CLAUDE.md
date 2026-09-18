@@ -144,11 +144,12 @@ Embed tier is **2 of each type**, co-located one-per-chat-GPU (`rebalance-embed-
 ## Key Configuration
 
 ### GPU Server (`gpu-server/docker-compose.yml`)
-- Memory limit: 2048m per chat server, 512m per text-embed server, 2560m per vision-embed server, 4096m per image server
+- Memory limits (host budget, enforced in CI by `scripts/check-memory-budget.py`): every default-started service has `mem_limit`, with `memswap_limit` = limit + 512m, and the limits sum to ≤ host RAM − 2 GiB (29,975 MiB; currently 29,312). Chat 1792m each, text-embed 512m, vision-embed 2048m, DINOv2 1536m, image 4096m, STT 1792m, TTS 2816m. Adding a service means shrinking another (change `bound-llama-host-prompt-cache`)
 - `N_GPU_LAYERS=33`, `N_CTX=16384`, `N_BATCH=128`, `N_UBATCH=64`, `N_THREADS=2`
 - KV cache: `q8_0` quantization for both keys and values
 - `EXTRA_ARGS: "--jinja"` — enables Jinja chat templates for Llama 3.1 models
 - `CACHE_REUSE=256` — prompt caching for faster TTFT
+- `CACHE_RAM=1024` — llama-server `--cache-ram`: bounds the host-RAM prompt cache per worker (~4 HeartCode 4k-token sessions). Never unset: llama.cpp's implicit 8192 MiB let six workers OOM the host on 2026-09-18. Never `0`: it may disable `--cache-reuse`
 - Power limit: 120W per GPU (`nvidia-power-limit.service`)
 
 ### Vision Embedding Server (`gpu-server/vision-embed/`)

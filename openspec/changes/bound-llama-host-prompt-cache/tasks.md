@@ -30,14 +30,20 @@
 
 ## 4. Rollout on PEA (design D6)
 
-- [ ] 4.1 Confirm no HeartCode evaluation is running; pull and render on PEA
-- [ ] 4.2 Recreate the chat workers one at a time in the order 3, 6, 2, 1, 5, 4: `/health` 200, `docker inspect` Cmd and Memory checked, 10 minutes of serving before the next
-- [ ] 4.3 Recreate the non-chat services one at a time with their new limits; confirm health
-- [ ] 4.4 Run `check-placement.py`; restart any worker whose `/health` is stuck on 503 `inference_active` with no traffic
+- [x] 4.1 Confirm no HeartCode evaluation is running; pull and render on PEA _(candidate E evaluation ended 15:47Z; PEA pulled f173654 at 16:48Z)_
+- [x] 4.2 Recreate the chat workers one at a time in the order 3, 6, 2, 1, 5, 4: `/health` 200, `docker inspect` Cmd and Memory checked, 10 minutes of serving before the next _(16:48–17:27Z via `evidence/2026-09-18-rollout.log`; each gated on both route peers healthy, `--cache-ram 1024`, 1792m/2304m. Soak shortened to 5 minutes (owner chose "everything now"). Host available 3.1 GiB → 25.8 GiB)_
+- [x] 4.3 Recreate the non-chat services one at a time with their new limits; confirm health _(17:27–17:40Z, 16 services, all healthy or running; `qwen3-canary` stays down behind its profile)_
+- [x] 4.4 Run `check-placement.py`; restart any worker whose `/health` is stuck on 503 `inference_active` with no traffic _(placement OK; every chat/embed port 200, image `/readyz` 200; no wedged worker)_
 
 ## 5. Acceptance
 
 - [ ] 5.1 Run sustained load (≥ 2 h) on both routes; sample `MemAvailable` and per-worker RSS each minute into `evidence/`
 - [ ] 5.2 Confirm no `llama-server` OOM kill in `journalctl -k` for the window, `MemAvailable` ≥ 4 GiB throughout, and every RSS below its `mem_limit`
-- [ ] 5.3 Update CLAUDE.md "Key Configuration" (memory limits and `CACHE_RAM`)
+- [x] 5.3 Update CLAUDE.md "Key Configuration" (memory limits and `CACHE_RAM`)
 - [ ] 5.4 Tell the HeartCode side that PEA RAM is bounded, so evaluations can record it as a precondition
+
+### Acceptance evidence so far (2026-09-18)
+
+- All six workers filled past the bound at once (12 distinct 2,000-token sessions each, 17:42Z): allocated memory 0.82–1.16 GiB per worker, RSS 1.09–1.46 GiB, container OOM kills 0, restarts 0, host available 18.1 GiB. Each worker holds 140–220 MiB in swap (cgroup v2 ignores `mem_swappiness`), but TTFT under the production limit is unaffected: returning turns 2.70 s (2 sessions) / 2.57 s (4) vs the 8192 baseline 2.67 / 2.63, 24/24 hits (`evidence/2026-09-18-ttft-cache-ram-1024-limit-1792.json`).
+- Kernel log: 0 `llama-server` OOM kills since the rollout began (16:40Z).
+- 2-hour memory sampler under live traffic: `evidence/2026-09-18-soak-2h.log`. It covers memory, not the acceptance's sustained-load requirement; 5.1 still needs a real load run on both routes (the next HeartCode evaluation, or `load-tests/`).

@@ -1,0 +1,36 @@
+at f173654 feat(gpu-server): bound chat prompt cache and fit PEA limits in host RAM
+16:48:44 pea-gpu-3 recreate (rss_before=1117MiB avail=4409MiB)
+16:50:26 pea-gpu-3 OK (healthy, /health 200, --cache-ram 1024, 1792m/2304m); soak 300s
+16:55:27 pea-gpu-3 after soak rss=169MiB restarts=0 avail=4870MiB
+16:55:27 pea-gpu-6 recreate (rss_before=261MiB avail=4828MiB)
+16:56:38 pea-gpu-6 OK (healthy, /health 200, --cache-ram 1024, 1792m/2304m); soak 300s
+17:01:38 pea-gpu-6 after soak rss=332MiB restarts=0 avail=4829MiB
+17:01:39 pea-gpu-2 recreate (rss_before=923MiB avail=4834MiB)
+17:02:56 pea-gpu-2 OK (healthy, /health 200, --cache-ram 1024, 1792m/2304m); soak 300s
+17:07:56 pea-gpu-2 after soak rss=145MiB restarts=0 avail=5761MiB
+17:07:57 pea-gpu-1 recreate (rss_before=7473MiB avail=5767MiB)
+17:09:04 pea-gpu-1 OK (healthy, /health 200, --cache-ram 1024, 1792m/2304m); soak 300s
+17:14:04 pea-gpu-1 after soak rss=146MiB restarts=0 avail=12995MiB
+17:14:04 pea-gpu-5 recreate (rss_before=7476MiB avail=12994MiB)
+17:15:21 pea-gpu-5 OK (healthy, /health 200, --cache-ram 1024, 1792m/2304m); soak 300s
+17:20:21 pea-gpu-5 after soak rss=365MiB restarts=0 avail=20442MiB
+17:20:21 pea-gpu-4 recreate (rss_before=7904MiB avail=20444MiB)
+17:21:47 pea-gpu-4 OK (healthy, /health 200, --cache-ram 1024, 1792m/2304m); soak 300s
+17:26:47 pea-gpu-4 after soak rss=1376MiB restarts=0 avail=25789MiB
+17:27:09 embedding-server-4 OK (healthy, limit 512MiB)
+17:27:40 embedding-server-5 OK (healthy, limit 512MiB)
+17:29:33 vision-embed-1 OK (healthy, limit 2048MiB)
+17:31:25 vision-embed-2 OK (healthy, limit 2048MiB)
+17:32:33 dino-embed-1 OK (healthy, limit 1536MiB)
+17:33:41 dino-embed-2 OK (healthy, limit 1536MiB)
+17:34:21 image-server OK (healthy, limit 4096MiB)
+17:35:23 speech-stt OK (healthy, limit 1792MiB)
+17:37:43 speech-tts OK (healthy, limit 2816MiB)
+17:37:57 speech-stream-gateway OK (running, limit 128MiB)
+17:38:44 speech-meter OK (healthy, limit 384MiB)
+17:39:02 speech-gpu-exporter OK (running, limit 128MiB)
+17:39:16 prometheus OK (running, limit 512MiB)
+17:39:30 grafana OK (running, limit 384MiB)
+17:39:46 blackbox-exporter OK (running, limit 64MiB)
+17:40:00 node-exporter OK (running, limit 64MiB)
+17:40:10 DONE avail=20550MiB
