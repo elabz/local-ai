@@ -220,7 +220,10 @@ groups:
           description: "{{ $value | humanize }} requests to {{$labels.requested_model}} in 1h and no 2xx response. Check deployment cooldowns (litellm_deployment_state), gpu-server/scripts/check-placement.py on PEA, and that routed replicas are running."
 
       - alert: GPUReadinessLost
-        expr: gpu_readiness == 0
+        # Only where the GPU gate is enabled and has recorded a transition. With
+        # GPU_HEALTH_ENABLED=0 (the deployed default) the gauge is never set and
+        # reads 0 forever; this rule fired on every worker until 2026-09-18.
+        expr: gpu_readiness == 0 and on(instance) (sum by (instance) (gpu_readiness_transitions_total) > 0)
         for: 30s
         labels:
           severity: critical

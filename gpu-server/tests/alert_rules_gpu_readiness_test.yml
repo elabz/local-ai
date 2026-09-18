@@ -1,0 +1,44 @@
+# promtool unit tests for GPUReadinessLost.
+#
+#   docker run --rm -v "$PWD/gpu-server:/work" --entrypoint promtool prom/prometheus:latest \
+#     test rules /work/tests/alert_rules_gpu_readiness_test.yml
+#
+# With GPU_HEALTH_ENABLED=0 the readiness gauge is never set, so it reads 0 and
+# no transition series exists. That must not alert; a real loss must.
+
+rule_files:
+  - ../configs/alert_rules.yml
+
+evaluation_interval: 15s
+
+tests:
+  - name: gate disabled — gauge stuck at 0, no transitions, no alert
+    interval: 15s
+    input_series:
+      - series: 'gpu_readiness{job="gpu-chat-servers",instance="pea-gpu-1:9091"}'
+        values: '0x20'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: GPUReadinessLost
+        exp_alerts: []
+
+  - name: gate enabled — ready, then lost
+    interval: 15s
+    input_series:
+      - series: 'gpu_readiness{job="gpu-chat-servers",instance="pea-gpu-1:9091"}'
+        values: '1x8 0x12'
+      - series: 'gpu_readiness_transitions_total{job="gpu-chat-servers",instance="pea-gpu-1:9091",state="ready",reason="ready"}'
+        values: '1x20'
+      - series: 'gpu_readiness_transitions_total{job="gpu-chat-servers",instance="pea-gpu-1:9091",state="unavailable",reason="gpu_execution_failed"}'
+        values: '_x8 1x12'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: GPUReadinessLost
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: gpu-chat-servers
+              instance: pea-gpu-1:9091
+            exp_annotations:
+              summary: "GPU readiness lost on pea-gpu-1:9091"
+              description: "The backend failed its bounded GPU readiness probe and must remain out of rotation."
