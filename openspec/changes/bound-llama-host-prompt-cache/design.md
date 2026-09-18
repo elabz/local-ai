@@ -21,7 +21,7 @@
 
 ### D1. Always pass `--cache-ram` from a setting
 
-Add `cache_ram: int` (MiB, env `CACHE_RAM`) to `config.py` and append `--cache-ram` next to `--cache-reuse` in `server.py`. Set it once in the `x-gpu-server-common` environment anchor, so all six workers share it and one worker can be overridden for the qualification run. **Never `0`**: `--cache-reuse` is documented as depending on prompt caching, and HeartCode relies on it. **Never `-1`** (unlimited).
+Add `cache_ram: int` (MiB, env `CACHE_RAM`) to `config.py` and append `--cache-ram` next to `--cache-reuse` in `server.py`. Set it once in the `x-gpu-env-common` environment anchor, so all six workers share it and one worker can be overridden for the qualification run. The code default is 8192, llama.cpp's own implicit default made explicit, so deploying the code is behavior-neutral and every change in bound goes through compose. **Never `0`**: `--cache-reuse` is documented as depending on prompt caching, and HeartCode relies on it. **Never `-1`** (unlimited).
 
 *Alternative rejected:* `EXTRA_ARGS: "--cache-ram N"`. It works, but it hides a memory-critical knob in a free-form string that neither CI nor tests can see.
 

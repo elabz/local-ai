@@ -23,6 +23,11 @@ class Settings(BaseSettings):
 
     # KV Cache optimization for faster TTFT
     cache_reuse: int = Field(default=256)  # Enable prompt caching
+    # Host-RAM prompt cache bound in MiB (llama-server --cache-ram). Always passed:
+    # left unset, each worker grows up to llama.cpp's 8192 MiB default, and six of
+    # them OOM the 31 GB host. 8192 only makes that default explicit; compose sets
+    # the qualified bound. 0 (may disable --cache-reuse) and -1 (unlimited) are refused.
+    cache_ram: int = Field(default=8192, gt=0)
     cache_type_k: str = Field(default="q8_0")  # Quantize KV cache keys
     cache_type_v: str = Field(default="q8_0")  # Quantize KV cache values
 

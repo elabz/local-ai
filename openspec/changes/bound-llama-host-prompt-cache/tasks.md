@@ -4,10 +4,11 @@
 
 ## 1. Code
 
-- [ ] 1.1 Add `cache_ram: int` (env `CACHE_RAM`) to `gpu-server/config.py`; reject `0` and negative values at startup
-- [ ] 1.2 Pass `--cache-ram` in `server.py` next to `--cache-reuse`
-- [ ] 1.3 Unit test: the built command contains `--cache-ram <value>`, and invalid values fail fast
-- [ ] 1.4 Add `CACHE_RAM` to the `x-gpu-server-common` environment in `gpu-server/docker-compose.yml`
+- [x] 1.1 Add `cache_ram: int` (env `CACHE_RAM`) to `gpu-server/config.py`; reject `0` and negative values at startup _(default 8192 = llama.cpp's implicit default made explicit, so shipping the code changes nothing until compose sets a bound)_
+- [x] 1.2 Pass `--cache-ram` in `server.py` next to `--cache-reuse`
+- [x] 1.3 Unit test: the built command contains `--cache-ram <value>`, and invalid values fail fast _(`tests/test_llama_server_command.py`, 6 tests)_
+- [x] 1.4 Add `CACHE_RAM` to the `x-gpu-env-common` environment in `gpu-server/docker-compose.yml` _(`${CACHE_RAM:-8192}`; `gpu-server-3` overrides to `${GPU_3_CACHE_RAM:-1024}` as the qualification worker)_
+- [x] 1.5 Add `scripts/prompt-cache-ttft.py`: alternating-session TTFT and distinct-session fill, reporting llama.cpp `timings.cache_n`/`prompt_ms` per turn
 
 ## 2. Qualify on one worker (design D5, `pea-gpu-3`)
 

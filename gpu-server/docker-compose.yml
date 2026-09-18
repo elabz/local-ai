@@ -71,6 +71,10 @@ x-gpu-env-common: &gpu-env-common
   N_UBATCH: 64
   N_THREADS: 2
   CACHE_REUSE: 256
+  # Host-RAM prompt cache bound (MiB) -> llama-server --cache-ram. Explicit so
+  # workers never inherit llama.cpp's implicit 8192 MiB default unnoticed; the
+  # fleet value drops once bound-llama-host-prompt-cache qualifies one (design D5).
+  CACHE_RAM: ${CACHE_RAM:-8192}
   CACHE_TYPE_K: q8_0
   CACHE_TYPE_V: q8_0
   EXTRA_ARGS: "--jinja"
@@ -193,6 +197,10 @@ services:
       MODEL_TYPE: ${GPU_3_MODEL_TYPE:-sfw}
       MODEL_NAME: ${GPU_3_MODEL_NAME:-unknown}
       CHAT_TEMPLATE_FILE: ${GPU_3_CHAT_TEMPLATE:-}
+      # Qualification worker for bound-llama-host-prompt-cache (design D5):
+      # bounded cache here first; mem_limit stays 8192m so an unbounded
+      # growth would be observed rather than memcg-killed mid-test.
+      CACHE_RAM: ${GPU_3_CACHE_RAM:-1024}
     ports:
       - "8082:8080"
     mem_limit: 8192m
