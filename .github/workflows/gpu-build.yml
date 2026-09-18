@@ -64,7 +64,7 @@ jobs:
             [ -f "$f" ] || { echo "skip $stack (no compose file)"; continue; }
             # Satisfy any env_file: targets so interpolation can run.
             while read -r p; do [ -n "$p" ] && touch "$stack/$p"; done < <(
-              awk '/env_file:/{ef=1;next} ef&&/^[[:space:]]*-/{gsub(/[[:space:]-]/,"");print;next} ef{ef=0}' "$f"
+              awk '/env_file:/{ef=1;next} ef&&/^[[:space:]]*-/{sub(/^[[:space:]]*-[[:space:]]*/,"");sub(/[[:space:]]+$/,"");print;next} ef{ef=0}' "$f"
             )
             # Provide dummy values for hard-required (${VAR:?}/${VAR?}) variables.
             reqs=$(grep -hoE '\$\{[A-Z0-9_]+:?\?' "$f" | sed -E 's/\$\{([A-Z0-9_]+).*/\1/' | sort -u || true)
@@ -130,6 +130,8 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: gpu-server/requirements-test.txt
+      # ffmpeg: the custom-voice intake tests run real audio normalization.
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg
       - run: pip install -r gpu-server/requirements-test.txt
       # tests/integration needs the LAN (PEA/Prod), which GitHub-hosted runners
       # cannot reach. Collection errors fail the job like any test failure.

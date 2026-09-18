@@ -7,6 +7,8 @@
 #   python -m venv venv && venv/bin/pip install -r gpu-server/requirements-test.txt
 #   venv/bin/python -m pytest gpu-server/tests --ignore=gpu-server/tests/integration
 #
+# System dependency: ffmpeg on PATH (custom-voice intake tests; CI apt-installs it).
+#
 # torch is deliberately absent: it belongs to the GPU images, and the few
 # tensor tests that need it skip via pytest.importorskip.
 
