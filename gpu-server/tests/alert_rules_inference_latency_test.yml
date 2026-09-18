@@ -1,0 +1,49 @@
+# promtool unit tests for InferenceLatencyHigh (owner decision 2026-09-18:
+# 300s threshold, 2-decimal latency, average processed prompt size).
+#
+#   docker run --rm -v "$PWD/gpu-server:/work" -w /work/tests --entrypoint promtool \
+#     prom/prometheus:latest test rules alert_rules_inference_latency_test.yml
+
+rule_files:
+  - ../configs/alert_rules.yml
+
+evaluation_interval: 1m
+
+tests:
+  - name: 120s average (slow but normal) stays silent
+    interval: 1m
+    input_series:
+      - series: 'inference_duration_seconds_sum{job="gpu-chat-servers",instance="pea-gpu-1:9091",gpu_id="1",endpoint="chat"}'
+        values: '0+120x20'
+      - series: 'inference_duration_seconds_count{job="gpu-chat-servers",instance="pea-gpu-1:9091",gpu_id="1",endpoint="chat"}'
+        values: '0+1x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: InferenceLatencyHigh
+        exp_alerts: []
+
+  - name: over 300s fires with 2-decimal latency and the average prompt size
+    interval: 1m
+    input_series:
+      # one request per minute taking 312.3456s; llama.cpp processes 3000 prompt tokens per minute
+      - series: 'inference_duration_seconds_sum{job="gpu-chat-servers",instance="pea-gpu-1:9091",gpu_id="1",endpoint="chat"}'
+        values: '0+312.3456x20'
+      - series: 'inference_duration_seconds_count{job="gpu-chat-servers",instance="pea-gpu-1:9091",gpu_id="1",endpoint="chat"}'
+        values: '0+1x20'
+      - series: 'llamacpp:prompt_tokens_total{job="llama-server",instance="pea-gpu-1:8080",gpu_id="1",model_type="sfw"}'
+        values: '0+3000x20'
+      # the text-embed llama-server on another card must not be counted
+      - series: 'llamacpp:prompt_tokens_total{job="llama-server",instance="pea-embed-4:8090",gpu_id="4",model_type="embed-text"}'
+        values: '0+99999x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: InferenceLatencyHigh
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: gpu-chat-servers
+              instance: pea-gpu-1:9091
+              gpu_id: "1"
+            exp_annotations:
+              summary: "Inference latency is high on pea-gpu-1:9091"
+              description: "Average inference latency is 312.35s (threshold: 300s); average prompt processed: 3000 tokens per request (cached prefix excluded)"

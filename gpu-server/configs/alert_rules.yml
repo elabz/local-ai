@@ -367,12 +367,22 @@ groups:
           summary: "Custom voice cleanup backlog is growing"
           description: "More than ten verified-deletion requests remain queued."
       
-      # Inference Latency Alert
+      # Inference Latency Alert. Slow is normal on P104s; owner decision
+      # 2026-09-18: alert only past 5 minutes average per request. The chat
+      # wrapper caps a request at 60s admission + 180s generation, so in
+      # practice this fires only if that ceiling is broken. The prompt figure
+      # is llama.cpp's newly processed prompt tokens (cached prefix excluded)
+      # per request on the same GPU over the same 5m window: an average, since
+      # the alert is too.
       - alert: InferenceLatencyHigh
-        expr: rate(inference_duration_seconds_sum[5m]) / rate(inference_duration_seconds_count[5m]) > 30
+        expr: >-
+          sum by (job, instance, gpu_id) (rate(inference_duration_seconds_sum[5m]))
+          / sum by (job, instance, gpu_id) (rate(inference_duration_seconds_count[5m]))
+          > 300
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "Inference latency is high on {{$labels.job}}"
-          description: "Average inference latency is {{$value}}s (threshold: 30s)"
+          summary: "Inference latency is high on {{$labels.instance}}"
+          description: >-
+            Average inference latency is {{ printf "%.2f" $value }}s (threshold: 300s){{ with printf `sum(increase(llamacpp:prompt_tokens_total{job="llama-server",model_type=~"sfw|nsfw",gpu_id="%s"}[5m])) / sum(increase(inference_duration_seconds_count{job="gpu-chat-servers",gpu_id="%s"}[5m]))` $labels.gpu_id $labels.gpu_id | query }}{{ with . | first }}; average prompt processed: {{ . | value | printf "%.0f" }} tokens per request (cached prefix excluded){{ end }}{{ end }}
