@@ -31,6 +31,8 @@ receivers:
       - channel: '#hardware-alerts'
         send_resolved: true
         title: '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} ({{ .CommonLabels.severity }})'
+        # instance is shown without its port: every wrapper exports metrics on
+        # the same in-container port (:9091), so only the container name informs.
         text: >-
-          {{ range .Alerts }}• {{ if .Annotations.summary }}{{ .Annotations.summary }}{{ else }}{{ .Labels.alertname }}{{ end }}{{ if .Annotations.description }}: {{ .Annotations.description }}{{ end }}{{ if .Labels.gpu_id }} — GPU {{ .Labels.gpu_id }}{{ end }}{{ if .Labels.instance }} ({{ .Labels.instance }}){{ end }}
+          {{ range .Alerts }}• {{ if .Annotations.summary }}{{ .Annotations.summary }}{{ else }}{{ .Labels.alertname }}{{ end }}{{ if .Annotations.description }}: {{ .Annotations.description }}{{ end }}{{ if .Labels.gpu_id }} — GPU {{ .Labels.gpu_id }}{{ end }}{{ if .Labels.instance }} ({{ reReplaceAll ":[0-9]+$" "" .Labels.instance }}){{ end }}
           {{ end }}

@@ -1,0 +1,249 @@
+#### What this does ####
+#   identifies least busy deployment
+#   How is this achieved?
+#   - Before each call, have the router print the state of requests {"deployment": "requests_in_flight"}
+#   - use litellm.input_callbacks to log when a request is just about to be made to a model - {"deployment-id": traffic}
+#   - use litellm.success + failure callbacks to log when a request completed
+#   - in get_available_deployment, for a given model group name -> pick based on traffic
+
+import random
+from typing import Optional
+
+from litellm.caching.caching import DualCache
+from litellm.integrations.custom_logger import CustomLogger
+
+
+class LeastBusyLoggingHandler(CustomLogger):
+    test_flag: bool = False
+    logged_success: int = 0
+    logged_failure: int = 0
+
+    def __init__(self, router_cache: DualCache):
+        self.router_cache = router_cache
+
+
+    def log_pre_api_call(self, model, messages, kwargs):
+        """
+        Log when a model is being used.
+
+        Caching based on model group.
+        """
+        try:
+            if kwargs["litellm_params"].get("metadata") is None:
+                pass
+            else:
+                model_group = kwargs["litellm_params"]["metadata"].get(
+                    "model_group", None
+                )
+                id = kwargs["litellm_params"].get("model_info", {}).get("id", None)
+                if model_group is None or id is None:
+                    return
+                elif isinstance(id, int):
+                    id = str(id)
+
+                request_count_api_key = f"{model_group}_request_count"
+                # update cache
+                request_count_dict = (
+                    self.router_cache.get_cache(key=request_count_api_key) or {}
+                )
+                request_count_dict[id] = request_count_dict.get(id, 0) + 1
+
+                self.router_cache.set_cache(
+                    key=request_count_api_key, value=request_count_dict
+                )
+        except Exception:
+            pass
+
+    def log_success_event(self, kwargs, response_obj, start_time, end_time):
+        try:
+            if kwargs["litellm_params"].get("metadata") is None:
+                pass
+            else:
+                model_group = kwargs["litellm_params"]["metadata"].get(
+                    "model_group", None
+                )
+
+                id = kwargs["litellm_params"].get("model_info", {}).get("id", None)
+                if model_group is None or id is None:
+                    return
+                elif isinstance(id, int):
+                    id = str(id)
+
+                request_count_api_key = f"{model_group}_request_count"
+                # decrement count in cache
+                request_count_dict = (
+                    self.router_cache.get_cache(key=request_count_api_key) or {}
+                )
+                request_count_value: Optional[int] = request_count_dict.get(id, 0)
+                if request_count_value is None:
+                    return
+                request_count_dict[id] = request_count_value - 1
+                self.router_cache.set_cache(
+                    key=request_count_api_key, value=request_count_dict
+                )
+
+                ### TESTING ###
+                if self.test_flag:
+                    self.logged_success += 1
+        except Exception:
+            pass
+
+    def log_failure_event(self, kwargs, response_obj, start_time, end_time):
+        try:
+            if kwargs["litellm_params"].get("metadata") is None:
+                pass
+            else:
+                model_group = kwargs["litellm_params"]["metadata"].get(
+                    "model_group", None
+                )
+                id = kwargs["litellm_params"].get("model_info", {}).get("id", None)
+                if model_group is None or id is None:
+                    return
+                elif isinstance(id, int):
+                    id = str(id)
+
+                request_count_api_key = f"{model_group}_request_count"
+                # decrement count in cache
+                request_count_dict = (
+                    self.router_cache.get_cache(key=request_count_api_key) or {}
+                )
+                request_count_value: Optional[int] = request_count_dict.get(id, 0)
+                if request_count_value is None:
+                    return
+                request_count_dict[id] = request_count_value - 1
+                self.router_cache.set_cache(
+                    key=request_count_api_key, value=request_count_dict
+                )
+
+                ### TESTING ###
+                if self.test_flag:
+                    self.logged_failure += 1
+        except Exception:
+            pass
+
+    async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
+        try:
+            if kwargs["litellm_params"].get("metadata") is None:
+                pass
+            else:
+                model_group = kwargs["litellm_params"]["metadata"].get(
+                    "model_group", None
+                )
+
+                id = kwargs["litellm_params"].get("model_info", {}).get("id", None)
+                if model_group is None or id is None:
+                    return
+                elif isinstance(id, int):
+                    id = str(id)
+
+                request_count_api_key = f"{model_group}_request_count"
+                # decrement count in cache
+                request_count_dict = (
+                    await self.router_cache.async_get_cache(key=request_count_api_key)
+                    or {}
+                )
+                request_count_value: Optional[int] = request_count_dict.get(id, 0)
+                if request_count_value is None:
+                    return
+                request_count_dict[id] = request_count_value - 1
+                await self.router_cache.async_set_cache(
+                    key=request_count_api_key, value=request_count_dict
+                )
+
+                ### TESTING ###
+                if self.test_flag:
+                    self.logged_success += 1
+        except Exception:
+            pass
+
+    async def async_log_failure_event(self, kwargs, response_obj, start_time, end_time):
+        try:
+            if kwargs["litellm_params"].get("metadata") is None:
+                pass
+            else:
+                model_group = kwargs["litellm_params"]["metadata"].get(
+                    "model_group", None
+                )
+                id = kwargs["litellm_params"].get("model_info", {}).get("id", None)
+                if model_group is None or id is None:
+                    return
+                elif isinstance(id, int):
+                    id = str(id)
+
+                request_count_api_key = f"{model_group}_request_count"
+                # decrement count in cache
+                request_count_dict = (
+                    await self.router_cache.async_get_cache(key=request_count_api_key)
+                    or {}
+                )
+                request_count_value: Optional[int] = request_count_dict.get(id, 0)
+                if request_count_value is None:
+                    return
+                request_count_dict[id] = request_count_value - 1
+                await self.router_cache.async_set_cache(
+                    key=request_count_api_key, value=request_count_dict
+                )
+
+                ### TESTING ###
+                if self.test_flag:
+                    self.logged_failure += 1
+        except Exception:
+            pass
+
+    def _get_available_deployments(
+        self,
+        healthy_deployments: list,
+        all_deployments: dict,
+    ):
+        """
+        Helper to get deployments using least busy strategy
+
+        LOCAL PATCH (local-ai, see litellm/patches/README.md). Upstream keeps the
+        first deployment with the lowest in-flight count, scanning every id it has
+        ever counted, so every tie goes to the first replica in config order. With
+        one-at-a-time traffic every request is a tie, so heartcode-gpu1 took ~75%
+        of SFW chat and ran hot. Here: only healthy deployments are considered,
+        negative counts (a missed increment) read as 0, and ties are broken
+        uniformly at random.
+        """
+        if not healthy_deployments:
+            return random.choice(healthy_deployments)  # same IndexError as upstream
+        in_flight = {}
+        for d in healthy_deployments:
+            _id = d["model_info"]["id"]
+            count = all_deployments.get(_id, all_deployments.get(str(_id))) or 0
+            in_flight[_id] = max(count, 0)
+        lowest = min(in_flight.values())
+        return random.choice(
+            [d for d in healthy_deployments if in_flight[d["model_info"]["id"]] == lowest]
+        )
+
+    def get_available_deployments(
+        self,
+        model_group: str,
+        healthy_deployments: list,
+    ):
+        """
+        Sync helper to get deployments using least busy strategy
+        """
+        request_count_api_key = f"{model_group}_request_count"
+        all_deployments = self.router_cache.get_cache(key=request_count_api_key) or {}
+        return self._get_available_deployments(
+            healthy_deployments=healthy_deployments,
+            all_deployments=all_deployments,
+        )
+
+    async def async_get_available_deployments(
+        self, model_group: str, healthy_deployments: list
+    ):
+        """
+        Async helper to get deployments using least busy strategy
+        """
+        request_count_api_key = f"{model_group}_request_count"
+        all_deployments = (
+            await self.router_cache.async_get_cache(key=request_count_api_key) or {}
+        )
+        return self._get_available_deployments(
+            healthy_deployments=healthy_deployments,
+            all_deployments=all_deployments,
+        )

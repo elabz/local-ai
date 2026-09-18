@@ -38,6 +38,7 @@ services:
     # verified against this exact digest by
     # gpu-server/tests/integration/test_litellm_gpu_routing.py; bump both
     # places together and re-run that test before deploying a newer image.
+    # litellm/patches/ is written against this digest too (see its README).
     image: ghcr.io/berriai/litellm:main-latest@sha256:bb0639701796218a3447160e55c0f1097446e4e6085df7dfd39f476d4143743f
     container_name: local-ai-litellm
     restart: unless-stopped
@@ -46,6 +47,8 @@ services:
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./speech_correlation.py:/app/speech_correlation.py:ro
+      # least-busy with random tie-breaking (litellm/patches/README.md)
+      - ./patches/least_busy.py:/usr/lib/python3.13/site-packages/litellm/router_strategy/least_busy.py:ro
     env_file:
       - .env
     environment:
