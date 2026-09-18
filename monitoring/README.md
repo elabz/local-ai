@@ -1,3 +1,13 @@
+> **NOT DEPLOYED (2026-09-18).** Nothing runs from this directory: it has no
+> compose file and Prod runs no Prometheus, Grafana or Alertmanager. The live
+> monitoring is on PEA, in `gpu-server/docker-compose.yml`: Prometheus
+> (`gpu-server/configs/prometheus.yml`), the **only** alert rules
+> (`gpu-server/configs/alert_rules.yml`), Alertmanager → Slack `#hardware-alerts`
+> (`gpu-server/configs/alertmanager.yml`) and Grafana on `:3001`. Its inert
+> Prometheus rules and Alertmanager config were removed by
+> `project-health-improvements` (git history keeps them). The Grafana dashboards
+> below are kept only as reference material; the notes that follow are historical.
+
 # HeartCode Monitoring Setup
 
 ## Overview

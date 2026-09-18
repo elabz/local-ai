@@ -1,11 +1,58 @@
 # Pea LLM Serving Optimization Notes
 
-Last updated: 2026-09-04
+Last updated: 2026-09-04 (analysis); consolidated 2026-09-18
 
-This is the canonical optimization note for Pea's llama.cpp chat workers. It
+This is the one optimization note for Pea's llama.cpp chat workers. It
 supersedes the older 6 GB / 8K-context recommendations that were written for a
-different topology. Treat every claimed improvement as a benchmark hypothesis
-until it passes the repository's canary gates on Pea.
+different topology, and it absorbed `OPTIMIZATION-SUMMARY.txt` and
+`QUICK-OPTIMIZATION-GUIDE.md` (condensed copies of this file) on 2026-09-18.
+Treat every claimed improvement as a benchmark hypothesis until it passes the
+repository's canary gates on Pea.
+
+Reliability and incident handling are not covered here. See
+[`docs/gpu-inference-availability-runbook.md`](../docs/gpu-inference-availability-runbook.md)
+for the watchdog, restart and recovery model and
+[`docs/proxy-client-contract.md`](../docs/proxy-client-contract.md) for
+concurrency caps, 429/503 semantics and backoff. The February
+`RELIABILITY-IMPROVEMENTS.md` (P106 cards, the ASH host, 8 chat GPUs) was removed
+as obsolete; git history keeps it.
+
+> **Priority note (2026-09-18):** `serve-aligned-sfw-chat-model` is the
+> top-priority open change. The SFW route no longer refuses adult content
+> in role, so an SFW candidate's in-role refusal behaviour gates everything
+> below, ahead of throughput.
+
+## At a glance
+
+Safe starting configuration for any candidate:
+
+- One slot; full GPU offload.
+- Target route context from the start: 16K for SFW, the proposed production
+  context for NSFW.
+- Batch 128, micro-batch 64, two CPU threads, Q8 K/V cache, `--cache-ram 1024`.
+- No multimodal projector for text-only chat.
+- No speculative decoding or model-native MTP during initial qualification.
+- Pin the llama.cpp image and exact GGUF revision/SHA-256.
+- Qualify on GPU 6; keep GPU 5 comfortably below ~7.6 GiB.
+
+Canary queue as of 2026-09-04 (rationale in [Canary shortlist](#canary-shortlist-2026-09-04-refresh)):
+
+| Route | Priority | Candidate | Initial quant |
+|---|---:|---|---|
+| SFW | 1 | Qwen3.5-9B | Q4_K_M, 6.17 GB |
+| SFW | 2 | Ministral-3-8B-Instruct-2512 | Q5_K_M, 6.06 GB |
+| SFW | 3 | Meta-Llama-3.1-8B-Instruct | Q5_K_M, 5.73 GB |
+| NSFW | baseline | Gemma-4-E4B-Luchador | existing Q5_K_M |
+| NSFW | 1 | Gemma-4-E4B-Luchador-Rudo | Q5_K_M, 5.76 GB |
+| NSFW | 2 | Nyx-RP-9B-Instruct-2608-v1 | Q4_K_M, 5.78 GB |
+| NSFW | 3 | Interferon-gamma RP 9B preview | defer; Q4_K_M |
+
+No-go defaults: no 12B near-full-card model on GPU 5; no Q6/Q8 9B first run; no
+speculative/MTP decoding until the base candidate passes all gates; no
+promotion based on a model card, load success, or average t/s alone. Do not
+assume that a larger batch, micro-batch, cache-reuse value, newer runtime, or
+higher-bit quant is faster or safer. Change one variable at a time and retain
+the measured rollback configuration.
 
 ## Platform and workload constraints
 
@@ -26,12 +73,13 @@ until it passes the repository's canary gates on Pea.
   and do not infer that a successful load means healthy generation.
 
 The latest completed comparison is
-[`final-comparison-2026-09-04.md`](../openspec/changes/evaluate-modern-chat-model-canaries/evidence/final-comparison-2026-09-04.md).
+[`final-comparison-2026-09-04.md`](../openspec/changes/archive/2026-09-18-evaluate-modern-chat-model-canaries/evidence/final-comparison-2026-09-04.md).
 
 ## Current baseline
 
 The production compose file defaults chat workers to 16K context, batch 128,
-micro-batch 64, two CPU threads, one slot, Q8 KV cache, and cache reuse 256.
+micro-batch 64, two CPU threads, one slot, Q8 KV cache, cache reuse 256 and
+`--cache-ram 1024` (verified in `pea-gpu-1`, llama.cpp b8027, on 2026-09-18).
 These are sensible conservative defaults for the host, but none should be
 called optimal without an A/B run.
 
@@ -117,6 +165,11 @@ runtime, run concurrent chat and embedding load, watch swap in/out, OOM events,
 container restarts, and request latency, and retain the old image for rollback.
 Do not use `--mlock` as a substitute for memory budgeting.
 
+Keep `CACHE_RAM` (llama-server `--cache-ram`) set. llama.cpp's implicit 8192 MiB
+host prompt cache let six workers OOM the host on 2026-09-18; every compose
+service's `mem_limit` must also fit the host budget that
+`scripts/check-memory-budget.py` enforces in CI.
+
 ### 7. Separate runtime qualification from model qualification
 
 New architectures may require newer llama.cpp builds. First prove that the
@@ -180,8 +233,8 @@ instruction following or amplified hallucination.
 1. Pin repository revision, GGUF filename, size, and SHA-256.
 2. Load on GPU 6 with one slot, baseline batch settings, target context, Q8 KV,
    and no vision projector.
-3. Record allocation and run repeated coherence probes; never rely on load
-   success alone.
+3. Record idle and peak VRAM, host RSS, temperature and startup warnings, and
+   run repeated coherence probes; never rely on load success alone.
 4. Verify direct response, streaming, retrieval, JSON/schema, tool calls, and
    multi-turn tool-result continuation as applicable.
 5. Run cold/warm performance matrices and reject below the route floor.

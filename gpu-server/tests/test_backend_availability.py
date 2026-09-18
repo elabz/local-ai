@@ -77,12 +77,18 @@ def test_stuck_request_restarts_after_age_and_failure_threshold(tmp_path):
 
 
 def test_old_queue_with_recent_completion_is_progressing_not_stuck(tmp_path):
-    availability, clock = tracker(tmp_path, idle_failure_limit=2, stuck_request_seconds=30)
-    availability.begin_request()
+    availability, clock = tracker(
+        tmp_path, idle_failure_limit=2, stuck_request_seconds=30, max_in_flight=2,
+    )
+    assert availability.begin_request()
     clock.advance(20)
-    availability.begin_request()
+    assert availability.begin_request()
     clock.advance(11)
     availability.end_request()
+    # The surviving request is now older than the stuck limit; only the
+    # recent completion shows the backend is still making progress.
+    clock.advance(20)
+    assert availability.snapshot().oldest_request_seconds >= 30
     assert not availability.probe_failed().restart
     assert availability.snapshot().reason == "busy_probe_timeout"
 

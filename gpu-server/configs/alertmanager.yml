@@ -1,0 +1,30 @@
+# Alertmanager for PEA's Prometheus (spec `alert-delivery`).
+#
+# Every firing rule in configs/alert_rules.yml goes to Slack #hardware-alerts,
+# the channel the GPU failure controller already posts to. The webhook URL is
+# never in git: compose injects SLACK_WEBHOOK_URL from the gitignored
+# gpu-server/.gpu-watchdog.env and the entrypoint writes it to the file below.
+# (Alertmanager does not expand ${VARS} in this file, so it must be a file.)
+
+global:
+  slack_api_url_file: /tmp/slack_webhook_url
+  resolve_timeout: 5m
+
+route:
+  receiver: slack-hardware-alerts
+  group_by: ['alertname']
+  # First notification for a new group goes out quickly; after that, hours.
+  # Start quiet and tune or silence noisy rules rather than paging on repeat.
+  group_wait: 30s
+  group_interval: 1h
+  repeat_interval: 4h
+
+receivers:
+  - name: slack-hardware-alerts
+    slack_configs:
+      - channel: '#hardware-alerts'
+        send_resolved: true
+        title: '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} ({{ .CommonLabels.severity }})'
+        text: >-
+          {{ range .Alerts }}• {{ if .Annotations.summary }}{{ .Annotations.summary }}{{ else }}{{ .Labels.alertname }}{{ end }}{{ if .Labels.gpu_id }} — GPU {{ .Labels.gpu_id }}{{ end }}{{ if .Labels.instance }} ({{ .Labels.instance }}){{ end }}
+          {{ end }}

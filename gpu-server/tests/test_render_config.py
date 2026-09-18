@@ -60,3 +60,60 @@ def test_check_fails_when_committed_manifest_drops_below_minimum(monkeypatch):
     group["deployments"] = group["deployments"][: group["min_replicas"] - 1]
     monkeypatch.setattr(render, "load_manifest", lambda: broken)
     assert render.main(["--check"]) == 1
+
+
+def test_committed_claude_md_tables_are_in_sync():
+    current = render.OUT_CLAUDE.read_text()
+    assert render.render_claude_md(render.load_manifest(), current) == current
+
+
+def test_hand_edited_claude_md_row_fails_check_naming_the_file(tmp_path, monkeypatch, capsys):
+    rendered = render.render_claude_md(render.load_manifest(), render.OUT_CLAUDE.read_text())
+    row = "| `heartcode-image` | Image | 8 | 1 (1) |"
+    assert row in rendered
+    edited = tmp_path / "CLAUDE.md"
+    edited.write_text(rendered.replace(row, "| `heartcode-image` | Image | 7-8 | 2 (1) |", 1))
+    monkeypatch.setattr(render, "OUT_CLAUDE", edited)
+
+    assert render.main(["--check"]) == 1
+    assert f"DRIFT: {edited} is out of sync" in capsys.readouterr().err
+
+
+def test_generator_rewrites_only_inside_the_markers():
+    prose = "# Title\n\nHand-written prose, untouched.\n\n"
+    text = (
+        prose
+        + "<!-- BEGIN GENERATED: models -->\nstale\n<!-- END GENERATED: models -->"
+        + "\n\nMiddle prose.\n\n"
+        + "<!-- BEGIN GENERATED: ports -->\n<!-- END GENERATED: ports -->\n\nTail.\n"
+    )
+    out = render.render_claude_md(manifest(litellm_model="model.gguf"), text)
+    assert out.startswith(prose + "<!-- BEGIN GENERATED: models -->\n")
+    assert "stale" not in out
+    assert "\n<!-- END GENERATED: models -->\n\nMiddle prose.\n\n<!-- BEGIN GENERATED: ports -->\n" in out
+    assert out.endswith("<!-- END GENERATED: ports -->\n\nTail.\n")
+    assert "| 8083-8084 | `heartcode-chat-nsfw` |" in out
+
+
+def test_missing_markers_fail():
+    with pytest.raises(render.ManifestError, match="BEGIN GENERATED: models"):
+        render.render_claude_md(manifest(), "no markers here\n")
+
+
+@pytest.mark.parametrize(
+    "filename,quant",
+    [
+        ("Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf", "Q5_K_M"),
+        ("Lumimaid-v0.2-8B-Q5_K_M-imat.gguf", "Q5_K_M"),
+        ("nomic-embed-text-v1.5.Q8_0.gguf", "Q8_0"),
+        ("model-IQ4_XS.gguf", "IQ4_XS"),
+        ("no-tag.gguf", "—"),
+    ],
+)
+def test_quant_is_read_from_the_gguf_filename(filename, quant):
+    assert render._doc_quant({"source": {"file": filename}}) == quant
+
+
+def test_invalid_docs_key_fails():
+    with pytest.raises(render.ManifestError, match="docs must map"):
+        render.validate(manifest(docs={"model": "x", "colour": "blue"}))

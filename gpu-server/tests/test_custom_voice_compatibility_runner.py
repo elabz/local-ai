@@ -3,29 +3,38 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from custom_voice.compatibility_runner import KOKORO_CONFIG, KOKORO_MODEL, validate_audio, validate_tensor
 
 
-def test_valid_voice_tensor_and_audio_pass() -> None:
+@pytest.fixture
+def torch():
+    # torch belongs to the GPU compatibility image, not the CI test
+    # requirements; only the tensor tests need it.
+    return pytest.importorskip("torch")
+
+
+def test_valid_voice_tensor_passes(torch) -> None:
     validate_tensor(torch.zeros((510, 1, 256), dtype=torch.float32), torch)
+
+
+def test_valid_audio_passes() -> None:
     assert validate_audio(np.zeros(24_000, dtype=np.float32), np) == 24_000
 
 
 @pytest.mark.parametrize(
-    "tensor,reason",
+    "make_tensor,reason",
     [
-        (torch.zeros((510, 256), dtype=torch.float32), "artifact_shape_invalid"),
-        (torch.zeros((510, 1, 256), dtype=torch.float64), "artifact_dtype_invalid"),
-        (torch.full((510, 1, 256), float("nan")), "artifact_non_finite"),
+        (lambda t: t.zeros((510, 256), dtype=t.float32), "artifact_shape_invalid"),
+        (lambda t: t.zeros((510, 1, 256), dtype=t.float64), "artifact_dtype_invalid"),
+        (lambda t: t.full((510, 1, 256), float("nan")), "artifact_non_finite"),
     ],
 )
-def test_invalid_voice_tensor_fails_closed(tensor, reason: str) -> None:
+def test_invalid_voice_tensor_fails_closed(torch, make_tensor, reason: str) -> None:
     with pytest.raises(ValueError, match=reason):
-        validate_tensor(tensor, torch)
+        validate_tensor(make_tensor(torch), torch)
 
 
 @pytest.mark.parametrize(

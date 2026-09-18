@@ -1,5 +1,10 @@
 # Serve an Aligned Model on the SFW Chat Route
 
+> **Priority (recorded 2026-09-18 by `project-health-improvements`):** this is
+> the top-priority open change. It became access-control critical when HeartCode
+> dropped its per-message content filter on 2026-08-29, and it ranks ahead of
+> `scale-chat-concurrency` and all other canary or throughput work.
+
 ## Why
 
 HeartCode removed per-message content filtering

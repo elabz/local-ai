@@ -38,7 +38,7 @@ Shared GPU inference infrastructure for local network projects. Provides OpenAI-
 |-----------|-------------|-------------|
 | `gpu-server/` | llama.cpp + LocalAI inference servers (8x GPU) | PEA (192.168.70.144) |
 | `litellm/` | LiteLLM proxy + PostgreSQL for API keys | Prod (192.168.70.152) |
-| `monitoring/` | Prometheus + Grafana dashboards | Prod (192.168.70.152) |
+| `monitoring/` | Reference Grafana dashboards — **not deployed** (live Prometheus/Alertmanager/Grafana run on PEA from `gpu-server/`) | — |
 | `langfuse/` | LLM observability and tracing | Prod (192.168.70.152) |
 | `load-tests/` | k6 stress tests and analysis tools | Dev machine |
 
@@ -164,18 +164,17 @@ curl -X POST http://localhost:4000/key/delete \
 - **Power**: 120W limit per GPU via `nvidia-power-limit.service`
 
 ### Prod (192.168.70.152) - Proxy Server
-- Runs LiteLLM proxy, PostgreSQL, monitoring stack
+- Runs LiteLLM proxy and PostgreSQL (monitoring and alerting run on PEA)
 - No GPU required
 
 ## Monitoring
 
+All monitoring runs on PEA, started with the rest of `gpu-server/docker-compose.yml`:
+
 ```bash
-# Prometheus (on PEA): http://192.168.70.144:9099
-# Start monitoring stack on Prod:
-cd monitoring
-docker compose up -d
-# Grafana: http://192.168.70.152:3001
-# Prometheus: http://192.168.70.152:9090
+# Prometheus:   http://192.168.70.144:9099   (rules: gpu-server/configs/alert_rules.yml)
+# Alertmanager: http://192.168.70.144:9093   (-> Slack #hardware-alerts; webhook from gpu-server/.gpu-watchdog.env)
+# Grafana:      http://192.168.70.144:3001
 ```
 
 ## Load Testing

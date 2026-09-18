@@ -774,6 +774,34 @@ services:
     networks:
       - gpu-network
 
+  # Delivers Prometheus alerts to Slack #hardware-alerts (spec `alert-delivery`).
+  # No GPU; idle almost always. The webhook comes from the gitignored
+  # .gpu-watchdog.env (mode 600, unreadable by the image's `nobody` user as a
+  # bind mount), so compose reads it on the host and the entrypoint writes the
+  # URL to a container-local file for `slack_api_url_file`.
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    container_name: pea-alertmanager
+    mem_limit: 64m
+    memswap_limit: 576m
+    restart: unless-stopped
+    env_file:
+      - .gpu-watchdog.env
+    volumes:
+      - ./configs/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        umask 077 && printf '%s' "$$SLACK_WEBHOOK_URL" > /tmp/slack_webhook_url &&
+        exec /bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml
+        --storage.path=/alertmanager
+    ports:
+      - "9093:9093"
+    networks:
+      - gpu-network
+
   grafana:
     image: grafana/grafana:11.6.2
     container_name: pea-grafana
@@ -906,6 +934,7 @@ networks:
 
 volumes:
   prometheus_data:
+  alertmanager_data:
   image_cache:
   image_backends:
   speech_model_cache:

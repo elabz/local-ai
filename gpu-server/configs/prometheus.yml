@@ -7,6 +7,13 @@ global:
 rule_files:
   - /etc/prometheus/alert_rules.yml
 
+# Firing alerts go to pea-alertmanager -> Slack #hardware-alerts. Grouping and
+# repeat intervals (hours) live in configs/alertmanager.yml.
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['pea-alertmanager:9093']
+
 scrape_configs:
   # GPU Chat Servers (6 instances, GPU 1-6; embeds co-located, image on GPU 7-8)
   - job_name: 'gpu-chat-servers'

@@ -106,6 +106,26 @@ curl http://localhost:9091/metrics
 └─────────────────┘     └─────────────────┘
 ```
 
+## Compose files
+
+| File | Purpose | Who uses it |
+|------|---------|-------------|
+| `docker-compose.yml` | The production stack: chat, embed, image, speech and monitoring (Prometheus, Alertmanager, Grafana). | Every deploy (`--env-file .env --env-file models.generated.env`) |
+| `docker-compose.gpu-health-canary.yml` | **Not a canary despite its name.** An overlay that sets `GPU_HEALTH_ENABLED=1` on every chat/embed service and switches the embed services to the `:gpu-health-preflight` images. | Only `scripts/gpu_failure_controller.py`, which layers it (plus its generated UUID override) onto every `compose up/stop` it runs to restore a card |
+| `docker-compose.model-canaries.yml` | Opt-in model-evaluation slots: `sfw-model-canary` (:18085, card chosen by `SFW_CANARY_GPU_UUID`) and `nsfw-model-canary` (:18086, GPU 6). `restart: "no"`, so they do not survive a reboot. | `scripts/model-canary-operations.sh`; a running canary must be recorded in `gpu-topology.json` (see `docs/gpu-inference-availability-runbook.md`) |
+
+> ⚠️ **Mixed-state hazard (found 2026-09-18).** A plain deploy starts chat and embed
+> services with `GPU_HEALTH_ENABLED=0` and the `:latest` embed images, which is
+> what runs today. When the failure controller restores a card, it recreates
+> that slot's services **with** the overlay, so they come back with the GPU
+> health gate on and the `:gpu-health-preflight` images. Until that is
+> reconciled one way or the other, check `docker inspect` on any slot the
+> controller has touched.
+
+The Qwen3-8B `docker-compose.qwen3-nothink.yml` canary (GPU 5, :18085) was removed
+on 2026-09-18. It was unreferenced, superseded by `docker-compose.model-canaries.yml`,
+and targeted GPU 5, which must not host near-full canaries.
+
 ## Configuration
 
 Environment variables:

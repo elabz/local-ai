@@ -4,6 +4,7 @@
 #   - compose-validate : `docker compose config` for every stack
 #   - litellm-validate  : structural checks on the LiteLLM config(s)
 #   - python-lint       : ruff (real errors) + py_compile for the FastAPI services
+#   - unit-tests        : pytest gpu-server/tests (pinned deps; integration excluded)
 #   - gpu-build         : build-only check of the llama.cpp image (path-filtered)
 #
 # Deploys to the private-LAN hosts (PEA/Prod) live in deploy.yml, which runs on a
@@ -118,6 +119,22 @@ jobs:
           python -m py_compile gpu-server/*.py
           python -m py_compile gpu-server/vision-embed/*.py
           python -m py_compile gpu-server/dino-embed/*.py
+
+  unit-tests:
+    name: gpu-server unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: gpu-server/requirements-test.txt
+      - run: pip install -r gpu-server/requirements-test.txt
+      # tests/integration needs the LAN (PEA/Prod), which GitHub-hosted runners
+      # cannot reach. Collection errors fail the job like any test failure.
+      - name: pytest
+        run: python -m pytest gpu-server/tests --ignore=gpu-server/tests/integration -q -rs
 
   gpu-build:
     name: Build GPU Server Image (build-only)

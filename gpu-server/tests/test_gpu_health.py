@@ -1,3 +1,4 @@
+import ast
 import subprocess
 import sys
 import threading
@@ -164,16 +165,35 @@ class Metric:
     def observe(self, _value):
         pass
 
+    def set(self, _value):
+        pass
+
+
+def metrics_stub(metrics_path):
+    """Stub every Counter/Gauge/Histogram the real metrics module defines.
+
+    Derived from the source so a metric added to ``metrics.py`` can never leave
+    the stub stale (routes.py importing a name the stub lacks).
+    """
+    names = {
+        target.id
+        for node in ast.parse(metrics_path.read_text()).body
+        if isinstance(node, ast.Assign)
+        and isinstance(node.value, ast.Call)
+        and getattr(node.value.func, "id", None) in {"Counter", "Gauge", "Histogram"}
+        for target in node.targets
+        if isinstance(target, ast.Name)
+    }
+    assert names, f"no metrics found in {metrics_path}"
+    return types.SimpleNamespace(**{name: Metric() for name in names})
+
 
 @contextmanager
 def loaded_routes(monkeypatch, service):
     service_dir = Path(__file__).resolve().parents[1] / service
     settings = types.SimpleNamespace(server_id="test", model_id="test/model", precision="fp32")
     monkeypatch.setitem(sys.modules, "config", types.SimpleNamespace(settings=settings))
-    monkeypatch.setitem(sys.modules, "metrics", types.SimpleNamespace(
-        active_requests_gauge=Metric(), embedding_items_total=Metric(),
-        inference_duration_seconds=Metric(), inference_requests_total=Metric(),
-    ))
+    monkeypatch.setitem(sys.modules, "metrics", metrics_stub(service_dir / "metrics.py"))
     monkeypatch.setitem(sys.modules, "gpu_health", vision_gpu_health)
     image_input = types.SimpleNamespace(
         ImageInputError=type("ImageInputError", (ValueError,), {}),
@@ -184,6 +204,9 @@ def loaded_routes(monkeypatch, service):
     spec = importlib.util.spec_from_file_location(f"{service.replace('-', '_')}_routes_test", service_dir / "routes.py")
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
+    # Register before exec, as a real import would: the embed routes use
+    # postponed annotations, and pydantic resolves them via sys.modules.
+    monkeypatch.setitem(sys.modules, spec.name, module)
     spec.loader.exec_module(module)
     yield module
 
@@ -289,16 +312,13 @@ def test_chat_routes_gate_all_inference_entrypoints():
 def loaded_chat_routes(monkeypatch):
     settings = types.SimpleNamespace(server_id="chat-test", model_path="/models/test.gguf")
     monkeypatch.setitem(sys.modules, "config", types.SimpleNamespace(settings=settings))
-    monkeypatch.setitem(sys.modules, "metrics", types.SimpleNamespace(
-        active_requests_gauge=Metric(), inference_tokens_total=Metric(),
-        inference_duration_seconds=Metric(), inference_requests_total=Metric(),
-        backend_in_flight_requests=Metric(),
-    ))
+    monkeypatch.setitem(sys.modules, "metrics", metrics_stub(Path(__file__).resolve().parents[1] / "metrics.py"))
     monkeypatch.setitem(sys.modules, "gpu_health", sys.modules[__name__].GPUReadiness.__module__ and __import__("gpu_health"))
     path = Path(__file__).resolve().parents[1] / "routes.py"
     spec = importlib.util.spec_from_file_location("chat_routes_test", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
+    monkeypatch.setitem(sys.modules, spec.name, module)
     spec.loader.exec_module(module)
     yield module
 

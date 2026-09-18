@@ -154,26 +154,6 @@ model_list:
   model_info:
     id: heartcode-tts1
     mode: audio_speech
-- model_name: heartcode-chat-gemma-3-12b-canary
-  litellm_params:
-    model: openai/gemma-3-12b-it-Q4_K_M.gguf
-    api_base: http://192.168.70.144:18085/v1
-    api_key: sk-local
-    max_tokens: 512
-    temperature: 0.8
-  model_info:
-    id: gemma-3-12b-canary-gpu5
-    mode: chat
-- model_name: heartcode-chat-gemma4-luchador-nsfw-canary
-  litellm_params:
-    model: openai/rpDungeon_Gemma-4-E4B-Luchador-Q5_K_M.gguf
-    api_base: http://192.168.70.144:18086/v1
-    api_key: sk-local
-    max_tokens: 512
-    temperature: 0.8
-  model_info:
-    id: gemma4-luchador-nsfw-canary-gpu6
-    mode: chat
 router_settings:
   routing_strategy: least-busy
   num_retries: 2

@@ -1,32 +1,32 @@
 ## 1. Priority record
 
-- [ ] 1.1 Add a priority note to `openspec/changes/serve-aligned-sfw-chat-model/proposal.md`: access-control critical since HeartCode dropped its filter (2026-08-29); ahead of `scale-chat-concurrency`
+- [x] 1.1 Add a priority note to `openspec/changes/serve-aligned-sfw-chat-model/proposal.md`: access-control critical since HeartCode dropped its filter (2026-08-29); ahead of `scale-chat-concurrency`
 
 ## 2. Unit tests gate CI
 
-- [ ] 2.1 Add `gpu-server/requirements-test.txt` with pinned fastapi, pydantic, pydantic-settings, httpx, sse-starlette, prometheus-client, orjson, pyyaml, pytest, numpy
-- [ ] 2.2 Fix the `metrics` stubs in `tests/test_gpu_health.py` (around lines 173 and 292) so they include `inference_admission_total`; prefer deriving the stub from the real module's names so it can't go stale again
-- [ ] 2.3 Fix the embed-route `PydanticUserError` failures (vision/dino/multimodal) under the pinned versions
-- [ ] 2.4 Fix or correct `test_old_queue_with_recent_completion_is_progressing_not_stuck` (`idle_probe_failure` vs `busy_probe_timeout`); decide whether the test or the code is wrong
-- [ ] 2.5 Make `test_custom_voice_compatibility_runner.py` collect (numpy via test requirements, or `importorskip` for GPU-only deps)
-- [ ] 2.6 Confirm a clean-venv run is fully green locally (Python 3.12, not the local 3.11 alpha)
+- [x] 2.1 Add `gpu-server/requirements-test.txt` with pinned fastapi, pydantic, pydantic-settings, httpx, sse-starlette, prometheus-client, orjson, pyyaml, pytest, numpy _(2026-09-18: web stack pinned to what `pea-gpu-1` actually runs — fastapi 0.125.0, pydantic 2.5.3; torch left out, see 2.5)_
+- [x] 2.2 Fix the `metrics` stubs in `tests/test_gpu_health.py` (around lines 173 and 292) so they include `inference_admission_total`; prefer deriving the stub from the real module's names so it can't go stale again _(2026-09-18: `metrics_stub()` now parses the service's real `metrics.py` for every Counter/Gauge/Histogram)_
+- [x] 2.3 Fix the embed-route `PydanticUserError` failures (vision/dino/multimodal) under the pinned versions _(2026-09-18: test-harness bug, not a pin issue — the routes module was exec'd without a `sys.modules` entry, so newer FastAPI could not resolve its postponed annotations; the loader now registers it)_
+- [x] 2.4 Fix or correct `test_old_queue_with_recent_completion_is_progressing_not_stuck` (`idle_probe_failure` vs `busy_probe_timeout`); decide whether the test or the code is wrong _(2026-09-18: the test was wrong — `tracker()` defaults to `max_in_flight=1`, so its second request was rejected and `idle_probe_failure` was correct. Test now allows 2 in flight and ages the survivor past the stuck limit so the recent-completion branch is what's exercised)_
+- [x] 2.5 Make `test_custom_voice_compatibility_runner.py` collect (numpy via test requirements, or `importorskip` for GPU-only deps) _(2026-09-18: the missing module was torch, not numpy; only the 4 tensor cases `importorskip("torch")`, the audio cases run)_
+- [x] 2.6 Confirm a clean-venv run is fully green locally (Python 3.12, not the local 3.11 alpha) _(2026-09-18: clean 3.12 venv from requirements-test.txt: 257 passed, 4 skipped; also green on latest unpinned versions)_
 - [ ] 2.7 Add a `unit-tests` job to `.github/workflows/gpu-build.yml` (`pytest gpu-server/tests --ignore=gpu-server/tests/integration`); merge only after a green run
 
 ## 3. Alert delivery
 
-- [ ] 3.1 Add an `alertmanager` service (64m memory limit, no GPU) to PEA's monitoring compose, with a Slack receiver reading the existing webhook from gitignored env
-- [ ] 3.2 Add an `alerting:` block to `gpu-server/configs/prometheus.yml`; set grouping/repeat intervals to hours
+- [x] 3.1 Add an `alertmanager` service (64m memory limit, no GPU) to PEA's monitoring compose, with a Slack receiver reading the existing webhook from gitignored env _(2026-09-18: `alertmanager` in `gpu-server/docker-compose.yml`, `prom/alertmanager:v0.28.1`, :9093, 64m/576m (budget now 29,376 MiB). Webhook comes from the gitignored `.gpu-watchdog.env` via `env_file` + `slack_api_url_file`; Alertmanager does not expand `${VARS}` in its config, so the dormant Prod `monitoring/alertmanager/alertmanager.yml` could never have delivered. `amtool check-config` passes)_
+- [x] 3.2 Add an `alerting:` block to `gpu-server/configs/prometheus.yml`; set grouping/repeat intervals to hours _(2026-09-18: `alerting:` targets `pea-alertmanager:9093`. The grouping/repeat intervals are Alertmanager settings, not Prometheus ones: `group_wait: 30s`, `group_interval: 1h`, `repeat_interval: 4h` in `configs/alertmanager.yml`. `promtool check config --syntax-only` passes)_
 - [ ] 3.3 Deploy on PEA (monitoring containers only); confirm `/api/v1/alertmanagers` lists it as active
 - [ ] 3.4 Fire a synthetic alert and record the Slack arrival timestamp here
 - [ ] 3.5 Uncheck `enforce-capacity-guardrails` 4.2, then re-check it with the 3.4 evidence
-- [ ] 3.6 Retire or mark as not deployed `monitoring/prometheus/alerts.yml` and the dormant Prod monitoring stack so one rules source remains
+- [x] 3.6 Retire or mark as not deployed `monitoring/prometheus/alerts.yml` and the dormant Prod monitoring stack so one rules source remains _(2026-09-18: Prod runs no monitoring container and `monitoring/` has no compose file. Removed `monitoring/prometheus/` (its LiteLLM capacity rules all exist in PEA's `alert_rules.yml`; the rest were HeartCode-app MySQL/Redis/CSAM rules nothing here can evaluate), `monitoring/alertmanager/` and `QUICKSTART.md`. `monitoring/README.md` now opens with a NOT DEPLOYED banner; dashboards kept as reference. README/CLAUDE.md/.env.example updated)_
 
 ## 4. Generated topology docs
 
-- [ ] 4.1 Add BEGIN/END GENERATED markers around the Models and Port Layout tables in CLAUDE.md
-- [ ] 4.2 Extend `render-config.py` to render both tables from `models.yaml` (including STT/TTS) and include the block in `--check`
-- [ ] 4.3 Fix the stale prose outside the markers: image instance count, vision-embed/text-embed deployment counts and ports in Key Configuration and the LiteLLM section
-- [ ] 4.4 Add a `test_render_config.py` case: a hand-edited row inside the block fails `--check`
+- [x] 4.1 Add BEGIN/END GENERATED markers around the Models and Port Layout tables in CLAUDE.md _(2026-09-18: `<!-- BEGIN/END GENERATED: models|ports -->`; the Aliases line moved inside the models block. Monitoring ports (not in the manifest) sit in a small hand-maintained table after the ports block)_
+- [x] 4.2 Extend `render-config.py` to render both tables from `models.yaml` (including STT/TTS) and include the block in `--check` _(2026-09-18: `render_claude_md()` replaces only the marked text and fails on missing/duplicate markers; CLAUDE.md is a `--check` target. New optional `docs: {model, quant}` per group in models.yaml supplies display names; GGUF quant is parsed from the filename. Tables add replicas (min) and computed GPU co-tenancy. The other three generated files render byte-identical)_
+- [x] 4.3 Fix the stale prose outside the markers: image instance count, vision-embed/text-embed deployment counts and ports in Key Configuration and the LiteLLM section _(2026-09-18: image 2→1 (image-server-2 retired, GPU 7 is speech), vision-embed 3→2 (:8101-8102, GPU 1-2), LiteLLM section now points at the generated tables and the manifest's rate limits instead of copying stale counts (text-embed is 240 RPM, not 40), GPU allocation line, `16 containers`)_
+- [x] 4.4 Add a `test_render_config.py` case: a hand-edited row inside the block fails `--check` _(2026-09-18: `test_hand_edited_claude_md_row_fails_check_naming_the_file`, plus in-sync, prose-untouched, missing-marker, quant-parsing and docs-validation cases; 21 passed)_
 
 ## 5. OpenSpec triage (docs-only — no host changes; see design D1–D5)
 
@@ -37,13 +37,13 @@
 - [x] 5.5 Archive in chronological order of each change's last real activity; after each one, run `git diff openspec/specs/` and read it before continuing
 - [ ] 5.6 Open small, dated follow-up changes only for leftovers still wanted (candidates: CD runner and Environment setup, speech observability after section 3, the photo-embedding offline eval)
 - [x] 5.8 Correct main-spec requirements that are false today, even when no open change touches them _(2026-09-18: `gpu-rebalance` still required two image servers on GPU 7+8; replaced via the archived `reconcile-specs-with-deployment`. No other count or placement claims in the main specs were wrong.)_
-- [ ] 5.9 Follow-up (production config, outside the docs-only triage): remove the `heartcode-chat-gemma-3-12b-canary` (:18085) and `heartcode-chat-gemma4-luchador-nsfw-canary` (:18086) routes from `litellm/config.base.yaml`. No canary container runs, and the file's own rule is "add an entry only when its model is actually loaded". Then re-render and deploy to Prod.
+- [ ] 5.9 Follow-up (production config, outside the docs-only triage): remove the `heartcode-chat-gemma-3-12b-canary` (:18085) and `heartcode-chat-gemma4-luchador-nsfw-canary` (:18086) routes from `litellm/config.base.yaml`. No canary container runs, and the file's own rule is "add an entry only when its model is actually loaded". Then re-render and deploy to Prod. **Companion to heartcode `fix-unenforced-limits-and-stale-clients` 6.3 (2026-09-18):** after deploying, `restart` LiteLLM (a bind-mounted config never reloads on `up -d`) and remove both model names from the HeartCode backend virtual key's `models` grant (`/key/update`), so the HeartCode model dropdown — which lists the key's grants — stops offering them. HeartCode has already repinned every character off these routes; until this lands the dropdown still offers two routes that answer as permanently "busy".
 - [x] 5.10 Follow-up: Prod's LiteLLM checkout is at 12d9da1 while `main` is at d1bb71b; confirm the difference is docs/alerts only, or pull _(2026-09-18: `git diff 12d9da1 d1bb71b -- litellm/` is empty; Prod serves the current config)_
 - [ ] 5.7 Run `openspec validate --all --strict` and confirm that only Keep changes remain open
 
 ## 6. Repo clutter
 
-- [ ] 6.1 Remove `generated-avatar.png` from the repo root (move it if something references it)
-- [ ] 6.2 Merge `gpu-server/OPTIMIZATION-ANALYSIS.md`, `gpu-server/OPTIMIZATION-SUMMARY.txt`, `gpu-server/QUICK-OPTIMIZATION-GUIDE.md` and `gpu-server/RELIABILITY-IMPROVEMENTS.md` into one current doc, and delete the rest
-- [ ] 6.3 Document the purpose of `docker-compose.gpu-health-canary.yml`, `docker-compose.model-canaries.yml` and `docker-compose.qwen3-nothink.yml` in `gpu-server/README.md`, or remove the ones that are dead
-- [ ] 6.4 Decide whether to keep `.codex`, `.gemini`, `.qwen` and `.opencode`; drop the unused ones
+- [x] 6.1 Remove `generated-avatar.png` from the repo root (move it if something references it) _(2026-09-18: unreferenced anywhere; `git rm`)_
+- [x] 6.2 Merge `gpu-server/OPTIMIZATION-ANALYSIS.md`, `gpu-server/OPTIMIZATION-SUMMARY.txt`, `gpu-server/QUICK-OPTIMIZATION-GUIDE.md` and `gpu-server/RELIABILITY-IMPROVEMENTS.md` into one current doc, and delete the rest _(2026-09-18: kept `OPTIMIZATION-ANALYSIS.md` as the one doc. The SUMMARY and QUICK guide were condensed copies of it: their canary-queue table, safe-start list and no-go rules moved into a new "At a glance" section. `RELIABILITY-IMPROVEMENTS.md` was a Feb-2026 relic (P106, ASH host, 8 chat GPUs) superseded by the availability runbook and proxy client contract, which the doc now points to. Added the `--cache-ram 1024` guidance, verified the b8027/128/64 baseline in `pea-gpu-1`, and fixed the now-archived final-comparison link)_
+- [x] 6.3 Document the purpose of `docker-compose.gpu-health-canary.yml`, `docker-compose.model-canaries.yml` and `docker-compose.qwen3-nothink.yml` in `gpu-server/README.md`, or remove the ones that are dead _(2026-09-18: documented in `gpu-server/README.md` → "Compose files". `gpu-health-canary` is not a canary: it is the overlay `gpu_failure_controller.py` layers on every compose action (health gate on + `:gpu-health-preflight` embed images), while plain deploys run health off + `:latest`. README records this as a mixed-state hazard; **follow-up needed** to reconcile. `model-canaries` is live tooling. `qwen3-nothink` was unreferenced, superseded and GPU-5-targeted, so it was removed)_
+- [x] 6.4 Decide whether to keep `.codex`, `.gemini`, `.qwen` and `.opencode`; drop the unused ones _(2026-09-18, owner decision: keep `.codex` (Codex reads `AGENTS.md`); dropped `.gemini`, `.qwen` and `.opencode`. `openspec update` only refreshes tool dirs that exist, so they will not be regenerated)_
