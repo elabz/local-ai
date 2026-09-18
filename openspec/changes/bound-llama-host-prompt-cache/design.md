@@ -91,5 +91,5 @@ Order: `gpu-server-3` (qualified in D5), then 6, then 2, 1, 5, 4. For each worke
 
 ## Open Questions
 
-- Final `CACHE_RAM` and chat `mem_limit`: 1,024/2,048 is the candidate, and D5 decides.
+- ~~Final `CACHE_RAM` and chat `mem_limit`~~ Decided 2026-09-18: 1,024 MiB cache with a 1,792 MiB limit (observed plateau 1.09–1.25 GiB). Trade-off accepted: ~4 HeartCode 4k-token sessions per worker before returning turns miss (8.2 s instead of ~2.7 s). Least-busy routing without affinity makes every route worker hold every active session on its route, so session affinity (`scale-chat-concurrency`) is the lever to raise effective capacity without more RAM.
 - ~~Does build 8027 store host-cache entries at q8_0 or f16?~~ Answered by the 2026-09-18 baseline: RSS grew ≈ 65 KiB per cached token, which matches q8_0. 1,024 MiB therefore holds ≈ 16,000 tokens, about 7 sessions of ~2,300 tokens, so the 8-session run is expected to miss.

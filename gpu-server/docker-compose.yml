@@ -24,18 +24,28 @@
 # Context: 16K tokens (N_CTX=16384) — uses ~1GB KV cache at q8_0
 # VRAM budget: ~5.7GB model + ~1GB KV + ~0.35GB embed + ~0.55GB overhead = ~7.6GB / 8GB
 #
-# Memory Budget (16GB RAM + 16GB swap observed on Pea 2026-08-18):
-#   - 3x SFW chat containers: 5GB each = 15GB max, one active request each
-#   - 3x NSFW chat containers: 2GB each = 6GB max
-#   - 3x text-embed containers (GPU 4-6): 768MB each = 2.25GB max
-#   - 3x vision-embed containers (GPU 1-3): 2.5GB each = 7.5GB max (~1.1GB used each)
-#   - 2x image containers (GPU 7-8): 4GB each = 8GB max
-#   - Note: mem_limit is per-container max, not reserved. Actual use much lower.
-#   - Swap available for spikes
+# Memory Budget (Pea: 32,023 MiB RAM + 16 GiB swap; see x-host-memory below):
+#   Every default-started service has a mem_limit, and the limits must sum to
+#   no more than host RAM minus a 2 GiB OS reserve (29,975 MiB). CI enforces
+#   this with scripts/check-memory-budget.py. Limits are measured peak plus
+#   margin (cgroup memory.peak, 2026-09-18); memswap_limit = mem_limit + 512m,
+#   so a container that outgrows its bound is killed in its own cgroup instead
+#   of pushing the whole host into OOM.
+#   - 6x chat (GPU 1-6): 1,792 MiB each; llama-server --cache-ram 1024 bounds
+#     the host prompt cache (unbounded, workers grew to ~8 GiB and the host
+#     OOM-killed them on 2026-09-18)
+#   - text-embed x2 512, vision-embed x2 2,048, dino-embed x2 1,536
+#   - image 4,096 (reached its limit at peak), STT 1,792, TTS 2,816
+#   - monitoring + speech helpers: 1,664 total
+#   Total 29,312 MiB. Adding a service means shrinking something else.
 #
 # Usage:
 #   docker compose up -d
 #   docker compose logs -f
+
+x-host-memory:
+  host_ram_mib: 32023   # Pea `free -m` total, 2026-09-18
+  os_reserve_mib: 2048
 
 x-gpu-server-common: &gpu-server-common
   image: local-ai-llama:latest
@@ -61,8 +71,10 @@ x-gpu-server-common: &gpu-server-common
     start_period: 300s
   networks:
     - gpu-network
-  mem_limit: 2048m
-  memswap_limit: 3072m
+  # Every chat worker shares this limit (check-memory-budget.py enforces it).
+  # Qualified 2026-09-18 on pea-gpu-3: CACHE_RAM=1024 plateaus at 1.1-1.25 GiB RSS.
+  mem_limit: 1792m
+  memswap_limit: 2304m
 
 x-gpu-env-common: &gpu-env-common
   N_GPU_LAYERS: 33
@@ -71,10 +83,11 @@ x-gpu-env-common: &gpu-env-common
   N_UBATCH: 64
   N_THREADS: 2
   CACHE_REUSE: 256
-  # Host-RAM prompt cache bound (MiB) -> llama-server --cache-ram. Explicit so
-  # workers never inherit llama.cpp's implicit 8192 MiB default unnoticed; the
-  # fleet value drops once bound-llama-host-prompt-cache qualifies one (design D5).
-  CACHE_RAM: ${CACHE_RAM:-8192}
+  # Host-RAM prompt cache bound (MiB) -> llama-server --cache-ram. Never leave it
+  # to llama.cpp's implicit 8192 MiB: six such workers OOM-killed the host on
+  # 2026-09-18. 1024 holds ~4 HeartCode 4k-token sessions per worker
+  # (bound-llama-host-prompt-cache evidence).
+  CACHE_RAM: ${CACHE_RAM:-1024}
   CACHE_TYPE_K: q8_0
   CACHE_TYPE_V: q8_0
   EXTRA_ARGS: "--jinja"
@@ -105,7 +118,7 @@ x-embedding-server-common: &embedding-server-common
     start_period: 60s
   networks:
     - gpu-network
-  mem_limit: 768m
+  mem_limit: 512m
   memswap_limit: 1024m
   entrypoint: ["llama-server"]
   command:
@@ -149,8 +162,6 @@ services:
       - "8080:8080"
     # Sustained SFW load reached ~2.3GiB RSS and the 2GiB cgroup killed only
     # llama-server (Docker OOMKilled remained false because PID 1 survived).
-    mem_limit: 8192m
-    memswap_limit: 9216m
     deploy:
       resources:
         reservations:
@@ -174,8 +185,6 @@ services:
       CHAT_TEMPLATE_FILE: ${GPU_2_CHAT_TEMPLATE:-}
     ports:
       - "8081:8080"
-    mem_limit: 8192m
-    memswap_limit: 9216m
     deploy:
       resources:
         reservations:
@@ -197,14 +206,8 @@ services:
       MODEL_TYPE: ${GPU_3_MODEL_TYPE:-sfw}
       MODEL_NAME: ${GPU_3_MODEL_NAME:-unknown}
       CHAT_TEMPLATE_FILE: ${GPU_3_CHAT_TEMPLATE:-}
-      # Qualification worker for bound-llama-host-prompt-cache (design D5):
-      # bounded cache here first; mem_limit stays 8192m so an unbounded
-      # growth would be observed rather than memcg-killed mid-test.
-      CACHE_RAM: ${GPU_3_CACHE_RAM:-1024}
     ports:
       - "8082:8080"
-    mem_limit: 8192m
-    memswap_limit: 9216m
     deploy:
       resources:
         reservations:
@@ -236,8 +239,6 @@ services:
     # past the shared 2GiB cgroup and the memcg kills it (-9) mid-stream while
     # Docker still reports the container healthy (PID 1 survives). Observed again
     # 2026-08-26 on this container.
-    mem_limit: 8192m
-    memswap_limit: 9216m
     deploy:
       resources:
         reservations:
@@ -270,8 +271,6 @@ services:
       - "8084:8080"
     # Same memcg headroom as gpu-server-4: sustained generation exceeds the
     # shared 2GiB limit and the container gets killed mid-stream otherwise.
-    mem_limit: 8192m
-    memswap_limit: 9216m
     deploy:
       resources:
         reservations:
@@ -397,8 +396,8 @@ services:
       start_period: 300s
     networks:
       - gpu-network
-    mem_limit: 2560m
-    memswap_limit: 4096m
+    mem_limit: 2048m
+    memswap_limit: 2560m
     deploy:
       resources:
         reservations:
@@ -440,8 +439,8 @@ services:
       start_period: 300s
     networks:
       - gpu-network
-    mem_limit: 2560m
-    memswap_limit: 4096m
+    mem_limit: 2048m
+    memswap_limit: 2560m
     deploy:
       resources:
         reservations:
@@ -491,8 +490,8 @@ services:
       start_period: 300s
     networks:
       - gpu-network
-    mem_limit: 3072m
-    memswap_limit: 4096m
+    mem_limit: 1536m
+    memswap_limit: 2048m
     deploy:
       resources:
         reservations:
@@ -533,8 +532,8 @@ services:
       start_period: 300s
     networks:
       - gpu-network
-    mem_limit: 3072m
-    memswap_limit: 4096m
+    mem_limit: 1536m
+    memswap_limit: 2048m
     deploy:
       resources:
         reservations:
@@ -585,7 +584,7 @@ services:
     networks:
       - gpu-network
     mem_limit: 4096m
-    memswap_limit: 6144m
+    memswap_limit: 4608m
     deploy:
       resources:
         reservations:
@@ -626,8 +625,8 @@ services:
       start_period: 300s
     networks:
       - gpu-network
-    mem_limit: 4096m
-    memswap_limit: 6144m
+    mem_limit: 1792m
+    memswap_limit: 2304m
     deploy:
       resources:
         reservations:
@@ -655,8 +654,8 @@ services:
       start_period: 180s
     networks:
       - gpu-network
-    mem_limit: 3072m
-    memswap_limit: 4096m
+    mem_limit: 2816m
+    memswap_limit: 3328m
     deploy:
       resources:
         reservations:
@@ -668,6 +667,8 @@ services:
   speech-stream-gateway:
     image: caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
     container_name: pea-speech-stream-gateway
+    mem_limit: 128m
+    memswap_limit: 640m
     restart: unless-stopped
     environment:
       SPEECH_DIRECT_API_KEY: ${SPEECH_DIRECT_API_KEY:?set SPEECH_DIRECT_API_KEY in .env}
@@ -685,6 +686,8 @@ services:
     build: ./speech
     image: local-ai-speech-observability:1
     container_name: pea-speech-meter
+    mem_limit: 384m
+    memswap_limit: 896m
     restart: unless-stopped
     command: ["metering_proxy.py"]
     environment:
@@ -721,6 +724,8 @@ services:
     build: ./speech
     image: local-ai-speech-observability:1
     container_name: pea-speech-gpu-exporter
+    mem_limit: 128m
+    memswap_limit: 640m
     restart: unless-stopped
     runtime: nvidia
     command: ["gpu_exporter.py"]
@@ -751,6 +756,8 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: pea-prometheus
+    mem_limit: 512m
+    memswap_limit: 1024m
     restart: unless-stopped
     volumes:
       - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
@@ -769,6 +776,8 @@ services:
   grafana:
     image: grafana/grafana:11.6.2
     container_name: pea-grafana
+    mem_limit: 384m
+    memswap_limit: 896m
     restart: unless-stopped
     volumes:
       - ./configs/grafana-datasources.yml:/etc/grafana/provisioning/datasources/pea.yml:ro
@@ -782,6 +791,8 @@ services:
   blackbox-exporter:
     image: prom/blackbox-exporter:latest@sha256:e753ff9f3fc458d02cca5eddab5a77e1c175eee484a8925ac7d524f04366c2fc
     container_name: pea-blackbox-exporter
+    mem_limit: 64m
+    memswap_limit: 576m
     restart: unless-stopped
     volumes:
       - ./configs/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
@@ -793,6 +804,8 @@ services:
   node-exporter:
     image: prom/node-exporter:latest
     container_name: pea-node-exporter
+    mem_limit: 64m
+    memswap_limit: 576m
     restart: unless-stopped
     command:
       - '--path.procfs=/host/proc'
@@ -824,6 +837,9 @@ services:
     # has proven itself here.
     image: local-ai-llama:v0.2.0
     container_name: qwen3-canary-gpu5
+    # Opt-in only (`docker compose --profile canary up -d qwen3-canary`): a plain
+    # `docker compose up -d` must not start it on GPU 5 beside pea-gpu-5.
+    profiles: [canary]
     restart: unless-stopped
     runtime: nvidia
     environment:

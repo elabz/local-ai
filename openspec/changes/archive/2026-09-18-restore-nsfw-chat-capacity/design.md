@@ -35,3 +35,7 @@ Rollback: revert the commit, restart LiteLLM, `compose stop gpu-server-5`.
 ## Open Questions
 
 - Whether GPU 6 returns to NSFW duty when the current canary queue is exhausted (decision belongs to the canary change).
+
+---
+
+**Correction (2026-09-18, `bound-llama-host-prompt-cache`):** the RAM premise above, that a chat container uses ~1.5 GiB RSS within an 8 GiB ceiling, held only for idle workers. Under load, llama.cpp's unbounded host prompt cache (8 GiB default per worker) grew busy workers to 7.5–8.5 GiB, and the host OOM-killed `llama-server` twice on 2026-09-18. Workers now run `--cache-ram 1024` within a 1,792 MiB limit, and `scripts/check-memory-budget.py` keeps the compose limits within host RAM.

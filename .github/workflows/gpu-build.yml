@@ -96,6 +96,8 @@ jobs:
       - run: pip install pyyaml
       - name: Schema + drift check (models.yaml -> generated files)
         run: python gpu-server/scripts/render-config.py --check
+      - name: PEA memory budget (compose limits fit host RAM)
+        run: python gpu-server/scripts/check-memory-budget.py
 
   python-lint:
     name: Lint Python services
