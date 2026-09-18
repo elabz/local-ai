@@ -1,396 +1,206 @@
-# LLM Inference Optimization Analysis
-
-## Research Summary
-
-Based on comprehensive research of llama.cpp optimization techniques (2025), this document analyzes your current configuration and identifies opportunities to improve **Time to First Token (TTFT)**, **throughput**, and **prompt processing speed**.
-
----
-
-## Current Configuration Status
-
-### Already Optimized ✅
-
-Your configuration already includes several critical optimizations:
-
-| Setting | Current | Status | Impact |
-|---------|---------|--------|--------|
-| Continuous Batching | `--cont-batching` | ✅ Enabled | 43.7% faster prompt processing vs batch-at-a-time |
-| Flash Attention | `--flash-attn on` | ✅ Enabled | Faster inference, lower memory, better context handling |
-| KV Cache Quantization | `q8_0` (K & V) | ✅ Enabled | 50% memory reduction vs FP16 |
-| Prompt Caching | `--cache-reuse 256` | ✅ Enabled | Avoids reprocessing repeated prefixes |
-| Memory Locking | `--mlock` | ✅ Enabled | Prevents swap, consistent latency |
-
----
-
-## Current Constraints & Bottlenecks
-
-### Why Settings Are Conservative
-
-Your configuration is tuned for the **2-core Celeron CPU + 6GB P106-100 GPU** constraint:
-
-```
-Current Config          Reason
-─────────────────────────────────────────────────────
-N_BATCH: 128           Reduced from 512 (CPU bottleneck)
-N_UBATCH: 64           Reduced from 512 (CPU can't handle more)
-N_THREADS: 2           Matches physical CPU cores exactly
-N_CTX: 8192            Reduced from default to fit 1536m container
-MAX_CONCURRENT: 1      Only 1 inference request at a time
-```
-
-**The 2-core CPU is the limiting factor** - it's too weak to efficiently prepare batches larger than 128 tokens at once.
-
----
-
-## Optimization Recommendations
-
-### 1. **Increase Ubatch Size (Micro-batch)** - HIGH PRIORITY
-
-**Current**: `N_UBATCH: 64`
-**Recommended**: `N_UBATCH: 128` (match N_BATCH)
-
-**Why**:
-- ubatch is the physical GPU batch size - determines how many tokens processed per GPU compute step
-- Current 64 underutilizes your GPU (P106 can handle more)
-- Research shows GPU is waiting for CPU to prepare batches
-- Increasing to 128 won't add much CPU overhead since N_BATCH is already 128
-
-**How to Test**:
-```bash
-# Update config.py
-N_UBATCH: 128
-
-# Measure TTFT before and after
-curl -X POST http://localhost:8080/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"","messages":[{"role":"user","content":"Hello"}],"temperature":0.8}' \
-  | jq '.usage.prompt_tokens'
-```
-
-**Expected Impact**: 5-10% faster TTFT (10-50ms improvement)
-
----
-
-### 2. **Increase Context Window (Carefully)** - MEDIUM PRIORITY
-
-**Current**: `N_CTX: 8192`
-**Consider**: `N_CTX: 12288` (if memory allows)
-
-**Analysis**:
-- You allocated 1536m per container
-- Current 8192 ctx uses ~1200-1300m (before request processing)
-- Increasing to 12288 would use ~1400-1450m (still safe with 1536m limit)
-- Larger context = slower TTFT but better long conversation handling
-
-**Trade-off**:
-```
-8192 ctx:  + Faster TTFT (~5-7s), - Limited conversation memory
-12288 ctx: - Slower TTFT (~6-9s), + Better long-context handling
-```
-
-**Recommendation**: **Stay at 8192** for now
-- Your prompts are ~500 tokens max
-- 8192 provides good balance
-- If you see complaints about "forgetting" context, then increase to 12288
-
----
-
-### 3. **Optimize Cache Reuse for 500-Token Prompts** - HIGH PRIORITY
-
-**Current**: `--cache-reuse 256`
-**Recommended**: Analyze and potentially increase to `512` or `1024`
-
-**How It Works**:
-- llama.cpp's `cache-reuse` enables KV cache slot management
-- When a new request arrives, it searches for cached prefixes that match ≥50%
-- If found, it reuses those cached tokens instead of reprocessing
-- With 256 slots, you can cache up to 256 different conversation prefixes
-
-**For Your Workload**:
-- 10 users × ~5-10 conversations each = 50-100 active slots
-- Current 256 slots has 2.5x headroom (good)
-- **Keep at 256** - no need to increase, wasting memory otherwise
-
-**However, Check Slot Usage**:
-```bash
-# Monitor in llama.cpp logs for "slot_id" messages
-# If you see "all slots full" warnings, increase to 512
-
-# Or query the slots endpoint
-curl http://localhost:8081/slots | jq '.[] | select(.task_type != "null")'
-```
-
----
-
-### 4. **Enable KV Cache Quantization for Embeddings** - MEDIUM PRIORITY
-
-**Current**: Chat models have `q8_0` quantization
-**Embedding Models**: Check if they also use quantized KV cache
-
-**Recommendation**:
-For embedding servers (8090), add the same KV cache quantization:
-```yaml
-# In docker-compose.yml embedding-server config
-environment:
-  CACHE_TYPE_K: q8_0
-  CACHE_TYPE_V: q8_0
-```
-
-**Expected Impact**:
-- Embeddings are shorter (2048 ctx), so less dramatic saving
-- But every bit helps with 8 embedding servers running
-- 30-40% memory reduction in embedding cache
-
----
-
-### 5. **Batch Size Tradeoff: N_BATCH** - MEDIUM PRIORITY
-
-**Current**: `N_BATCH: 128`
-**Could increase to**: `N_BATCH: 256` (if CPU can handle)
-
-**Research Finding**:
-- Default is 2048, but that's for modern CPUs
-- Your 2-core Celeron was running at 128 safely
-- Increasing to 256 would mean preparing 256 tokens per step
-- CPU would be slightly more utilized, but might not bottle-neck
-
-**How to Test Safely**:
-```bash
-# Set N_BATCH: 256, keep N_UBATCH: 128
-# Run a 30-minute 10 VU load test
-# Monitor: CPU usage, GPU queue depth, latency
-
-# If CPU usage stays <80% and latency stable:
-#   → Safe to keep at 256
-# If CPU spikes to 100%:
-#   → Revert to 128
-```
-
-**Recommendation**: **Only test if TTFT becomes critical bottleneck**
-
----
-
-### 6. **GPU-Specific Optimization: More GPU Layers** - LOW PRIORITY
-
-**Current**: `N_GPU_LAYERS: 33`
-**Could try**: `N_GPU_LAYERS: 35-40`
-
-**Analysis**:
-- Your P106-100 has 6GB VRAM
-- Currently 33 layers are on GPU (out of 33 total in Stheno-8B)
-- This means model is 100% on GPU already ✅
-- No room to increase without exceeding VRAM
-
-**Recommendation**: **No change needed** - you're already fully GPU-accelerated
-
----
-
-### 7. **Optional: Explore CUDA Graphs** - ADVANCED
-
-**Current**: Using standard CUDA inference
-**Research Finding**: NVIDIA reports 1.2x speedup with CUDA Graphs
-
-**How It Works**:
-- CUDA Graphs batch multiple operations into a single GPU kernel launch
-- Reduces GPU-CPU synchronization overhead
-- Requires llama.cpp version from mid-2024 or later
-
-**Status**: This requires checking your llama.cpp build version
-```bash
-# Check version
-llama-server --version
-
-# If >= v3294 (mid-2024), CUDA Graphs likely already built-in
-# Check llama.cpp release notes for "CUDA Graphs" mention
-```
-
-**Recommendation**:
-- If using recent llama.cpp, it may already be enabled
-- Otherwise, rebuild llama.cpp from latest main branch
-- Expected improvement: 8-15% speedup in TTFT and throughput
-
----
-
-## Quantization Tradeoff Analysis
-
-Your models are already quantized at import:
-
-| Model | Quantization | Size | Trade-off |
-|-------|-------------|------|-----------|
-| Stheno-L3.1-8B | Q6_K (assumed) | ~5.3GB | Good quality/speed balance |
-| Lumimaid-v0.2-8B | Q6_K (assumed) | ~5.3GB | Same balance |
-
-**Can you optimize further?**
-
-| Alternative | Pros | Cons |
-|-------------|------|------|
-| Q5_K_M | -15% VRAM, 5% quality loss | Less memory for context |
-| Q4_K_M | -25% VRAM, 10% quality loss | Noticeably lower quality |
-| Q6_K (current) | Best quality/speed | Using already ✅ |
-| Q8_0 (higher) | +5% better quality | Larger file, no VRAM benefit |
-
-**Recommendation**: **Keep current quantization** - Q6_K is the research-confirmed sweet spot
-
----
-
-## Prompt Processing Speed Analysis
-
-### Current Bottleneck Breakdown
-
-For a 500-token prompt + 512-token response on your setup:
-
-```
-TTFT = Prompt Processing Time + Batch Preparation Overhead
-```
-
-| Phase | Time | Bottleneck |
-|-------|------|-----------|
-| Load prompt into GPU memory | ~200ms | GPU PCIe (not major) |
-| Process prompt tokens (500÷128 batch) | ~3-4s | 2-core CPU preparing batches |
-| First token generation | ~100-200ms | GPU |
-| **Total TTFT** | **~4-5s** | CPU (batch preparation) |
-
-**Why TTFT is CPU-limited**:
-- N_BATCH=128 means process 128 tokens per step
-- 500-token prompt needs ⌈500÷128⌉ = 4 steps
-- Each step needs CPU overhead (chunk preparation, KV cache management)
-- Your 2-core CPU can't prepare larger batches
-
-**To improve TTFT further**: Would need CPU upgrade (not feasible)
-
----
-
-## Recommendations Ranked by Impact/Effort
-
-| Priority | Change | Impact | Effort | Testing |
-|----------|--------|--------|--------|---------|
-| 1 | Increase N_UBATCH to 128 | 5-10% TTFT | ⭐ Low | 5 min |
-| 2 | Monitor cache-reuse slots | Find bottleneck | ⭐ Low | 10 min |
-| 3 | Add KV cache to embeddings | 30-40% embed mem | ⭐ Low | 5 min |
-| 4 | Update llama.cpp for CUDA Graphs | 8-15% speedup | ⭐⭐ Med | 20 min build |
-| 5 | Increase N_BATCH to 256 | 5-8% TTFT | ⭐⭐ Med | 30 min test |
-| 6 | Change context to 12288 | Longer memory | ⭐⭐ Med | Monitor OOM |
-| 7 | Benchmark against vLLM | See alternative | ⭐⭐⭐ High | 2-3 hours |
-
----
-
-## Implementation Plan
-
-### Phase 1: Quick Wins (1-2 hours)
-
-```bash
-# 1. Update config.py
-N_UBATCH: 128  # from 64
-
-# 2. Restart containers
-docker compose restart local-ai-gpu-1 local-ai-gpu-2 ...
-
-# 3. Run baseline latency test
-# Time 10 requests, record TTFT
-# Compare before/after: should see 5-10ms improvement
-```
-
-### Phase 2: Monitor & Tune (Ongoing)
-
-```bash
-# Check cache slot usage
-# If "all slots full" appears, increase cache-reuse to 512
-
-# Monitor in docker logs
-docker compose logs local-ai-gpu-1 | grep "slot_id"
-```
-
-### Phase 3: If TTFT Still Matters (Next Sprint)
-
-```bash
-# Only if client feedback indicates TTFT is issue:
-
-# 1. Build llama.cpp main branch with CUDA Graphs
-#    (or update container image to latest)
-
-# 2. Test N_BATCH=256 under load
-#    Run 30-min 10 VU test, monitor CPU
-
-# 3. Consider vLLM as alternative
-#    (requires rewrite of router logic, but better concurrency)
-```
-
----
-
-## Known Limitations & Trade-offs
-
-### Cannot Improve Without Hardware Upgrade
-
-| Bottleneck | Current | Limit | Solution |
-|-----------|---------|-------|----------|
-| Prompt processing latency | 2-4s | CPU-bound | Faster CPU |
-| Concurrent requests | 1 per GPU | Batch size limit | More RAM/GPU |
-| Long context handling | 8192 tokens | Container memory | 2GB+ containers |
-| Model quality | Q6_K | Quantization level | 8GB+ per GPU |
-
-### Research Findings vs Reality
-
-**Flash Attention Quality Issue** ⚠️
-- Research noted quality degradation with >8k context on some models
-- Your 8k context is at threshold - monitor output quality
-- If issues arise: either reduce to 4096 or test without flash-attn
-- Stheno-L3.1 appears to handle flash-attn well (no reports of issues)
-
-**KV Cache Reuse Bug** ⚠️
-- Recent issues reported cache-reuse not working with some models
-- Test to confirm it's actually reusing prompts
-- Monitor: Check if repeat requests have same latency (would indicate caching)
-
----
-
-## Monitoring Checklist
-
-To verify optimizations are working:
-
-```bash
-# 1. Measure TTFT for identical prompts (should be faster if cached)
-time curl -X POST http://localhost:8080/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"","messages":[{"role":"user","content":"Hello world"}]}' | jq '.usage'
-
-# 2. Check GPU utilization during prompt processing
-nvidia-smi dmon -s pucvmet | head -20  # Watch GPU utilization
-
-# 3. Monitor cache slot usage (if implemented)
-curl http://localhost:8081/slots | jq '.[].task_type' | grep -c "null"
-
-# 4. Track container memory
-docker stats local-ai-gpu-1 --no-stream | awk '{print $6}'
-
-# 5. Check for OOMKill events
-docker inspect local-ai-gpu-1 | grep -i "oomkilled"
-```
-
----
-
-## Sources
-
-- [Tutorial: measuring TTFT and TBT in llama.cpp](https://github.com/ggml-org/llama.cpp/discussions/14115)
-- [Improving server inference via prompt streaming](https://github.com/ggml-org/llama.cpp/discussions/11348)
-- [vLLM vs llama.cpp comparison](https://developers.redhat.com/articles/2025/09/30/vllm-or-llamacpp-choosing-right-llm-inference-engine-your-use-case)
-- [Comparative Study of LLM Inference Engines (2025)](https://arxiv.org/pdf/2511.05502)
-- [NVIDIA CUDA Graphs Optimization](https://developer.nvidia.com/blog/optimizing-llama-cpp-ai-inference-with-cuda-graphs/)
-- [KV Cache Quantization & Memory Optimization](https://medium.com/@tejaswi_kashyap/memory-optimization-in-llms-leveraging-kv-cache-quantization-for-efficient-inference-94bc3df5faef)
-- [llama.cpp KV Cache Reuse Tutorial](https://github.com/ggml-org/llama.cpp/discussions/13606)
-- [Q8_0 vs Q6_K Quantization Analysis](https://github.com/ggml-org/llama.cpp/discussions/5932)
-- [Continuous Batching Performance Study](https://github.com/ggml-org/llama.cpp/discussions/4130)
-- [Batch Size vs Ubatch Size Explanation](https://github.com/ggml-org/llama.cpp/discussions/6328)
-- [Flash Attention Quality Concerns](https://github.com/ggml-org/llama.cpp/discussions/9646)
-- [llama.cpp guide: Running LLMs locally](https://blog.steelph0enix.dev/posts/llama-cpp-guide/)
-
----
-
-## Next Steps
-
-1. **Implement Phase 1** (increase N_UBATCH to 128)
-2. **Test baseline vs optimized** with 10 requests
-3. **Monitor cache slot usage** for next 48 hours
-4. **If TTFT still critical**: Consider Phase 2 (CUDA Graphs, N_BATCH tuning)
-5. **Re-run 30-minute load test** to ensure stability
-
-The current configuration is solid and near-optimal for your hardware. Most remaining improvements require either CPU upgrade or rewriting the inference engine (vLLM).
+# Pea LLM Serving Optimization Notes
+
+Last updated: 2026-09-04
+
+This is the canonical optimization note for Pea's llama.cpp chat workers. It
+supersedes the older 6 GB / 8K-context recommendations that were written for a
+different topology. Treat every claimed improvement as a benchmark hypothesis
+until it passes the repository's canary gates on Pea.
+
+## Platform and workload constraints
+
+- 8 NVIDIA P104-100 cards, 8 GiB each, Pascal compute capability 6.1.
+- Approximately 31 GiB host RAM and a 2-core Celeron without AVX.
+- One model replica per chat GPU; speech and image workloads reserve their own
+  cards, while embedding services share selected cards.
+- Production chat workers use llama.cpp build b8027. The isolated canary image
+  currently uses b10566 (`bb4caa754`). Keep the build and model artifact pinned
+  by immutable revision and digest.
+- SFW admission requires a 16K context window and the real `site-2017`
+  workload. The current cold decode floor is 12 tokens/s.
+- NSFW admission requires at least 12 tokens/s at the proposed context plus
+  allowed-adult, prohibited-content, instruction, repetition, and blind prose
+  gates.
+- GPU 5 has produced corrupt or empty generations when a process holds more
+  than roughly 7.6 GiB. Keep it well below that region; validate on GPU 6 first
+  and do not infer that a successful load means healthy generation.
+
+The latest completed comparison is
+[`final-comparison-2026-09-04.md`](../openspec/changes/evaluate-modern-chat-model-canaries/evidence/final-comparison-2026-09-04.md).
+
+## Current baseline
+
+The production compose file defaults chat workers to 16K context, batch 128,
+micro-batch 64, two CPU threads, one slot, Q8 KV cache, and cache reuse 256.
+These are sensible conservative defaults for the host, but none should be
+called optimal without an A/B run.
+
+Important corrections to the previous notes:
+
+- `--cache-reuse 256` is a reuse threshold/chunk-size control, not 256
+  conversation slots. Slot count is controlled by `--parallel`.
+- Embedding-only inference does not benefit from an autoregressive KV cache in
+  the same way chat generation does. Do not add chat KV-cache flags to all
+  embedding workers expecting large savings.
+- Matching `ubatch` to `batch` is not automatically faster. On this CPU and
+  Pascal hardware it can increase activation memory or hurt latency; measure
+  128/64 against alternatives.
+- Q6 is not a universal sweet spot. On an 8 GiB card, model family, tokenizer,
+  context, KV layout, runtime workspace, and co-located services matter more
+  than the GGUF file size alone.
+- Flash attention support and benefit are backend/model/build-specific. Verify
+  the startup log and output correctness rather than assuming it is active.
+
+## Recommended serving strategy
+
+### 1. Preserve one-slot, full-offload workers
+
+Use one slot per 8 GiB card and offload all layers when the complete runtime
+allocation fits with operational margin. Extra parallel slots multiply KV
+cache and activation pressure and are a poor trade on this fleet. Scale with
+replicas and LiteLLM routing rather than multiple sequences on one card.
+
+Avoid splitting an 8–12B dense model across two P104s as a default: it consumes
+two scarce cards and adds inter-GPU/PCIe coordination. Use a second card only
+for a deliberate experiment that measures end-to-end latency.
+
+### 2. Select quantization from measured allocation
+
+Starting points, not promotion rules:
+
+- 7–8B conventional models: Q5_K_M when the file is around 5.7–6.1 GB;
+  otherwise Q4_K_M.
+- 9B or hybrid models: Q4_K_M first. Move to Q5 only if 16K allocation retains
+  at least several hundred MiB of healthy headroom and decode still clears the
+  floor.
+- 12B models: Q4_K_M only, GPU-6-only during qualification. The latest Gemma
+  3 12B occupied about 7,949 MiB at 16K and is unsuitable for GPU 5.
+
+Always record GGUF revision, SHA-256, actual VRAM after load, peak VRAM during
+long prefill, host RSS, and output integrity. File size alone is insufficient.
+
+### 3. Keep Q8 KV as the default; test Q4 KV only as a rescue path
+
+Q8 K/V is the current quality-conscious baseline. If a promising candidate
+misses the 16K memory gate narrowly, compare Q4 KV against Q8 KV using the full
+schema, safety, long-context, and prose suites. Do not trade output stability
+for context capacity silently.
+
+### 4. Tune batch and micro-batch empirically
+
+For each admitted model, compare at least:
+
+| Matrix | Batch | Micro-batch | Purpose |
+|---|---:|---:|---|
+| Baseline | 128 | 64 | Known conservative configuration |
+| A | 128 | 128 | Test larger physical batches |
+| B | 256 | 64 | Test fewer logical prefill chunks |
+| C | 256 | 128 | Test combined change if memory allows |
+
+Measure cold and warm TTFT, prompt tokens/s, decode p10/median, peak VRAM,
+host RSS, and correctness on identical requests. The 2-core CPU means a larger
+batch can help or hurt; there is no safe percentage improvement to assume.
+
+### 5. Exploit stable-prefix reuse, but verify hits
+
+The repeated HeartCode system prompt and character-card prefix are the best
+cache opportunity. Keep the prompt ordering and serialization byte-stable and
+inspect llama.cpp logs/metrics to prove reuse. Benchmark cold and warm paths
+separately. Gemma 3 sliding-window cache disabled cache reuse in the completed
+campaign, so treat reuse as model-dependent.
+
+### 6. Keep host-memory pressure bounded
+
+The b10566 canary workers reached their 8 GiB cgroup limits and used far more
+anonymous host memory than b8027 production workers. Before promoting a newer
+runtime, run concurrent chat and embedding load, watch swap in/out, OOM events,
+container restarts, and request latency, and retain the old image for rollback.
+Do not use `--mlock` as a substitute for memory budgeting.
+
+### 7. Separate runtime qualification from model qualification
+
+New architectures may require newer llama.cpp builds. First prove that the
+runtime loads the exact GGUF and returns coherent direct responses on Pascal;
+then run model-quality gates. A model should not cause an unreviewed production
+runtime upgrade.
+
+Do not enable speculative decoding or model-native MTP by default. It adds
+runtime/version complexity and memory use; evaluate it only after a candidate
+already passes without it and only if decode, rather than prefill or CPU work,
+is the measured bottleneck.
+
+## Canary shortlist: 2026-09-04 refresh
+
+### SFW, in test order
+
+1. **Qwen3.5-9B, Q4_K_M (6.17 GB)** — strongest new capability candidate.
+   Official results report IFEval 91.5 and strong long-context/agent scores.
+   Start on GPU 6 at 16K without the vision projector. Qwen3.5 thinks by
+   default, so direct-response mode, streaming, reasoning-marker leakage,
+   native JSON schema, and multi-turn tools are pre-admission gates.
+2. **Ministral-3-8B-Instruct-2512, Q5_K_M (6.06 GB)** — lower-risk
+   direct-response alternative with documented system-prompt, function-call,
+   and JSON support. Test Q4_K_M (5.42 GB) if Q5 lacks allocation margin. Its
+   multi-turn tool-call ID/template round trip must pass on the pinned build.
+3. **Meta-Llama-3.1-8B-Instruct, Q5_K_M (5.73 GB)** — older but valuable
+   control with a mature llama.cpp path and documented tool formats. It is a
+   canary only if its real in-role SFW refusal and `site-2017` precision beat
+   the current failures; age alone does not disqualify a stable control.
+
+Do not advance another 12B SFW model until the precision gate/prompt contract
+is reviewed. Gemma 3 12B achieved perfect validity and high-risk recall but
+only 57.9% actionable precision and missed the separate cold throughput floor.
+
+### NSFW, in test order
+
+Keep **Gemma-4-E4B-Luchador Q5_K_M** as the measured baseline: it remains the
+only 2026 challenger to pass all machine and safety gates, although human blind
+prose scoring and the product decision on multi-turn tools remain open.
+
+1. **Gemma-4-E4B-Luchador-Rudo, Q5_K_M (5.76 GB)** — best first challenger.
+   It shares Luchador's architecture and intended thinking-off template while
+   deliberately increasing character/style signal. Run the same prohibited
+   suite and a three-arm blind packet; stronger prose must not weaken safety.
+2. **Nyx-RP-9B-Instruct-2608-v1, Q4_K_M (5.78 GB)** — best architecture-diverse
+   challenger. It is a Qwen3.5 9B RP fine-tune and is explicitly described as
+   the finished v1. Q5_K_M (6.64 GB) is too aggressive for the first Pea run.
+   It inherits the Qwen3.5 direct-response/runtime risks, and its private
+   training data requires provenance review before promotion.
+3. **Interferon-gamma RP 9B preview, Q4_K_M (5.78 GB)** — deferred exploratory
+   arm only. Its card calls it unstable, and the Nyx author says the testing
+   variants generally underperformed v1. Test only if Nyx v1 passes mechanics
+   but exposes a specific prose weakness worth exploring.
+
+Screened out for this wave: 12B RP models (memory/thermal risk), Q6/Q8 9B
+quants (insufficient headroom), and merges whose own cards warn of reduced
+instruction following or amplified hallucination.
+
+## Admission sequence
+
+1. Pin repository revision, GGUF filename, size, and SHA-256.
+2. Load on GPU 6 with one slot, baseline batch settings, target context, Q8 KV,
+   and no vision projector.
+3. Record allocation and run repeated coherence probes; never rely on load
+   success alone.
+4. Verify direct response, streaming, retrieval, JSON/schema, tool calls, and
+   multi-turn tool-result continuation as applicable.
+5. Run cold/warm performance matrices and reject below the route floor.
+6. Run the frozen SFW or NSFW quality/safety suite under the production system
+   prompt and sampler.
+7. For NSFW finalists, run provider-blind prose review against Luchador and
+   Lumimaid.
+8. Run concurrent host/GPU soak monitoring, restore displaced services, and
+   confirm no public alias changed unless promotion is explicitly approved.
+
+## Research references
+
+- Qwen3.5-9B model card: https://huggingface.co/Qwen/Qwen3.5-9B
+- Qwen3.5-9B GGUF sizes: https://huggingface.co/bartowski/Qwen_Qwen3.5-9B-GGUF
+- Ministral-3-8B official card: https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512-BF16
+- Ministral-3-8B GGUF sizes: https://huggingface.co/unsloth/Ministral-3-8B-Instruct-2512-GGUF
+- Llama 3.1 8B Instruct: https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct
+- Llama 3.1 GGUF sizes: https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
+- Luchador Rudo: https://huggingface.co/rpDungeon/Gemma-4-E4B-Luchador-Rudo
+- Luchador Rudo GGUF sizes: https://huggingface.co/mradermacher/Gemma-4-E4B-Luchador-Rudo-GGUF
+- Nyx v1: https://huggingface.co/Indexnusrefather/Nyx-RP-9B-Instruct-2608-v1
+- Nyx v1 GGUF sizes: https://huggingface.co/mradermacher/Nyx-RP-9B-Instruct-2608-v1-GGUF
