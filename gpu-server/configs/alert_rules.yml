@@ -3,6 +3,8 @@ groups:
     interval: 30s
     rules:
       # GPU Temperature Alerts
+      # Warning only: visible in Prometheus/Alertmanager, NOT sent to Slack
+      # (routed to the `silent` receiver in configs/alertmanager.yml).
       - alert: GPUTemperatureHigh
         expr: gpu_temperature_celsius > 80
         for: 2m
@@ -12,14 +14,19 @@ groups:
           summary: "GPU {{$labels.gpu_id}} temperature is high"
           description: "GPU {{$labels.gpu_id}} temperature is {{$value}}°C (threshold: 80°C)"
       
+      # The only GPU temperature alert that notifies (owner decision 2026-09-18):
+      # critical AND sustained for 10 minutes. Brief spikes under load are
+      # normal. `max by (gpu_id)` gives one alert per card; the chat worker and
+      # its co-located embed server both export the same card's temperature.
+      # gpu_id is the 1-based config slot (nvidia-smi index is gpu_id - 1).
       - alert: GPUTemperatureCritical
-        expr: gpu_temperature_celsius > 85
-        for: 1m
+        expr: max by (gpu_id) (gpu_temperature_celsius) > 85
+        for: 10m
         labels:
           severity: critical
         annotations:
-          summary: "GPU {{$labels.gpu_id}} temperature is CRITICAL"
-          description: "GPU {{$labels.gpu_id}} temperature is {{$value}}°C (threshold: 85°C) - IMMEDIATE ACTION REQUIRED"
+          summary: "GPU {{$labels.gpu_id}} temperature is CRITICAL for 10+ minutes"
+          description: "GPU {{$labels.gpu_id}} (config slot; nvidia-smi index is one lower) is at {{$value}}°C, above 85°C for at least 10 minutes"
       
       # CPU Temperature Alerts (supports Intel coretemp, AMD k10temp, and generic hwmon)
       - alert: CPUTemperatureHigh

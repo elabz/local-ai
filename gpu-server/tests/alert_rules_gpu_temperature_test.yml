@@ -1,0 +1,41 @@
+# promtool unit tests for GPUTemperatureCritical (owner decision 2026-09-18:
+# notify only when a card stays above 85°C for 10 minutes, once per card).
+#
+#   docker run --rm -v "$PWD/gpu-server:/work" -w /work/tests --entrypoint promtool \
+#     prom/prometheus:latest test rules alert_rules_gpu_temperature_test.yml
+
+rule_files:
+  - ../configs/alert_rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - name: 9 minutes above 85°C is not enough
+    interval: 1m
+    input_series:
+      - series: 'gpu_temperature_celsius{job="gpu-chat-servers",instance="pea-gpu-1:9091",gpu_id="1"}'
+        values: '87x8 70x10'
+    alert_rule_test:
+      - eval_time: 9m
+        alertname: GPUTemperatureCritical
+        exp_alerts: []
+
+  - name: sustained 10+ minutes fires once per card despite two exporters
+    interval: 1m
+    input_series:
+      - series: 'gpu_temperature_celsius{job="gpu-chat-servers",instance="pea-gpu-1:9091",gpu_id="1"}'
+        values: '87x20'
+      - series: 'gpu_temperature_celsius{job="vision-embed",instance="pea-embed-vision-1:9091",gpu_id="1"}'
+        values: '86x20'
+      - series: 'gpu_temperature_celsius{job="gpu-chat-servers",instance="pea-gpu-4:9091",gpu_id="4"}'
+        values: '47x20'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: GPUTemperatureCritical
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              gpu_id: "1"
+            exp_annotations:
+              summary: "GPU 1 temperature is CRITICAL for 10+ minutes"
+              description: "GPU 1 (config slot; nvidia-smi index is one lower) is at 87°C, above 85°C for at least 10 minutes"
