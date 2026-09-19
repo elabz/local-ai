@@ -7,7 +7,8 @@
 3. Deploy `speech-meter`, `speech-gpu-exporter`, `speech-stream-gateway`, `blackbox-exporter`, Prometheus, and Grafana.
 4. Recreate Prometheus after replacing bind-mounted configuration files. Confirm the `speech-health`, `speech-requests`, and `speech-gpu` targets are up.
 5. Deploy the LiteLLM `speech_correlation.py` callback and configuration, then recreate LiteLLM so the read-only callback mount is refreshed.
-6. Run `controlled_probe.sh`. Do not enable HeartCode traffic unless it reports two 2xx routes, two correlated meter log entries, an exact LiteLLM accounting row, the expected GPU UUID/index, non-zero process memory, and an increased speech request counter.
+6. Run `controlled_probe.sh` (scheduled twice daily by cron on PEA — see
+   "Scheduled controlled probe" below; run it by hand here for the deploy gate). Do not enable HeartCode traffic unless it reports two 2xx routes, two correlated meter log entries, an exact LiteLLM accounting row, the expected GPU UUID/index, non-zero process memory, and an increased speech request counter.
 7. Enable normal STT/TTS through LiteLLM first. Enable backend-only direct TTS streaming after the authenticated route passes independently. Browsers never receive the direct service credential.
 
 `SPEECH_TTS_ENCODING_PROFILE` selects the live Ogg/Opus profile. Supported values are `opus-128k`, `opus-48k`, `opus-40k`, and `opus-32k`; the accepted default is `opus-40k`. The controlled probe sends the configured profile and rejects a response without an Ogg container signature. Lower profiles transcode provider PCM incrementally with 24 kHz mono libopus; MP3 preview traffic remains provider-native and is unaffected.
@@ -31,3 +32,29 @@ Sanitized probe JSON belongs in `speech/evidence/`. It contains IDs, HTTP status
 ## Secret rotation
 
 Generate a new high-entropy direct key, update PEA and HeartCode secret stores, recreate the gateway, validate the new key, then revoke the old value. Never place either value in Git, compose arguments, evidence, logs, browser code, or frontend configuration. Rotate immediately after suspected exposure and on the normal service-secret schedule.
+
+## Scheduled controlled probe
+
+`SpeechControlledProbeCorrelationMissing` fires when the newest evidence file is
+older than 24h, but the probe used to run only by hand at deploy time. Its
+evidence went stale on 2026-09-04 and the alert fired continuously from then
+(unseen until alert delivery went live on 2026-09-18).
+
+`speech/run_controlled_probe.sh` wraps `controlled_probe.sh` for cron: it loads
+`gpu-server/.speech-probe.env` (mode 600, gitignored — see
+`.speech-probe.env.example`), applies the PEA defaults, appends one line per run
+to `speech/evidence/probe-runs.log`, and keeps only the newest 30 evidence files
+(`SPEECH_PROBE_KEEP`). PEA has no passwordless sudo, so this is boss's user
+crontab rather than a systemd timer:
+
+```cron
+0 */12 * * * /home/boss/local-ai/gpu-server/speech/run_controlled_probe.sh
+```
+
+Twice a day keeps a margin under the 24h alert window; a daily run would leave
+the metric momentarily stale and flap the alert. Each run sends one fixed audio
+file through STT and one fixed phrase through TTS on GPU 7 — no user content.
+
+Check it: `tail -3 gpu-server/speech/evidence/probe-runs.log` on PEA, or query
+`time() - speech_controlled_probe_timestamp_seconds` (seconds since the last
+probe) and `speech_controlled_probe_success` on PEA's Prometheus.
