@@ -116,7 +116,7 @@ Then deploy via `deploy.yml`, or **manually** (fallback if the runner is down):
 | API Name | Type | GPUs | Replicas (min) | Model | Quant | Chat Template |
 |----------|------|------|----------------|-------|-------|---------------|
 | `heartcode-chat-sfw` | Chat (SFW) | 1-3 | 3 (3) | Llama-3.1-8B-Stheno-v3.4 | Q5_K_M | GGUF-embedded (`--jinja`) |
-| `heartcode-chat-nsfw` | Chat (NSFW) | 4-6 | 3 (3) | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M | GGUF-embedded (`--jinja`) |
+| `heartcode-chat-nsfw` | Chat (NSFW) | 4, 6 | 2 (2) | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M | GGUF-embedded (`--jinja`) |
 | `heartcode-embed` | Embedding (text) | 4-5 | 2 (2) | nomic-embed-text-v1.5 | Q8_0 | — |
 | `heartcode-embed-vision` | Embedding (text + image) | 1-2 | 2 (2) | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | fp32¹ | — |
 | `heartcode-embed-visual` | Embedding (image-only) | 3, 6 | 2 (2) | DINOv2 ViT-L/14 (with registers) | fp32² | — |
@@ -143,8 +143,8 @@ Embed tier is **2 of each type**, co-located one-per-chat-GPU (`rebalance-embed-
 |-------|-------------|-------|-----|-----------------|
 | 5100 | `heartcode-image` | Segmind SSD-1B (SDXL distilled) | GPU 8 | — |
 | 8080-8082 | `heartcode-chat-sfw` | Llama-3.1-8B-Stheno-v3.4 | GPU 1-3 | `heartcode-embed-vision` (GPU 1-2), `heartcode-embed-visual` (GPU 3) |
-| 8083-8085 | `heartcode-chat-nsfw` | Lumimaid-v0.2-8B (NeverSleep) | GPU 4-6 | `heartcode-embed` (GPU 4-5), `heartcode-embed-visual` (GPU 6) |
-| 8093-8094 | `heartcode-embed` | nomic-embed-text-v1.5 | GPU 4-5 | `heartcode-chat-nsfw` (GPU 4-5) |
+| 8083, 8085 | `heartcode-chat-nsfw` | Lumimaid-v0.2-8B (NeverSleep) | GPU 4, 6 | `heartcode-embed` (GPU 4), `heartcode-embed-visual` (GPU 6) |
+| 8093-8094 | `heartcode-embed` | nomic-embed-text-v1.5 | GPU 4-5 | `heartcode-chat-nsfw` (GPU 4) |
 | 8101-8102 | `heartcode-embed-vision` | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | GPU 1-2 | `heartcode-chat-sfw` (GPU 1-2) |
 | 8104-8105 | `heartcode-embed-visual` | DINOv2 ViT-L/14 (with registers) | GPU 3, 6 | `heartcode-chat-sfw` (GPU 3), `heartcode-chat-nsfw` (GPU 6) |
 | 8200 | `heartcode-stt` | faster-whisper small.en (speaches) | GPU 7 | `heartcode-tts` (GPU 7) |
