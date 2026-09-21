@@ -86,7 +86,7 @@ k6 run -e API_KEY=$KEY stress-all-gpus.js
 
 Two workflows under `.github/workflows/`:
 
-- **`gpu-build.yml` (CI)** — runs on every push/PR on GitHub-hosted runners (no secrets, no LAN). Jobs: `compose-validate` (`docker compose config` for every stack), `litellm-validate` (`litellm/validate_config.py`), `model-manifest-validate` (`render-config.py --check`), `python-lint` (ruff + `py_compile`), and a **build-only**, path-filtered `gpu-build` (llama.cpp image, no push). GitHub-hosted runners **cannot reach the 192.168.70.x LAN**, so CI never deploys.
+- **`gpu-build.yml` (CI)** — runs on every push/PR on GitHub-hosted runners (no secrets, no LAN). Jobs: `compose-validate` (`docker compose config` for every stack), `litellm-validate` (`litellm/validate_config.py`), `model-manifest-validate` (`render-config.py --check` + `check-memory-budget.py`), `python-lint` (ruff + `py_compile`), `unit-tests` (`pytest gpu-server/tests --ignore=gpu-server/tests/integration`, pinned `gpu-server/requirements-test.txt`, apt-installs ffmpeg for the custom-voice intake tests; integration tests need the LAN and stay out), and a **build-only**, path-filtered `gpu-build` (llama.cpp image, no push). GitHub-hosted runners **cannot reach the 192.168.70.x LAN**, so CI never deploys.
 - **`deploy.yml` (CD)** — manual `workflow_dispatch` (`target`: `litellm`/`gpu-server`/`both`) on a **self-hosted runner labeled `homelab`** (registered on Prod; can SSH to PEA over the LAN). Gated by the `production` Environment. LiteLLM = `git checkout <sha>` + `docker compose up -d litellm` + health check on Prod; GPU server = SSH to PEA, regenerate env, native `docker build`, rolling `gpu-server-1..6` restart with `/health` gating.
 
 ### Changing a model or its tenancy (single source of truth)
@@ -190,6 +190,7 @@ Monitoring (hand-maintained; not in `models.yaml`):
 - Deployments per group, their ports and GPUs: the generated [Models](#models) and [Port Layout](#port-layout-pea) tables. BiQwen2.5 (`:8100`) shelved
 - Busy is not failure: chat wrappers queue up to `ADMISSION_WAIT_SECONDS=60` then answer `429 BACKEND_BUSY` + `Retry-After`; the router retries a sibling (`num_retries: 2`) and never cools a replica for 429 (`allowed_fails_policy`). Cooldown needs 3 real failures (503/connection) and lasts 20s. Chat deployment `timeout: 240`.
 - Health checks every 15s; per-key `max_parallel_requests` mandatory — see `docs/proxy-client-contract.md`
+- `least-busy` ties are patched: upstream keeps the first minimum, so with one-at-a-time traffic every request went to replica 1 (SFW 1008/318/6 over 24h, GPU 1 at 85-87°C). `litellm/patches/least_busy.py` is bind-mounted over the image's **site-packages** copy (the `/app/litellm` tree the container's shell finds first is not what the proxy imports) — see `litellm/patches/README.md`; a CI test pins the patch to the image digest
 
 ### Image Server (`gpu-server/models/heartcode-image.yaml`)
 - **1 instance** (`image-server` → `pea-image-1`, GPU 8, `:5100`) behind `heartcode-image`. The second replica (`image-server-2`, GPU 7, `:5101`) is retired; GPU 7 serves speech
