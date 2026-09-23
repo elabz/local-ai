@@ -16,6 +16,8 @@ Drift reported (one line each, exit 1 when any is found):
   wrong-card          a tenant is pinned to, or computing on, a different card than its slot
   name-pin-mismatch   a container named *-gpuN / *-gpu-N is pinned to another card
   unrouted            a running chat/embed container publishes no port LiteLLM routes
+                      (except one listed in a slot's `quarantined`, which is
+                       deliberately running-but-unrouted, e.g. a faulty card)
   unrecorded          a live GPU-pinned container is not a tenant of any slot
   displaced-running   a slot records a canary but its main tenants are also running
   inventory-mismatch  the controller inventory disagrees with gpu-topology.json
@@ -155,6 +157,15 @@ def check(snapshot: dict, topology: dict, routed: set[int], inventory: dict | No
     slots = topology.get("slots", {})
     card_of = {slot["uuid"]: slot["id"] for slot in slots.values()}
     tenants = slot_tenants(topology)
+    # Containers a slot records as deliberately unrouted: the service still runs
+    # (for diagnosis, or because a neighbour on the card is healthy) but LiteLLM
+    # must not route to it. Without this, quarantining a card turns
+    # check-placement into a permanent red light. See gpu-topology.json.
+    quarantined = {
+        name
+        for slot in slots.values()
+        for name in (slot.get("quarantined") or {}).get("containers", [])
+    }
 
     def card(uuid: str) -> str:
         return card_of.get(uuid, f"unknown {uuid}")
@@ -203,7 +214,8 @@ def check(snapshot: dict, topology: dict, routed: set[int], inventory: dict | No
         if c["pins"] and name not in tenants:
             drift.append(f"{card(c['pins'][0])} unrecorded: {name} is live on the card but not "
                          f"recorded in gpu-topology.json")
-        if name.startswith(ROUTED_PREFIXES) and c["ports"] and not routed.intersection(c["ports"]):
+        if (name.startswith(ROUTED_PREFIXES) and name not in quarantined
+                and c["ports"] and not routed.intersection(c["ports"])):
             health = f", {c['health']}" if c["health"] else ""
             drift.append(f"{card(c['pins'][0]) if c['pins'] else '-'} unrouted: {name} "
                          f"(ports {c['ports']}{health}) is not routed in litellm/config.yaml")

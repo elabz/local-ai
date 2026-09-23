@@ -264,14 +264,19 @@ groups:
           summary: "Speech controlled-probe correlation is missing"
           description: "No fully correlated controlled probe has been retained in the last 24 hours."
 
+      # The exporter container is pinned to one card, so nvidia-smi inside it
+      # renumbers it to index 0; the index half of this check only applies when
+      # the full host mapping is visible (see speech/gpu_exporter.py). Host
+      # placement is verified by scripts/check-placement.py. Until 2026-09-23
+      # this compared the container-local index and fired permanently.
       - alert: SpeechGPUInventoryMismatch
         expr: speech_gpu_inventory_match == 0
         for: 5m
         labels:
           severity: critical
         annotations:
-          summary: "Speech GPU UUID/index inventory mismatch"
-          description: "{{$labels.gpu_uuid}} was discovered at physical index {{$labels.physical_index_zero_based}}."
+          summary: "Speech GPU inventory mismatch"
+          description: "The speech service is not on its configured card: {{$labels.gpu_uuid}} (display slot {{$labels.display_slot_one_based}}, expected physical index {{$labels.physical_index_zero_based}}) is missing or sits elsewhere. Check scripts/check-placement.py on PEA."
 
       - alert: SpeechUnexpectedCPUFallback
         expr: sum(speech_gpu_process_memory_bytes) == 0 and sum(increase(speech_requests_total[10m])) > 0

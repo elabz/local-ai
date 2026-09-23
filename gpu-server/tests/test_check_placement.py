@@ -3,6 +3,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import yaml
+
 import pytest
 
 
@@ -55,7 +57,27 @@ def test_recorded_healthy_layout_has_no_drift(snapshot, topology, routed):
 
 
 def test_routed_ports_cover_every_manifest_deployment(routed):
-    assert {8080, 8081, 8082, 8083, 8084, 8085, 8093, 8094, 8101, 8102, 8104, 8105, 5100} <= routed
+    # Derived from the manifest, not hardcoded: a replica removed there (GPU 5,
+    # 2026-09-19) must not leave this asserting ports that no longer exist.
+    manifest = yaml.safe_load((ROOT / "models.yaml").read_text())
+    expected = {d["port"] for m in manifest["models"] for d in m["deployments"]}
+    assert expected <= routed
+
+
+def test_quarantined_container_is_running_but_unrouted(snapshot, topology, routed):
+    """GPU 5 keeps serving embeddings while its chat replica is pulled."""
+    quarantined = topology["slots"]["0000:0a:00.0"]["quarantined"]
+    assert quarantined["containers"] == ["pea-gpu-5"] and quarantined["reason"]
+    assert named(snapshot, "pea-gpu-5")["ports"] == [8084]
+    assert 8084 not in routed, "the faulty chat replica must stay out of litellm/config.yaml"
+    assert 8094 in routed, "pea-embed-5 on the same card is still routed"
+    assert placement.check(snapshot, topology, routed) == []
+
+
+def test_unquarantined_unrouted_container_still_drifts(snapshot, topology, routed):
+    topology = copy.deepcopy(topology)
+    del topology["slots"]["0000:0a:00.0"]["quarantined"]
+    assert kinds(placement.check(snapshot, topology, routed)) == ["gpu-5 unrouted"]
 
 
 def test_routed_ports_ignore_other_hosts():
