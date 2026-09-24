@@ -1,0 +1,48 @@
+# promtool unit tests for GPUMemoryHigh (owner decision 2026-09-24: the cards
+# are meant to run near full, so only >98% for 5m is worth a notification).
+#
+#   docker run --rm -v "$PWD/gpu-server:/work" -w /work/tests --entrypoint promtool \
+#     prom/prometheus:latest test rules alert_rules_gpu_memory_test.yml
+
+rule_files:
+  - ../configs/alert_rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - name: chat plus co-located embed at ~95% is the normal design point
+    interval: 1m
+    input_series:
+      # GPU 3: 7705 MiB of 8192 (94.1%) — chat + DINOv2, as deployed
+      - series: 'gpu_memory_used_bytes{job="gpu-chat-servers",instance="pea-gpu-3:9091",gpu_id="3"}'
+        values: '8079474688x15'
+      - series: 'gpu_memory_total_bytes{job="gpu-chat-servers",instance="pea-gpu-3:9091",gpu_id="3"}'
+        values: '8589934592x15'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: GPUMemoryHigh
+        exp_alerts: []
+
+  - name: above 98% for 5m alerts with a 1-decimal percentage
+    interval: 1m
+    input_series:
+      # 8100 MiB of 8192 = 98.88%
+      - series: 'gpu_memory_used_bytes{job="gpu-chat-servers",instance="pea-gpu-3:9091",gpu_id="3"}'
+        values: '8493465600x15'
+      - series: 'gpu_memory_total_bytes{job="gpu-chat-servers",instance="pea-gpu-3:9091",gpu_id="3"}'
+        values: '8589934592x15'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: GPUMemoryHigh
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: GPUMemoryHigh
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: gpu-chat-servers
+              instance: pea-gpu-3:9091
+              gpu_id: "3"
+            exp_annotations:
+              summary: "GPU 3 memory usage is high"
+              description: "GPU 3 memory usage is 98.9% (threshold: 98%)"

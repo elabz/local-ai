@@ -73,14 +73,18 @@ groups:
           description: "1-minute load average is {{$value}} (threshold: 4.0 for 2-core system) - system may be unresponsive"
       
       # GPU Memory Alerts
+      # Owner decision 2026-09-24: the fleet is meant to run its cards close to
+      # full (chat + a co-located embed model is ~7.5 of 8 GiB by design), so a
+      # high-water mark is not news. 98% of 8192 MiB leaves ~164 MiB, which is
+      # where allocation failures actually start.
       - alert: GPUMemoryHigh
-        expr: (gpu_memory_used_bytes / gpu_memory_total_bytes * 100) > 95
+        expr: (gpu_memory_used_bytes / gpu_memory_total_bytes * 100) > 98
         for: 5m
         labels:
           severity: warning
         annotations:
           summary: "GPU {{$labels.gpu_id}} memory usage is high"
-          description: "GPU {{$labels.gpu_id}} memory usage is {{$value}}% (threshold: 95%)"
+          description: 'GPU {{$labels.gpu_id}} memory usage is {{ printf "%.1f" $value }}% (threshold: 98%)'
       
       # CPU Usage Alerts
       - alert: CPUUsageHigh
