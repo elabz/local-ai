@@ -71,6 +71,42 @@ these procedures.
    confirm with `scripts/check-placement.py`. Leaving a retired canary recorded
    blocks fault recovery for that card.
 
+## Quarantining a faulty card
+
+When a card produces bad output but its neighbour service is healthy (GPU 5,
+2026-09-19: garbled chat generation at ~6.6 GiB while `pea-embed-5` was fine),
+pull only the bad replica and record why.
+
+1. In `gpu-server/models.yaml`, comment out that deployment and lower the
+   group's `min_replicas` in the same edit with a dated reason, then
+   `scripts/render-config.py`.
+2. Record the quarantine in `gpu-server/configs/gpu-topology.json`, on the
+   slot that owns the card:
+
+   ```json
+   "quarantined": {
+     "containers": ["pea-gpu-5"],
+     "since": "2026-09-19",
+     "reason": "garbled generation at ~6.6 GiB; pulled from heartcode-chat-nsfw"
+   }
+   ```
+
+   The container keeps running (for diagnosis, and because the co-located
+   embed server shares the card) but LiteLLM no longer routes to it.
+   `check-placement.py` reports a running-but-unrouted chat/embed container as
+   `unrouted` drift, which is correct and would otherwise fail every deploy and
+   turn the check into a permanent red light. It skips exactly the containers
+   listed here; any other unrouted replica still drifts.
+3. Deploy the routing change to Prod (`docker compose up -d litellm`, then
+   **restart** it — a bind-mounted config is not re-read on `up`).
+4. **Do not run a full `compose up` on PEA** while a chat replica is
+   quarantined: the re-render drops that GPU's `GPU_N_MODEL_*` entries from
+   `models.generated.env`, so a deploy would start the service without its
+   model configuration.
+5. **On repair or replacement**, remove the `quarantined` entry, restore the
+   deployment in `models.yaml` (raising `min_replicas` back in the same edit),
+   re-render, deploy, and confirm with `scripts/check-placement.py`.
+
 ## Fleet rollout
 
 Recreate one SFW backend at a time. Do not recreate the co-located embedding,
