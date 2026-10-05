@@ -41,6 +41,9 @@ services:
     # litellm/patches/ is written against this digest too (see its README).
     image: ghcr.io/berriai/litellm:main-latest@sha256:bb0639701796218a3447160e55c0f1097446e4e6085df7dfd39f476d4143743f
     container_name: local-ai-litellm
+    # Guardrail for the shared Prod host: the proxy sits around 2-3G after two
+    # weeks up (peak RSS 2.1G). Without a cap a leak would push mysql/redis into swap.
+    mem_limit: 4g
     restart: unless-stopped
     ports:
       - "4000:4000"
