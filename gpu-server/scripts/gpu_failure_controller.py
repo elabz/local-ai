@@ -21,6 +21,12 @@ from pathlib import Path
 
 LOG = logging.getLogger("gpu-failure-controller")
 MAX_ATTEMPTS = 3
+# Consecutive empty discoveries before alerting. One or two are a cold boot or a
+# transient probe failure; a run of them is a driver that cannot initialize —
+# e.g. unattended-upgrades replaced the NVIDIA userspace library under a loaded
+# kernel module ("Driver/library version mismatch", 2026-10-10). Running
+# containers keep serving, but nothing can be (re)started until a reboot.
+DISCOVERY_ALERT_CYCLES = int(os.getenv("GPU_DISCOVERY_ALERT_CYCLES", "5"))
 # v1: slots with id/uuid/services/containers/ports.
 # v2: adds an optional per-slot `canary: {container, compose_file, uuid}` recording
 #     a canary (from a second compose file) that has displaced the slot's
@@ -131,6 +137,7 @@ class Controller:
         validate_inventory(self.inventory)
         self.recovery = self._load(self.recovery_path, {"slots": {}})
         self.failed = self._load(self.failed_path, {"failed": []})
+        self.discovery_error, self.discovery_failures, self.discovery_alerted = "", 0, False
 
     @staticmethod
     def _load(path, default):
@@ -155,7 +162,9 @@ class Controller:
     def discover(self):
         result = self.command(["nvidia-smi", "--query-gpu=uuid,pci.bus_id", "--format=csv,noheader,nounits"])
         if result.returncode:
-            LOG.warning("GPU discovery failed")
+            lines = ((result.stderr or "") + (result.stdout or "")).strip().splitlines()
+            self.discovery_error = lines[0] if lines else f"exit {result.returncode}"
+            LOG.warning("GPU discovery failed: %s", self.discovery_error)
             return {}
         found = {}
         for line in result.stdout.splitlines():
@@ -317,7 +326,18 @@ class Controller:
             # down and quarantined the whole stack at boot, then stuck at
             # attempts>=MAX. Skip the cycle and let a later poll reconcile.
             LOG.warning("No GPUs discovered; skipping cycle (driver not ready?)")
+            self.discovery_failures += 1
+            if self.discovery_failures >= DISCOVERY_ALERT_CYCLES and not self.discovery_alerted:
+                self.discovery_alerted = self.alert(None, None, "discovery_failed", text=(
+                    f"Pea GPU discovery has failed for {self.discovery_failures} consecutive polls: "
+                    f"{self.discovery_error or 'nvidia-smi listed no GPUs'}. Running containers keep "
+                    "serving, but no GPU container can start or be recovered. A 'Driver/library "
+                    "version mismatch' means the NVIDIA driver was upgraded without a reboot."))
             return {}
+        if self.discovery_alerted:
+            self.alert(None, None, "discovery_recovered", text=(
+                f"Pea GPU discovery recovered after {self.discovery_failures} failed polls."))
+        self.discovery_failures, self.discovery_alerted = 0, False
         self.reconcile_replacements(discovered)
         results = {}
         for pci, slot in self.inventory["slots"].items():

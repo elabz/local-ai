@@ -1,0 +1,17 @@
+// Keep the NVIDIA driver out of unattended-upgrades on Pea.
+//
+// The driver ships as a userspace library, which switches over the moment the
+// package installs, and a kernel module, which switches only on reboot. With
+// Automatic-Reboot off, an unattended driver upgrade leaves the host
+// half-upgraded: running containers keep serving, but nvidia-smi fails with
+// "Driver/library version mismatch" and no GPU container can start or be
+// recovered until someone reboots (2026-10-10, 580.173.02 -> 580.178.04).
+//
+// Every other security update stays automatic. Upgrade the driver on purpose:
+// docs/nvidia-driver-upgrades.md. Installed by install-driver-upgrade-guard.sh.
+// Entries are regular expressions matched against package names.
+Unattended-Upgrade::Package-Blacklist {
+    "nvidia-";
+    "libnvidia-";
+    "xserver-xorg-video-nvidia-";
+};

@@ -156,6 +156,32 @@ def test_empty_discovery_skips_cycle_without_touching_services(tmp_path):
     assert ctl.recovery["slots"] == {}
 
 
+def test_sustained_discovery_failure_alerts_once_with_the_driver_error(tmp_path, monkeypatch):
+    # 2026-10-10: unattended-upgrades swapped the NVIDIA library under a loaded
+    # kernel module. Containers kept serving; the controller logged a warning a
+    # minute for eleven hours and nobody saw it.
+    alerts, broken = [], [True]
+    def runner(args, **kw):
+        if args[0] == "nvidia-smi" and broken[0]:
+            return subprocess.CompletedProcess(args, 18, "", "Failed to initialize NVML: Driver/library version mismatch\n")
+        if args[0] == "nvidia-smi":
+            return completed(args, stdout="GPU-old, 00000000:04:00.0\n")
+        return completed(args, stdout="true\n")
+    ctl = controller(tmp_path, runner)
+    monkeypatch.setattr(ctl, "alert", lambda pci, slot, reason, text=None: alerts.append((reason, text)) or True)
+    for _ in range(gpu.DISCOVERY_ALERT_CYCLES - 1):
+        ctl.cycle()
+    assert alerts == []
+    for _ in range(3):
+        ctl.cycle()
+    assert len(alerts) == 1
+    assert alerts[0][0] == "discovery_failed" and "Driver/library version mismatch" in alerts[0][1]
+    broken[0] = False
+    ctl.cycle()
+    ctl.cycle()
+    assert [reason for reason, _ in alerts] == ["discovery_failed", "discovery_recovered"]
+
+
 def test_wait_for_driver_returns_once_expected_gpus_are_visible(tmp_path):
     # Driver comes up on the 3rd probe; wait_for_driver blocks until the full
     # expected GPU set is visible, then returns so the first cycle sees them.

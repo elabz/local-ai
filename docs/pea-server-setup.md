@@ -38,19 +38,16 @@ non-zero exit indicates missing UUID or inventory mismatch.
 
 ## Step 1: OS and Driver Setup
 
-### 1.1 Install Ubuntu 22.04 LTS
+### 1.1 Install Ubuntu 24.04 LTS
 
-Standard server installation. Ensure SSH access is configured.
+Standard server installation. Ensure SSH access is configured. (Pea ran 22.04 with
+driver 535 originally; as of 2026-10 it runs 24.04.3 with the 580 server branch.)
 
 ### 1.2 Install NVIDIA Drivers
 
 ```bash
-# Add NVIDIA driver PPA
-sudo add-apt-repository ppa:graphics-drivers/ppa
-sudo apt update
-
-# Install driver (535+ recommended for Pascal)
-sudo apt install nvidia-driver-535
+# The server branch from Ubuntu's own archive (no PPA); it supports Pascal
+sudo apt install nvidia-driver-580-server
 
 # Reboot
 sudo reboot
@@ -60,6 +57,13 @@ Verify after reboot:
 ```bash
 nvidia-smi
 # Should show all GPUs with driver version and CUDA version
+```
+
+Then keep the driver out of unattended-upgrades. A driver upgraded without a reboot
+leaves the host unable to start any GPU container
+([nvidia-driver-upgrades.md](nvidia-driver-upgrades.md)):
+```bash
+sudo ~/local-ai/gpu-server/scripts/install-driver-upgrade-guard.sh
 ```
 
 ### 1.3 Install Docker with NVIDIA Container Toolkit
