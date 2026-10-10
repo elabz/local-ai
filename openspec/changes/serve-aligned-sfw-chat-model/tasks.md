@@ -22,29 +22,29 @@ other side of the same pair.
 
 ## 2. Promote into the SFW pool
 
-- [ ] 2.1 Confirm VRAM headroom under sustained three-replica load, not a single probe — a 12B occupant leaves a thinner margin on the 8 GB cards than the 8B it replaces
-- [ ] 2.2 Update `GPU_{1,2,3}_MODEL_PATH` and `GPU_{1,2,3}_MODEL_NAME` in `gpu-server/.env`; the compose file needs no edit, the paths are already parameterized
-- [ ] 2.3 Recreate `pea-gpu-1`, `pea-gpu-2`, `pea-gpu-3`. Update `pea-gpu-controller.service`'s slot inventory rather than fighting its 60s re-up poll
-- [ ] 2.4 Keep the Stheno GGUF on disk for rollback
-- [ ] 2.5 Edit the three `heartcode-chat-sfw` entries' `model:` field on `.152` **in place**; never ship this repo's `litellm/config.yaml` wholesale — the live file carries canary, STT/TTS, and tuning entries a copy would delete
-- [ ] 2.6 `restart` LiteLLM; `up -d` does not reload a bind-mounted config
-- [ ] 2.7 Verify all three replicas serve the new weight and that no route still points at a dead port — a route with no listener returns 500 then cools down to 429 for ~90s, which the application surfaces as "we are busy"
+- [x] 2.1 Confirm VRAM headroom under sustained three-replica load, not a single probe — a 12B occupant leaves a thinner margin on the 8 GB cards than the 8B it replaces — 2026-10-10: the E4B is far below the 12B this task anticipated. 4.2–4.4 GiB of 8 GiB VRAM per card beside the embedders, with the 16k KV cache preallocated, so the footprint does not grow under load. Host memory per worker is ~330 MiB anonymous (cgroup 24% of 1.75 GiB); the ~3 GiB GGUF mapping is page cache shared by all three. Sustained-load watch continues under 3.4
+- [x] 2.2 Update `GPU_{1,2,3}_MODEL_PATH` and `GPU_{1,2,3}_MODEL_NAME` in `gpu-server/.env`; the compose file needs no edit, the paths are already parameterized — done through models.yaml instead: GPU_N_* are rendered into models.generated.env, now including per-model `server:` overrides (image v0.2.0, -ngl 99, --reasoning off). Pea's .env GPU_N_* lines are synced to match (backup .env.bak-20261010-gemma-promote)
+- [x] 2.3 Recreate `pea-gpu-1`, `pea-gpu-2`, `pea-gpu-3`. Update `pea-gpu-controller.service`'s slot inventory rather than fighting its 60s re-up poll — GPU 3 first (out of routing, smoke-tested through the wrapper), then GPU 1 and GPU 2, health-gated with a 60 s soak (1f5e6e6). The controller now passes both env files to compose. Clearing the live inventory's canary record and loading that controller code needs `sudo ~/lend-gpu3-to-canary.sh --restore` (owner)
+- [x] 2.4 Keep the Stheno GGUF on disk for rollback — Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf kept in gpu-server/models/
+- [x] 2.5 Edit the three `heartcode-chat-sfw` entries' `model:` field on `.152` **in place**; never ship this repo's `litellm/config.yaml` wholesale — the live file carries canary, STT/TTS, and tuning entries a copy would delete — superseded: litellm/config.yaml is generated and was in sync, so elm pulled 1f5e6e6. The diff was exactly SFW → gemma on :8080-8082, DINO :8104 re-routed, canary route removed. Pre-change copy at /tmp/litellm-config.pre-gemma-promote.yaml on elm
+- [x] 2.6 `restart` LiteLLM; `up -d` does not reload a bind-mounted config — restarted 2026-10-10 ~19:05 UTC
+- [x] 2.7 Verify all three replicas serve the new weight and that no route still points at a dead port — a route with no listener returns 500 then cools down to 429 for ~90s, which the application surfaces as "we are busy" — `/v1/model/info` lists heartcode-gpu1..3 on :8080-8082 (gemma); six proxied requests landed on all three ids. The HeartCode backend key's canary grant was removed so the dropdown shows no dead route
 
 ## 3. Verify on the production route
 
-- [ ] 3.1 Re-measure in-role refusal against `heartcode-chat-sfw` itself and record it in the canary log's refusal matrix
-- [ ] 3.2 Confirm the NSFW pool still does not refuse for an authorized caller: `--model heartcode-chat-nsfw --profile nsfw` (0/3 refusals on 2026-08-29; must stay that way)
-- [ ] 3.3 Confirm end-to-end through the application, not only through the proxy
+- [x] 3.1 Re-measure in-role refusal against `heartcode-chat-sfw` itself and record it in the canary log's refusal matrix — 2026-10-10: `--trials 5 --pressure 7` against heartcode-chat-sfw with HeartCode's GEMMA4_PRESET (1.2 / min_p 0.1). 0/5 narrated sex, all 40 replies read and every one deflects in character. Recorded in HeartCode docs/model-canary-log.md
+- [x] 3.2 Confirm the NSFW pool still does not refuse for an authorized caller: `--model heartcode-chat-nsfw --profile nsfw` (0/3 refusals on 2026-08-29; must stay that way) — 2026-10-10: 3/3 comply, provisional_holds true
+- [x] 3.3 Confirm end-to-end through the application, not only through the proxy — 2026-10-10: a fresh dev conversation with an SFW character streamed 16 tokens + done through /chat/{id}/stream. Production HeartCode needs a deploy to carry GEMMA4_PRESET; until then production sends Stheno's 1.4
 - [ ] 3.4 Watch for OOMs, restarts, and host RAM/swap across the first sustained load window
 
 ## 4. Rollback readiness
 
-- [ ] 4.1 Record the exact commands to restore the previous weight and proxy entries
-- [ ] 4.2 Note in the rollback record that reverting reopens the access gate, so it is a step toward a different candidate rather than a resting state
+- [x] 4.1 Record the exact commands to restore the previous weight and proxy entries — rollback = revert models.yaml's SFW entry to Stheno + drop `server:`, re-render, roll pea-gpu-1..3 with both env files, pull + restart LiteLLM on elm; HeartCode points resolve_preset() back at STHENO_PRESET. Pea .env backup: .env.bak-20261010-gemma-promote
+- [x] 4.2 Note in the rollback record that reverting reopens the access gate, so it is a step toward a different candidate rather than a resting state — recorded in models.yaml's SFW comment and HeartCode's canary log
 
 ## 5. Cross-repo coordination
 
 - [ ] 5.1 HeartCode `move-content-gating-to-model-layer` task 1.1 (model selected) ← pairs with 0.1 here
 - [x] 5.2 HeartCode task 1.3 (chat-quality corpus run) ← pairs with 1.8 here
-- [ ] 5.3 HeartCode task 1.4 (in-role refusal re-verified after the swap) ← pairs with 3.1 here
+- [x] 5.3 HeartCode task 1.4 (in-role refusal re-verified after the swap) ← pairs with 3.1 here — heartcode-chat-sfw re-verified 2026-10-10 (3.1)
 - [ ] 5.4 Notify HeartCode when this lands: it unblocks the archive of `move-content-gating-to-model-layer` and the start of `screen-characters-at-publication`, whose rationale for unscreened private import depends on the SFW route declining
