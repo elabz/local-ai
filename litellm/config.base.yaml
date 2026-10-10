@@ -89,6 +89,9 @@ litellm_settings:
   drop_params: true  # Drop unsupported params instead of erroring
   callbacks:
     - speech_correlation.speech_correlation_callback
+    # Bounds HeartCode's public API keys as a group (message size and count,
+    # sampler clamps, per-model-group admission); see public_api_guard.py.
+    - public_api_guard.public_api_guard
     - prometheus
 
 # Environment variables needed:

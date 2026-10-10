@@ -4,7 +4,7 @@ import asyncio
 import logging
 import os
 import time
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 import httpx
 
@@ -73,12 +73,41 @@ class ChatCompletionRequest(BaseModel):
     dry_penalty_last_n: Optional[int] = None
     xtc_threshold: Optional[float] = None
     xtc_probability: Optional[float] = None
+    # OpenAI-format fields third-party clients (SillyTavern) send. They used to
+    # be absent here, so pydantic dropped them without a word: a stop string
+    # never stopped anything and the penalties never reached llama.cpp.
+    stop: Optional[Union[str, List[str]]] = None
+    seed: Optional[int] = None
+    presence_penalty: Optional[float] = None
+    frequency_penalty: Optional[float] = None
+    # The OpenAI-world spelling of llama.cpp's `repeat_penalty`.
+    repetition_penalty: Optional[float] = None
     stream: bool = False
     model: Optional[str] = None  # Ignored, for OpenAI compatibility
     response_format: Optional[dict[str, Any]] = None
     tools: Optional[List[dict[str, Any]]] = None
     tool_choice: Optional[Any] = None
     parallel_tool_calls: Optional[bool] = None
+
+
+    def client_sampling(self) -> dict[str, Any]:
+        """The OpenAI-format sampler fields, in llama.cpp's terms.
+
+        `repeat_penalty` wins over `repetition_penalty` when both are sent;
+        a lone string `stop` becomes a one-element list.
+        """
+        stop = [self.stop] if isinstance(self.stop, str) else self.stop
+        return {
+            "repeat_penalty": (
+                self.repeat_penalty
+                if self.repeat_penalty is not None
+                else self.repetition_penalty
+            ),
+            "stop": stop,
+            "seed": self.seed,
+            "presence_penalty": self.presence_penalty,
+            "frequency_penalty": self.frequency_penalty,
+        }
 
 
 class TokenizeRequest(BaseModel):
@@ -335,7 +364,7 @@ async def create_chat_completion(request: Request, body: ChatCompletionRequest):
             temperature=body.temperature,
             top_p=body.top_p,
             top_k=body.top_k,
-            repeat_penalty=body.repeat_penalty,
+            **body.client_sampling(),
             min_p=body.min_p,
             dry_multiplier=body.dry_multiplier,
             dry_base=body.dry_base,
@@ -421,7 +450,7 @@ async def _stream_chat_completion(request: Request, llama_client, messages: list
             temperature=body.temperature,
             top_p=body.top_p,
             top_k=body.top_k,
-            repeat_penalty=body.repeat_penalty,
+            **body.client_sampling(),
             min_p=body.min_p,
             dry_multiplier=body.dry_multiplier,
             dry_base=body.dry_base,

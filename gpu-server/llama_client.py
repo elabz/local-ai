@@ -187,6 +187,10 @@ class LlamaClient:
         dry_penalty_last_n: Optional[int] = None,
         xtc_threshold: Optional[float] = None,
         xtc_probability: Optional[float] = None,
+        stop: Optional[List[str]] = None,
+        seed: Optional[int] = None,
+        presence_penalty: Optional[float] = None,
+        frequency_penalty: Optional[float] = None,
         response_format: Optional[Dict[str, Any]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[Any] = None,
@@ -215,6 +219,10 @@ class LlamaClient:
                 dry_penalty_last_n=dry_penalty_last_n,
                 xtc_threshold=xtc_threshold,
                 xtc_probability=xtc_probability,
+                stop=stop,
+                seed=seed,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
             )
         )
         for key, value in (
@@ -249,6 +257,10 @@ class LlamaClient:
         dry_penalty_last_n: Optional[int] = None,
         xtc_threshold: Optional[float] = None,
         xtc_probability: Optional[float] = None,
+        stop: Optional[List[str]] = None,
+        seed: Optional[int] = None,
+        presence_penalty: Optional[float] = None,
+        frequency_penalty: Optional[float] = None,
     ) -> AsyncGenerator[str, None]:
         """
         Stream chat completion via llama.cpp's native /v1/chat/completions.
@@ -274,6 +286,10 @@ class LlamaClient:
                 dry_penalty_last_n=dry_penalty_last_n,
                 xtc_threshold=xtc_threshold,
                 xtc_probability=xtc_probability,
+                stop=stop,
+                seed=seed,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
             )
         )
 

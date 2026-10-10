@@ -50,6 +50,7 @@ services:
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./speech_correlation.py:/app/speech_correlation.py:ro
+      - ./public_api_guard.py:/app/public_api_guard.py:ro
       # least-busy with random tie-breaking (litellm/patches/README.md)
       - ./patches/least_busy.py:/usr/lib/python3.13/site-packages/litellm/router_strategy/least_busy.py:ro
     env_file:
@@ -62,6 +63,12 @@ services:
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
       - LANGFUSE_HOST=${LANGFUSE_HOST:-}
+      # HeartCode public API keys (public_api_guard.py). One public generation
+      # per chat group leaves first-party chat 2 of 3 SFW and 1 of 2 NSFW slots.
+      - PUBLIC_API_PARALLEL=${PUBLIC_API_PARALLEL:-heartcode-chat-sfw=1,heartcode-chat-nsfw=1}
+      - PUBLIC_API_MAX_TOKENS=${PUBLIC_API_MAX_TOKENS:-1024}
+      - PUBLIC_API_MAX_MESSAGES=${PUBLIC_API_MAX_MESSAGES:-100}
+      - PUBLIC_API_MAX_MESSAGE_BYTES=${PUBLIC_API_MAX_MESSAGE_BYTES:-32768}
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     depends_on:
       litellm-postgres:

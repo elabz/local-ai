@@ -107,6 +107,49 @@ class SamplingPassthroughTest(unittest.IsolatedAsyncioTestCase):
                 )
         self.assertEqual(FailingAsyncClient.attempts, 1)
 
+    async def test_chat_forwards_openai_client_fields(self):
+        """SillyTavern sends these. Before 2026-10-10 the request model had no
+        such fields, so pydantic dropped them and a stop string never fired
+        (verified live: `stop: ["7"]` counted straight past 7)."""
+        chat = ChatCompletionRequest(
+            messages=[{"role": "user", "content": "hello"}],
+            stop="</s>",
+            seed=42,
+            presence_penalty=0.4,
+            frequency_penalty=0.3,
+            repetition_penalty=1.1,
+        )
+        with patch("llama_client.httpx.AsyncClient", FakeAsyncClient):
+            await LlamaClient().chat_completion(
+                [{"role": "user", "content": "hello"}], **chat.client_sampling()
+            )
+
+        payload = FakeAsyncClient.calls[0][1]
+        self.assertEqual(payload["stop"], ["</s>"])
+        self.assertEqual(payload["seed"], 42)
+        self.assertEqual(payload["presence_penalty"], 0.4)
+        self.assertEqual(payload["frequency_penalty"], 0.3)
+        self.assertEqual(payload["repeat_penalty"], 1.1)
+
+    def test_llama_spelling_wins_over_openai_spelling(self):
+        chat = ChatCompletionRequest(
+            messages=[{"role": "user", "content": "hello"}],
+            repeat_penalty=1.2,
+            repetition_penalty=1.05,
+        )
+        self.assertEqual(chat.client_sampling()["repeat_penalty"], 1.2)
+
+    async def test_unsent_client_fields_stay_unsent(self):
+        chat = ChatCompletionRequest(messages=[{"role": "user", "content": "hello"}])
+        with patch("llama_client.httpx.AsyncClient", FakeAsyncClient):
+            await LlamaClient().chat_completion(
+                [{"role": "user", "content": "hello"}], **chat.client_sampling()
+            )
+
+        payload = FakeAsyncClient.calls[0][1]
+        for name in ("stop", "seed", "presence_penalty", "frequency_penalty", "repeat_penalty"):
+            self.assertNotIn(name, payload)
+
 
 if __name__ == "__main__":
     unittest.main()
