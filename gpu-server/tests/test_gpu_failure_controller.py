@@ -303,3 +303,14 @@ def test_healthy_canary_slot_never_starts_displaced_services(tmp_path, monkeypat
     assert inspected == ["pea-sfw-model-canary-gpu2"]
     assert compose_commands(commands) == []
     assert alerts == []
+
+
+def test_compose_passes_the_deploy_env_files(tmp_path):
+    commands = []
+    ctl = controller(tmp_path, lambda args, **kw: commands.append(args) or completed(args))
+    for name in (".env", "models.generated.env"):
+        (ctl.compose_dir / name).write_text("")
+    ctl.compose("up", ["gpu-server-2"])
+    args = commands[-1]
+    assert args[2:6] == ["--env-file", str(ctl.compose_dir / ".env"),
+                         "--env-file", str(ctl.compose_dir / "models.generated.env")]

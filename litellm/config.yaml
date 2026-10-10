@@ -3,7 +3,7 @@
 model_list:
 - model_name: heartcode-chat-sfw
   litellm_params:
-    model: openai/Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf
+    model: openai/gemma-4-E4B-it-qat-q4_0.gguf
     api_base: http://192.168.70.144:8080/v1
     api_key: sk-local
     max_tokens: 512
@@ -14,7 +14,7 @@ model_list:
     mode: chat
 - model_name: heartcode-chat-sfw
   litellm_params:
-    model: openai/Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf
+    model: openai/gemma-4-E4B-it-qat-q4_0.gguf
     api_base: http://192.168.70.144:8081/v1
     api_key: sk-local
     max_tokens: 512
@@ -22,6 +22,17 @@ model_list:
     timeout: 240
   model_info:
     id: heartcode-gpu2
+    mode: chat
+- model_name: heartcode-chat-sfw
+  litellm_params:
+    model: openai/gemma-4-E4B-it-qat-q4_0.gguf
+    api_base: http://192.168.70.144:8082/v1
+    api_key: sk-local
+    max_tokens: 512
+    temperature: 0.8
+    timeout: 240
+  model_info:
+    id: heartcode-gpu3
     mode: chat
 - model_name: heartcode-chat-nsfw
   litellm_params:
@@ -88,13 +99,23 @@ model_list:
 - model_name: heartcode-embed-visual
   litellm_params:
     model: openai/heartcode-embed-visual
-    api_base: http://192.168.70.144:8105/v1
+    api_base: http://192.168.70.144:8104/v1
     api_key: sk-local
     timeout: 60
-    extra_body:
+    extra_body: &id003
       encoding_format: float
   model_info:
     id: heartcode-embed-visual1
+    mode: embedding
+- model_name: heartcode-embed-visual
+  litellm_params:
+    model: openai/heartcode-embed-visual
+    api_base: http://192.168.70.144:8105/v1
+    api_key: sk-local
+    timeout: 60
+    extra_body: *id003
+  model_info:
+    id: heartcode-embed-visual2
     mode: embedding
 - model_name: heartcode-image
   litellm_params:
@@ -122,17 +143,6 @@ model_list:
   model_info:
     id: heartcode-tts1
     mode: audio_speech
-- model_name: heartcode-chat-gemma-4-e4b-canary
-  litellm_params:
-    model: openai/gemma-4-E4B-it-qat-q4_0.gguf
-    api_base: http://192.168.70.144:18085/v1
-    api_key: sk-local
-    max_tokens: 512
-    temperature: 0.8
-    timeout: 240
-  model_info:
-    id: gemma-4-e4b-canary-gpu3
-    mode: chat
 router_settings:
   routing_strategy: least-busy
   num_retries: 2

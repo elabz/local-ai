@@ -20,35 +20,10 @@ GPU6 = "GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9"
 GPU6_PCI = "0000:0b:00.0"
 
 
-GPU3 = "GPU-1f2ba781-081b-56cf-da1a-802759aea70b"
-SFW_CANARY_GPU3 = "pea-sfw-model-canary-gpu3"
-
-
-def lend_gpu3_to_sfw_canary(snapshot):
-    """The 2026-09-16 recording, with GPU 3's card lent whole to the SFW canary
-    as `configs/gpu-topology.json` records from 2026-10-10: its chat replica and
-    DINO embedder stopped, the canary running on that card at 18085. Delete this
-    with the topology's canary record when the trial ends."""
-    for c in snapshot["containers"]:
-        if c["name"] in ("pea-gpu-3", "pea-embed-dino-1"):
-            c["state"], c["health"] = "exited", None
-    stopped = {c["id"] for c in snapshot["containers"] if c["state"] == "exited"}
-    snapshot["compute_apps"] = [
-        a for a in snapshot["compute_apps"] if a.get("container_id") not in stopped
-    ]
-    canary = add_container(snapshot, SFW_CANARY_GPU3, [GPU3], [18085])
-    canary["health"] = "healthy"
-    snapshot["compute_apps"].append({"container_id": canary["id"], "pid": "1", "uuid": GPU3})
-    return snapshot
-
-
 @pytest.fixture
 def snapshot():
-    """Live PEA state recorded 2026-09-16 with --dump-snapshot (healthy layout),
-    adjusted for the GPU 3 canary loan."""
-    return lend_gpu3_to_sfw_canary(
-        json.loads((FIXTURES / "pea-snapshot-2026-09-16.json").read_text())
-    )
+    """Live PEA state recorded 2026-09-16 with --dump-snapshot (healthy layout)."""
+    return json.loads((FIXTURES / "pea-snapshot-2026-09-16.json").read_text())
 
 
 @pytest.fixture

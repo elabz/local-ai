@@ -117,3 +117,21 @@ def test_quant_is_read_from_the_gguf_filename(filename, quant):
 def test_invalid_docs_key_fails():
     with pytest.raises(render.ManifestError, match="docs must map"):
         render.validate(manifest(docs={"model": "x", "colour": "blue"}))
+
+
+def test_server_overrides_render_per_gpu_and_default_to_the_fleet():
+    plain = render.render_env(manifest(env_model_name="m"))
+    assert "GPU_4_IMAGE=local-ai-llama:latest" in plain
+    assert "GPU_4_N_GPU_LAYERS=33" in plain and "GPU_4_EXTRA_ARGS=--jinja" in plain
+    gemma = manifest(env_model_name="m", server={
+        "image": "local-ai-llama:v0.2.0", "n_gpu_layers": 99, "extra_args": "--jinja --reasoning off"})
+    render.validate(gemma)
+    env = render.render_env(gemma)
+    assert "GPU_5_IMAGE=local-ai-llama:v0.2.0" in env
+    assert "GPU_5_N_GPU_LAYERS=99" in env and "GPU_5_EXTRA_ARGS=--jinja --reasoning off" in env
+
+
+@pytest.mark.parametrize("server", [{"ngl": 99}, {"n_gpu_layers": "99"}, {"image": ""}, "v0.2.0"])
+def test_invalid_server_block_fails(server):
+    with pytest.raises(render.ManifestError, match="server"):
+        render.validate(manifest(server=server))

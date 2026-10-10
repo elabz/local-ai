@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 1,
   "slots": {
     "0000:03:00.0": {
       "containers": [
@@ -47,14 +47,7 @@
         "gpu-server-3",
         "dino-embed-1"
       ],
-      "uuid": "GPU-1f2ba781-081b-56cf-da1a-802759aea70b",
-      "canary": {
-        "container": "pea-sfw-model-canary-gpu3",
-        "compose_file": "docker-compose.model-canaries.yml",
-        "uuid": "GPU-1f2ba781-081b-56cf-da1a-802759aea70b",
-        "reason": "Gemma 4 E4B SFW canary (serve-aligned-sfw-chat-model section 1). GPU 5 garbles output above ~6.6 GiB and GPU 6's replica serves NSFW, so the whole card is lent; pea-gpu-3 and pea-embed-dino-1 are stopped and unrouted. Remove this record, restore both and their routes when the trial ends.",
-        "since": "2026-10-10"
-      }
+      "uuid": "GPU-1f2ba781-081b-56cf-da1a-802759aea70b"
     },
     "0000:06:00.0": {
       "containers": [

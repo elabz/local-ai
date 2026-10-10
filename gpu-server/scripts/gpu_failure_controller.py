@@ -205,7 +205,15 @@ class Controller:
         atomic_json(self.override_path, {"services": services})
 
     def compose(self, action, services):
-        args = ["docker", "compose", "-f", str(self.compose_dir / "docker-compose.yml"),
+        # The same env files a deploy passes. Without models.generated.env, a slot
+        # the controller recreates reads only .env's hand-kept GPU_N_* lines and
+        # can come back on a model or llama.cpp image the manifest has retired.
+        # An explicit --env-file disables compose's implicit .env, so name both.
+        env_files = []
+        for name in (".env", "models.generated.env"):
+            if (self.compose_dir / name).is_file():
+                env_files += ["--env-file", str(self.compose_dir / name)]
+        args = ["docker", "compose", *env_files, "-f", str(self.compose_dir / "docker-compose.yml"),
                 "-f", str(self.compose_dir / "docker-compose.gpu-health-canary.yml"),
                 "-f", str(self.override_path), action]
         if action == "up":

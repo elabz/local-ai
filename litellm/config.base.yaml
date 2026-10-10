@@ -56,23 +56,11 @@ router_settings:
 # Removed 2026-09-18 (project-health-improvements 5.9), no canary container runs:
 #   - heartcode-chat-gemma-3-12b-canary (:18085)
 #   - heartcode-chat-gemma4-luchador-nsfw-canary (:18086)
+# Removed 2026-10-10 (serve-aligned-sfw-chat-model §2), promoted to heartcode-chat-sfw:
+#   - heartcode-chat-gemma-4-e4b-canary (:18085)
 # Add an entry only when its model is actually loaded on the slot. Trial
 # records: HeartCode repo, docs/model-canary-log.md.
-extra_model_list:
-  # serve-aligned-sfw-chat-model §1, 2026-10-10: Google's QAT Q4_0 of
-  # gemma-4-E4B-it on GPU 3's card (GPU-1f2ba781), port 18085. Granted only to
-  # the HeartCode backend key, for the refusal probe and chat-quality corpus.
-  - model_name: heartcode-chat-gemma-4-e4b-canary
-    litellm_params:
-      model: openai/gemma-4-E4B-it-qat-q4_0.gguf
-      api_base: http://192.168.70.144:18085/v1
-      api_key: sk-local
-      max_tokens: 512
-      temperature: 0.8
-      timeout: 240
-    model_info:
-      id: gemma-4-e4b-canary-gpu3
-      mode: chat
+extra_model_list: []
 
 # General settings - PostgreSQL-backed API key management
 general_settings:

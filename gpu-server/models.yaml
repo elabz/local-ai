@@ -45,28 +45,36 @@ models:
   # --- SFW chat (GPU 1-3) ------------------------------------------------------
   - api_name: heartcode-chat-sfw
     kind: chat
-    # lowered 2026-10-10 from 3: GPU 3's card hosts the Gemma 4 E4B SFW canary
-    # (serve-aligned-sfw-chat-model §1). GPU 5 garbles output above ~6.6 GiB, and
-    # GPU 6's replica now serves NSFW. Restore with the replica.
-    min_replicas: 2
+    min_replicas: 3
     mode: chat
-    litellm_model: Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf
+    # Gemma 4 E4B since 2026-10-10 (serve-aligned-sfw-chat-model §2): it declines
+    # sexual content in role under sustained pressure (0/5, Stheno v3.4 3/5) and
+    # cleared HeartCode's chat-quality corpus. Rollback: revert this entry to
+    # Stheno (bartowski/Llama-3.1-8B-Stheno-v3.4-GGUF, Q5_K_M, still on disk) and
+    # drop `server:`, which reopens the SFW gate; see the change's tasks §4.
+    litellm_model: gemma-4-E4B-it-qat-q4_0.gguf
     model_type: sfw
-    env_model_name: Sao10K/Llama-3.1-8B-Stheno-v3.4
-    docs: {model: Llama-3.1-8B-Stheno-v3.4}
+    env_model_name: google/gemma-4-E4B-it
+    docs: {model: gemma-4-E4B-it, quant: QAT Q4_0}
     aliases: [heartcode-default, heartcode-sfw, heartcode-chat]
     rate_limit: {rpm: 35, tpm: 50000}
     # timeout = ADMISSION_WAIT_SECONDS (60) + wrapper REQUEST_TIMEOUT (180).
     params: {max_tokens: 512, temperature: 0.8, timeout: 240}
+    # Gemma 4 needs the v0.2.0 llama.cpp build (the fleet's :latest predates
+    # it), all layers on the GPU (33 is Llama-sized), and thinking off: llama.cpp
+    # enables it for Gemma 4's template and the reply comes back empty.
+    server:
+      image: local-ai-llama:v0.2.0
+      n_gpu_layers: 99
+      extra_args: --jinja --reasoning off
     source:
       type: gguf
-      repo: bartowski/Llama-3.1-8B-Stheno-v3.4-GGUF
-      file: Llama-3.1-8B-Stheno-v3.4-Q5_K_M.gguf
-      fallback_file: Llama-3.1-8B-Stheno-v3.4-Q4_K_M.gguf
+      repo: google/gemma-4-E4B-it-qat-q4_0-gguf
+      file: gemma-4-E4B-it-qat-q4_0.gguf
     deployments:
       - {gpu: 1, port: 8080}
       - {gpu: 2, port: 8081}
-      # - {gpu: 3, port: 8082}  # pulled 2026-10-10: card lent to the SFW canary
+      - {gpu: 3, port: 8082}
 
   # --- NSFW chat (GPU 4-6) -----------------------------------------------------
   - api_name: heartcode-chat-nsfw
@@ -149,9 +157,7 @@ models:
   # --- Visual embeddings, DINOv2 ViT-L/14, 1024-d image-only (GPU 3, 6) ---------
   - api_name: heartcode-embed-visual
     kind: visual-embed
-    # lowered 2026-10-10 from 2: GPU 3's card is lent whole to the SFW
-    # canary (serve-aligned-sfw-chat-model §1). Restore with the replica.
-    min_replicas: 1
+    min_replicas: 2
     mode: embedding
     litellm_model: heartcode-embed-visual
     id_prefix: heartcode-embed-visual
@@ -163,7 +169,7 @@ models:
       repos:
         - facebook/dinov2-with-registers-large
     deployments:
-      # - {gpu: 3, port: 8104}  # pulled 2026-10-10: card lent to the SFW canary
+      - {gpu: 3, port: 8104}
       - {gpu: 6, port: 8105}
 
   # --- Image generation, Segmind SSD-1B via LocalAI (GPU 8) ---------------------

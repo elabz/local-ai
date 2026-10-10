@@ -115,11 +115,11 @@ Then deploy via `deploy.yml`, or **manually** (fallback if the runner is down):
 
 | API Name | Type | GPUs | Replicas (min) | Model | Quant | Chat Template |
 |----------|------|------|----------------|-------|-------|---------------|
-| `heartcode-chat-sfw` | Chat (SFW) | 1-2 | 2 (2) | Llama-3.1-8B-Stheno-v3.4 | Q5_K_M | GGUF-embedded (`--jinja`) |
+| `heartcode-chat-sfw` | Chat (SFW) | 1-3 | 3 (3) | gemma-4-E4B-it | QAT Q4_0 | GGUF-embedded (`--jinja`) |
 | `heartcode-chat-nsfw` | Chat (NSFW) | 4, 6 | 2 (2) | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M | GGUF-embedded (`--jinja`) |
 | `heartcode-embed` | Embedding (text) | 4-5 | 2 (2) | nomic-embed-text-v1.5 | Q8_0 | — |
 | `heartcode-embed-vision` | Embedding (text + image) | 1-2 | 2 (2) | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | fp32¹ | — |
-| `heartcode-embed-visual` | Embedding (image-only) | 6 | 1 (1) | DINOv2 ViT-L/14 (with registers) | fp32² | — |
+| `heartcode-embed-visual` | Embedding (image-only) | 3, 6 | 2 (2) | DINOv2 ViT-L/14 (with registers) | fp32² | — |
 | `heartcode-image` | Image | 8 | 1 (1) | Segmind SSD-1B (SDXL distilled) | FP16 | — |
 | `heartcode-stt` | Speech-to-text | 7 | 1 (1) | faster-whisper small.en (speaches) | int8 | — |
 | `heartcode-tts` | Text-to-speech | 7 | 1 (1) | Kokoro-82M (kokoro-fastapi) | — | — |
@@ -142,11 +142,11 @@ Embed tier is **2 of each type**, co-located one-per-chat-GPU (`rebalance-embed-
 | Ports | Model group | Model | GPU | Shares GPU with |
 |-------|-------------|-------|-----|-----------------|
 | 5100 | `heartcode-image` | Segmind SSD-1B (SDXL distilled) | GPU 8 | — |
-| 8080-8081 | `heartcode-chat-sfw` | Llama-3.1-8B-Stheno-v3.4 | GPU 1-2 | `heartcode-embed-vision` (GPU 1-2) |
+| 8080-8082 | `heartcode-chat-sfw` | gemma-4-E4B-it | GPU 1-3 | `heartcode-embed-vision` (GPU 1-2), `heartcode-embed-visual` (GPU 3) |
 | 8083, 8085 | `heartcode-chat-nsfw` | Lumimaid-v0.2-8B (NeverSleep) | GPU 4, 6 | `heartcode-embed` (GPU 4), `heartcode-embed-visual` (GPU 6) |
 | 8093-8094 | `heartcode-embed` | nomic-embed-text-v1.5 | GPU 4-5 | `heartcode-chat-nsfw` (GPU 4) |
 | 8101-8102 | `heartcode-embed-vision` | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | GPU 1-2 | `heartcode-chat-sfw` (GPU 1-2) |
-| 8105 | `heartcode-embed-visual` | DINOv2 ViT-L/14 (with registers) | GPU 6 | `heartcode-chat-nsfw` (GPU 6) |
+| 8104-8105 | `heartcode-embed-visual` | DINOv2 ViT-L/14 (with registers) | GPU 3, 6 | `heartcode-chat-sfw` (GPU 3), `heartcode-chat-nsfw` (GPU 6) |
 | 8200 | `heartcode-stt` | faster-whisper small.en (speaches) | GPU 7 | `heartcode-tts` (GPU 7) |
 | 8201 | `heartcode-tts` | Kokoro-82M (kokoro-fastapi) | GPU 7 | `heartcode-stt` (GPU 7) |
 
