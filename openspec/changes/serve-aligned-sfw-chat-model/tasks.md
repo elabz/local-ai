@@ -18,7 +18,7 @@ other side of the same pair.
 - [x] 1.5 Measure in-role refusal — 2026-10-10: single turn 0/5 explicit, but under sustained pressure two conversations gave way by turn 7–8 with HeartCode's old tone contract. HeartCode firmed the SFW contract; then `--trials 5 --pressure 7`: Gemma 0/5 narrated sex across 40 replies, Stheno 3/5 (2/5 fully explicit). Transcripts read in full; see HeartCode docs/model-canary-log.md
 - [x] 1.6 Measure throughput cold and warm — short 25.3 t/s (TTFT 0.11 s); 1,538-token cold TTFT 3.23 s at 24.4 t/s; warm 0.10 s; next turn 0.64 s at 24.6 t/s. Above Stheno's 23.5 t/s
 - [x] 1.7 Record both measurements in HeartCode's docs/model-canary-log.md — 2026-10-10
-- [ ] 1.8 Run HeartCode's chat-quality corpus against the candidate through a per-character model pin, so quality is measured before the route moves — an over-refusing occupant degrades ordinary romantic roleplay, which is the false-positive failure this architecture exists to avoid
+- [x] 1.8 Run HeartCode's chat-quality corpus against the candidate through a per-character model pin, so quality is measured before the route moves — an over-refusing occupant degrades ordinary romantic roleplay, which is the false-positive failure this architecture exists to avoid — 2026-10-10: four interleaved full-corpus runs. Gemma looped on 1/3 long cases (Stheno 3/3, both runs), recalled every fact, and had no blanket refusal or escalation in any case, slow-burn romance included. Median reply 972–1,069 vs 1,174–1,907 chars, 13.7 vs 16–18 s per 1k chars; 0 corrupted contractions in 508 replies. Decision in HeartCode `openspec/changes/v1-character-chat-quality/design.md`
 
 ## 2. Promote into the SFW pool
 
@@ -45,6 +45,6 @@ other side of the same pair.
 ## 5. Cross-repo coordination
 
 - [ ] 5.1 HeartCode `move-content-gating-to-model-layer` task 1.1 (model selected) ← pairs with 0.1 here
-- [ ] 5.2 HeartCode task 1.3 (chat-quality corpus run) ← pairs with 1.8 here
+- [x] 5.2 HeartCode task 1.3 (chat-quality corpus run) ← pairs with 1.8 here
 - [ ] 5.3 HeartCode task 1.4 (in-role refusal re-verified after the swap) ← pairs with 3.1 here
 - [ ] 5.4 Notify HeartCode when this lands: it unblocks the archive of `move-content-gating-to-model-layer` and the start of `screen-characters-at-publication`, whose rationale for unscreened private import depends on the SFW route declining
