@@ -47,6 +47,12 @@ services:
       # on its 31 GB host (2026-09-18).
       - "--cache-ram"
       - "${CANARY_CACHE_RAM:-1024}"
+      # llama.cpp turns thinking on for any template that supports it. Gemma 4's
+      # spent a whole 120-token reply thinking and returned empty content
+      # (2026-10-10), and HeartCode sends no chat_template_kwargs, so a chat
+      # canary sets this to off in .env.
+      - "--reasoning"
+      - "${CANARY_REASONING:-auto}"
       - "--jinja"
       - "--metrics"
     healthcheck:
