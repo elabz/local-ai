@@ -42,6 +42,11 @@ services:
       # full ingestion each time (~5s at only ~1k tokens on the 12B).
       - "--cache-reuse"
       - "${CANARY_CACHE_REUSE:-256}"
+      # Host-RAM prompt cache, bounded like the production chat workers. The
+      # llama.cpp default (8 GiB per server) is what OOM-killed Pea's workers
+      # on its 31 GB host (2026-09-18).
+      - "--cache-ram"
+      - "${CANARY_CACHE_RAM:-1024}"
       - "--jinja"
       - "--metrics"
     healthcheck:
