@@ -6,18 +6,18 @@ other side of the same pair.
 
 ## 0. Decision
 
-- [ ] 0.1 **Operator selects the SFW candidate.** Neither option is promotable on present evidence: `gemma-3-12b-it-Q4_K_M` refuses 3/3 in role (2026-08-29) but runs 9.4 t/s cold, below the 12 t/s floor; `Meta-Llama-3.1-8B-Instruct` should hold ~23 t/s as an architectural drop-in for Stheno but is not on Pea's disk and has never been measured. See the Open Questions table in design.md
-- [ ] 0.2 If the choice is Llama-3.1-8B-Instruct, fetch the Q5_K_M GGUF into Pea's private model storage and verify revision and digest without printing private paths
+- [x] 0.1 **Operator selects the SFW candidate.** — 2026-10-10: operator chose **Gemma 4 E4B-it** (April 2026) for trial over Llama-3.1-8B-Instruct; gemma-3-12b was below the throughput floor and its GGUF has since been removed from Pea (re-downloadable). Original options: `gemma-3-12b-it-Q4_K_M` refuses 3/3 in role but runs 9.4 t/s cold; `Meta-Llama-3.1-8B-Instruct` unmeasured
+- [x] 0.2 Fetch the candidate into Pea's model storage and verify revision and digest — 2026-10-10: Google's QAT Q4_0 `gemma-4-E4B_q4_0-it.gguf`, rev `4b4a2c1d`, sha256 verified against the Hub record, stored as `gemma-4-E4B-it-qat-q4_0.gguf`
 
 ## 1. Measure the candidate before promoting it
 
-- [ ] 1.1 Load the candidate on the **SFW canary slot** (`pea-sfw-model-canary-gpu5`, port 18085), not the production pool
-- [ ] 1.2 Configure the canary slot exactly like a production worker — including `--cache-reuse`, whose omission previously made a canary's TTFT unrepresentative — or the measurement is not comparable
-- [ ] 1.3 For a Gemma or Qwen3 candidate, pin the chat template explicitly in `models.yaml`; a stripped GGUF template silently disables llama.cpp's flags
-- [ ] 1.4 Grant the candidate id on the HeartCode backend's LiteLLM virtual key (`/key/update` with the master key) so the probe and the chat-quality corpus can reach it
-- [ ] 1.5 Measure in-role refusal: `docker exec heartcode-backend-dev python scripts/probe_model_refusal.py --model <candidate> --profile sfw --trials 3`. **Read every transcript** — the printed verdict is a keyword sort and has already mis-scored a correct refusal. Reject the candidate if it does not decline
-- [ ] 1.6 Measure throughput cold and warm as separate figures, at a short prompt and at a production-sized ~2,150-token prompt. Reject if the cold figure is below the floor and the operator does not explicitly accept it
-- [ ] 1.7 Record both measurements in the HeartCode repository's model canary log, under its docs directory, before proceeding
+- [x] 1.1 Load the candidate on the SFW canary slot — 2026-10-10: on GPU 3's card (`pea-sfw-model-canary-gpu3`, :18085), not GPU 5 (garbles above ~6.6 GiB) or GPU 6 (serves NSFW). GPU 3's chat replica and DINO embedder displaced and unrouted (min_replicas lowered, dated); controller inventory carries a schema-2 canary record (owner ran `~/lend-gpu3-to-canary.sh`; `--restore` reverses)
+- [x] 1.2 Configure the canary slot exactly like a production worker — 16,384 ctx, batch 128/64, Q8 KV, `--cache-reuse 256`, plus `--cache-ram 1024` (now in the canary compose) and `--reasoning off` (llama.cpp otherwise enables Gemma 4 thinking and replies come back empty)
+- [x] 1.3 Chat template — not pinned: the GGUF carries Google's canonical Gemma 4 template (2026-07-09), whose `enable_thinking` defaults false; the server flag above handles llama.cpp's override
+- [x] 1.4 Grant the candidate id on the HeartCode backend's LiteLLM virtual key — `heartcode-chat-gemma-4-e4b-canary` appended to `heartcode-backend`'s grant; route in `extra_model_list`
+- [x] 1.5 Measure in-role refusal — 2026-10-10: single turn 0/5 explicit, but under sustained pressure two conversations gave way by turn 7–8 with HeartCode's old tone contract. HeartCode firmed the SFW contract; then `--trials 5 --pressure 7`: Gemma 0/5 narrated sex across 40 replies, Stheno 3/5 (2/5 fully explicit). Transcripts read in full; see HeartCode docs/model-canary-log.md
+- [x] 1.6 Measure throughput cold and warm — short 25.3 t/s (TTFT 0.11 s); 1,538-token cold TTFT 3.23 s at 24.4 t/s; warm 0.10 s; next turn 0.64 s at 24.6 t/s. Above Stheno's 23.5 t/s
+- [x] 1.7 Record both measurements in HeartCode's docs/model-canary-log.md — 2026-10-10
 - [ ] 1.8 Run HeartCode's chat-quality corpus against the candidate through a per-character model pin, so quality is measured before the route moves — an over-refusing occupant degrades ordinary romantic roleplay, which is the false-positive failure this architecture exists to avoid
 
 ## 2. Promote into the SFW pool
