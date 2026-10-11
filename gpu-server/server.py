@@ -76,11 +76,12 @@ def start_llama_server() -> subprocess.Popen:
 
     logger.info(f"Starting llama.cpp server: {' '.join(cmd)}")
 
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    # Inherit the container's stdout/stderr: llama.cpp's log lands in `docker
+    # logs`. Never subprocess.PIPE here: nothing reads the pipe, so once ~64 KB
+    # of per-request log had accumulated llama-server blocked forever in
+    # pipe_write mid-request -- health still green, GPU idle, every request
+    # queued behind it. All six chat replicas froze this way on 2026-10-11.
+    process = subprocess.Popen(cmd, stdout=None, stderr=None)
 
     return process
 
