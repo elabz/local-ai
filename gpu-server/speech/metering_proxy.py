@@ -40,6 +40,37 @@ OPUS_PROFILES = {
     "opus-40k": 40000,
     "opus-32k": 32000,
 }
+# libopus effort, 0 (cheapest) to 10 (ffmpeg's default). Lower profiles are
+# re-encoded here with one ffmpeg per sentence, on a 2-core host where Kokoro
+# is already CPU-bound; at 10 that encode stretched the TTS tail enough to
+# stall playback at 8 concurrent calls (heartcode optimize-live-speech-delivery
+# 5.4, 2026-10-12). Measured on Pea: level 5 encodes in 57% of level 10's CPU
+# time at the same size.
+DEFAULT_OPUS_COMPRESSION_LEVEL = 5
+
+
+def opus_compression_level(raw):
+    try:
+        level = int(raw)
+    except (TypeError, ValueError):
+        return DEFAULT_OPUS_COMPRESSION_LEVEL
+    return level if 0 <= level <= 10 else DEFAULT_OPUS_COMPRESSION_LEVEL
+
+
+OPUS_COMPRESSION_LEVEL = opus_compression_level(
+    os.getenv("SPEECH_OPUS_COMPRESSION_LEVEL", str(DEFAULT_OPUS_COMPRESSION_LEVEL))
+)
+
+
+def opus_encoder_command(bitrate, compression_level):
+    return [
+        "ffmpeg", "-hide_banner", "-loglevel", "error",
+        "-f", "s16le", "-ar", "24000", "-ac", "1", "-i", "pipe:0",
+        "-c:a", "libopus", "-b:a", str(bitrate), "-vbr", "on",
+        "-application", "voip", "-frame_duration", "20",
+        "-compression_level", str(compression_level),
+        "-f", "ogg", "pipe:1",
+    ]
 
 
 def prepare_tts_payload(payload):
@@ -181,10 +212,7 @@ async def custom_voice_registry(request):
 async def transcode_pcm_to_opus(upstream, response, profile, started):
     bitrate = OPUS_PROFILES[profile]
     process = await asyncio.create_subprocess_exec(
-        "ffmpeg", "-hide_banner", "-loglevel", "error",
-        "-f", "s16le", "-ar", "24000", "-ac", "1", "-i", "pipe:0",
-        "-c:a", "libopus", "-b:a", str(bitrate), "-vbr", "on",
-        "-application", "voip", "-frame_duration", "20", "-f", "ogg", "pipe:1",
+        *opus_encoder_command(bitrate, OPUS_COMPRESSION_LEVEL),
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,

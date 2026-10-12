@@ -2,7 +2,12 @@ import unittest
 
 from aiohttp import web
 
-from metering_proxy import prepare_tts_payload
+from metering_proxy import (
+    DEFAULT_OPUS_COMPRESSION_LEVEL,
+    opus_compression_level,
+    opus_encoder_command,
+    prepare_tts_payload,
+)
 
 
 class EncodingProfileTest(unittest.TestCase):
@@ -35,6 +40,21 @@ class EncodingProfileTest(unittest.TestCase):
                 {"response_format": "opus", "encoding_profile": "opus-24k"}
             )
 
+
+
+
+class OpusEncoderTest(unittest.TestCase):
+    def test_encoder_runs_at_the_configured_effort(self):
+        command = opus_encoder_command(40000, 5)
+        self.assertEqual(command[command.index("-compression_level") + 1], "5")
+        self.assertEqual(command[command.index("-b:a") + 1], "40000")
+        self.assertEqual(command[-2:], ["ogg", "pipe:1"])
+
+    def test_effort_setting_is_bounded(self):
+        self.assertEqual(opus_compression_level("0"), 0)
+        self.assertEqual(opus_compression_level("10"), 10)
+        for raw in ("11", "-1", "fast", None, ""):
+            self.assertEqual(opus_compression_level(raw), DEFAULT_OPUS_COMPRESSION_LEVEL)
 
 if __name__ == "__main__":
     unittest.main()
