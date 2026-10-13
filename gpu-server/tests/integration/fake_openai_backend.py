@@ -11,6 +11,10 @@ for the older embedding scenarios):
   flaky        the first *probe* chat request answers 503 BACKEND_UNAVAILABLE,
                every later one succeeds (a single transient downstream timeout)
 
+In any mode, POST /fail?n=N makes the next N probe requests (chat,
+transcription or speech) answer a plain 500, the way a speech server does when
+it errors on one request while staying up; /health keeps answering 200.
+
 A chat request whose body contains the marker "routing-probe" is a test probe;
 anything else (LiteLLM's background health check also issues chat calls for
 `mode: chat` deployments) is counted separately so the assertions only see
@@ -24,7 +28,7 @@ import threading
 from collections import Counter
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 app = FastAPI()
 
@@ -32,6 +36,7 @@ MODE = os.getenv("BACKEND_MODE") or ("healthy" if os.getenv("BACKEND_AVAILABLE",
 _lock = threading.Lock()
 _stats: Counter = Counter()
 _chat_calls = 0
+_fail_remaining = 0
 
 
 def available() -> bool:
@@ -41,6 +46,27 @@ def available() -> bool:
 def _count(path: str, status: int) -> None:
     with _lock:
         _stats[f"{path} {status}"] += 1
+
+
+def _take_injected_failure(path: str) -> JSONResponse | None:
+    global _fail_remaining
+    with _lock:
+        if _fail_remaining <= 0:
+            return None
+        _fail_remaining -= 1
+    _count(path, 500)
+    return JSONResponse(
+        status_code=500,
+        content={"error": {"message": "injected failure", "type": "server_error", "code": "INTERNAL_ERROR"}},
+    )
+
+
+@app.post("/fail")
+async def fail(n: int):
+    global _fail_remaining
+    with _lock:
+        _fail_remaining = n
+    return {"fail_remaining": n}
 
 
 def _unavailable(path: str) -> HTTPException:
@@ -91,6 +117,8 @@ async def chat_completions(request: Request):
     path = "/v1/chat/completions" + (" probe" if probe else " other")
     if not available():
         raise _unavailable(path)
+    if probe and (injected := _take_injected_failure(path)):
+        return injected
     call_index = 0
     if probe:
         with _lock:
@@ -119,3 +147,28 @@ async def chat_completions(request: Request):
         "choices": [{"index": 0, "message": {"role": "assistant", "content": f"served-by-{MODE}"}, "finish_reason": "stop"}],
         "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
     }
+
+
+@app.post("/v1/audio/transcriptions")
+async def transcriptions(request: Request):
+    # Read the multipart body raw: the uploaded "audio" of a probe carries the marker.
+    probe = b"routing-probe" in await request.body()
+    path = "/v1/audio/transcriptions" + (" probe" if probe else " other")
+    if not available():
+        raise _unavailable(path)
+    if probe and (injected := _take_injected_failure(path)):
+        return injected
+    _count(path, 200)
+    return {"text": f"served-by-{MODE}"}
+
+
+@app.post("/v1/audio/speech")
+async def speech(request: Request):
+    probe = b"routing-probe" in await request.body()
+    path = "/v1/audio/speech" + (" probe" if probe else " other")
+    if not available():
+        raise _unavailable(path)
+    if probe and (injected := _take_injected_failure(path)):
+        return injected
+    _count(path, 200)
+    return Response(content=b"OggS-fake-audio", media_type="audio/ogg")

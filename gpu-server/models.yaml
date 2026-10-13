@@ -198,7 +198,11 @@ models:
     id_prefix: heartcode-stt
     docs: {model: faster-whisper small.en (speaches), quant: int8}
     rate_limit: {rpm: 60}
-    params: {timeout: 180}
+    # Sole deployment: never cool it (a cooldown would refuse every
+    # transcription with nowhere to route), and never retry inside LiteLLM (its
+    # single-deployment retry sleeps >= retry_after, past HeartCode's 2 s
+    # budget; HeartCode retries itself). serve-speech-cooldown-tuning.
+    params: {timeout: 180, cooldown_time: 0, num_retries: 0}
     source: {type: container}
     deployments:
       - {gpu: 7, port: 8200}
@@ -212,7 +216,8 @@ models:
     id_prefix: heartcode-tts
     docs: {model: Kokoro-82M (kokoro-fastapi)}
     rate_limit: {rpm: 60}
-    params: {timeout: 180, api_key: os.environ/SPEECH_DIRECT_API_KEY}
+    # Sole deployment: same cooldown/retry reasoning as heartcode-stt above.
+    params: {timeout: 180, api_key: os.environ/SPEECH_DIRECT_API_KEY, cooldown_time: 0, num_retries: 0}
     source: {type: container}
     deployments:
       - {gpu: 7, port: 8201}

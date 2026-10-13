@@ -86,6 +86,44 @@ model_list:
       id: healthy-chat-sibling-2
       mode: chat
 
+  # serve-speech-cooldown-tuning. Control: a sole STT deployment on the router
+  # defaults alone, which is what heartcode-stt ran before the change.
+  - model_name: speech-stt-defaults
+    litellm_params:
+      model: openai/test-whisper
+      api_base: http://gpu-test-speech-defaults:8080/v1
+      api_key: test
+      timeout: 10
+    model_info:
+      id: speech-stt-defaults-1
+      mode: audio_transcription
+
+  # The speech groups as shipped: keep the per-deployment keys equal to the
+  # heartcode-stt / heartcode-tts params in gpu-server/models.yaml
+  # (test_speech_params_match_production asserts it).
+  - model_name: speech-stt
+    litellm_params:
+      model: openai/test-whisper
+      api_base: http://gpu-test-stt:8080/v1
+      api_key: test
+      timeout: 10
+      cooldown_time: 0
+      num_retries: 0
+    model_info:
+      id: speech-stt-1
+      mode: audio_transcription
+  - model_name: speech-tts
+    litellm_params:
+      model: openai/test-kokoro
+      api_base: http://gpu-test-tts:8080/v1
+      api_key: test
+      timeout: 10
+      cooldown_time: 0
+      num_retries: 0
+    model_info:
+      id: speech-tts-1
+      mode: audio_speech
+
 router_settings:
   routing_strategy: least-busy
   enable_health_check: true

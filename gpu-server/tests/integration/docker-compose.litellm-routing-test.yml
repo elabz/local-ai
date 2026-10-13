@@ -40,6 +40,23 @@ services:
     environment: {BACKEND_MODE: flaky}
     ports: ["4413:8080"]
 
+  # Healthy, but fails on demand (POST /fail?n=N) -- one per group under test
+  # so each test reads its own counts.
+  gpu-test-speech-defaults:
+    <<: *fake-backend
+    environment: {BACKEND_MODE: healthy}
+    ports: ["4415:8080"]
+
+  gpu-test-stt:
+    <<: *fake-backend
+    environment: {BACKEND_MODE: healthy}
+    ports: ["4416:8080"]
+
+  gpu-test-tts:
+    <<: *fake-backend
+    environment: {BACKEND_MODE: healthy}
+    ports: ["4417:8080"]
+
   litellm-routing-test:
     image: ${LITELLM_IMAGE:-ghcr.io/berriai/litellm:main-latest@sha256:bb0639701796218a3447160e55c0f1097446e4e6085df7dfd39f476d4143743f}
     command: ["--config", "/app/config.yaml", "--port", "4000"]
@@ -55,3 +72,6 @@ services:
       - gpu-test-unavailable-2
       - gpu-test-busy
       - gpu-test-flaky
+      - gpu-test-speech-defaults
+      - gpu-test-stt
+      - gpu-test-tts

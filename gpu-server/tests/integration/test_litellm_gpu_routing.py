@@ -9,6 +9,7 @@ passes here is what Prod's router does.
 
 import os
 import re
+import time
 from pathlib import Path
 
 import httpx
@@ -21,10 +22,18 @@ TEST_KEY = os.getenv("LITELLM_GPU_TEST_KEY", "test-gpu-routing-key")
 BUSY_STATS = os.getenv("LITELLM_GPU_TEST_BUSY_STATS", "http://localhost:4412/stats")
 FLAKY_STATS = os.getenv("LITELLM_GPU_TEST_FLAKY_STATS", "http://localhost:4413/stats")
 HEALTHY_STATS = os.getenv("LITELLM_GPU_TEST_HEALTHY_STATS", "http://localhost:4411/stats")
+SPEECH_DEFAULTS = os.getenv("LITELLM_GPU_TEST_SPEECH_DEFAULTS", "http://localhost:4415")
+STT = os.getenv("LITELLM_GPU_TEST_STT", "http://localhost:4416")
+TTS = os.getenv("LITELLM_GPU_TEST_TTS", "http://localhost:4417")
 
 pytestmark = pytest.mark.skipif(not BASE_URL, reason="isolated LiteLLM stack is not configured")
 
 PROBE_CHAT = "/v1/chat/completions probe"
+PROBE_STT = "/v1/audio/transcriptions probe"
+PROBE_TTS = "/v1/audio/speech probe"
+# HeartCode's whole added-wait budget for one speech operation
+# (SPEECH_RETRY_DEADLINE_SECONDS); a LiteLLM-side retry must never outlast it.
+CALLER_RETRY_BUDGET_SECONDS = 2.0
 
 
 def request(path: str, **kwargs):
@@ -40,8 +49,30 @@ def chat(model: str):
     )
 
 
+def transcribe(model: str):
+    headers = {"Authorization": f"Bearer {TEST_KEY}"}
+    return httpx.post(
+        f"{BASE_URL}/v1/audio/transcriptions",
+        headers=headers,
+        timeout=60,
+        data={"model": model},
+        files={"file": ("probe.wav", b"RIFF routing-probe", "audio/wav")},
+    )
+
+
+def speak(model: str):
+    return request(
+        "/v1/audio/speech", method="POST", json={"model": model, "input": "routing-probe", "voice": "af_heart"}
+    )
+
+
 def stats(url: str) -> dict:
     return httpx.get(url, timeout=5).json()["counts"]
+
+
+def fail_next(backend: str, n: int) -> None:
+    """Make the fake at `backend` answer its next n probe requests with a 500."""
+    httpx.post(f"{backend}/fail", params={"n": n}, timeout=5).raise_for_status()
 
 
 def cooldown_events() -> dict:
@@ -165,3 +196,93 @@ def test_cooldown_metric_is_exposed_for_alerting():
     text = request("/metrics/").text
     assert "litellm_deployment_cooled_down" in text
     assert "litellm_proxy_total_requests_metric" in text
+
+
+# --- serve-speech-cooldown-tuning ----------------------------------------------------
+
+SPEECH_KEYS = {"cooldown_time": 0, "num_retries": 0}
+
+
+def _deployments(config: dict, model_name: str) -> list[dict]:
+    return [m["litellm_params"] for m in config["model_list"] if m["model_name"] == model_name]
+
+
+def test_speech_params_match_production():
+    """The tuned groups here carry exactly what heartcode-stt/-tts ship with."""
+    here = Path(__file__).resolve()
+    manifest = yaml.safe_load((here.parents[2] / "models.yaml").read_text())
+    shipped = {m["api_name"]: m.get("params") or {} for m in manifest["models"]}
+    test_config = yaml.safe_load(here.with_name("litellm_gpu_routing.yaml").read_text())
+    for api_name, test_group in (("heartcode-stt", "speech-stt"), ("heartcode-tts", "speech-tts")):
+        for key, value in SPEECH_KEYS.items():
+            assert shipped[api_name].get(key) == value, (api_name, key)
+        (deployment,) = _deployments(test_config, test_group)
+        for key, value in SPEECH_KEYS.items():
+            assert deployment.get(key) == value, (test_group, key)
+    # The control group must stay on the router defaults, or it proves nothing.
+    (control,) = _deployments(test_config, "speech-stt-defaults")
+    assert not set(SPEECH_KEYS) & set(control)
+
+
+def _assert_cooled_on_router_defaults(call, model: str, backend: str, probe: str):
+    attempts = lambda: stats(f"{backend}/stats").get(f"{probe} 500", 0)  # noqa: E731
+    fail_next(backend, 1000)
+    try:
+        before = attempts()
+        statuses = [call(model).status_code for _ in range(4)]
+        tried = attempts() - before
+    finally:
+        fail_next(backend, 0)
+    # allowed_fails=3: the first request fails three times (two router
+    # retries), the second fails a 4th time and cools the deployment, and every
+    # later request is refused with 429 without reaching it.
+    assert statuses[-1] == 429, statuses
+    assert tried == 4, tried
+
+
+def test_sole_speech_deployment_on_router_defaults_is_cooled():
+    """Control: without the per-deployment keys, a sole deployment IS cooled and
+    then refused without being tried -- the 2026-09-09 STT outage. If a LiteLLM
+    bump makes this fail, the router changed underneath the speech settings:
+    re-run the serve-speech-cooldown-tuning findings before trusting them."""
+    _assert_cooled_on_router_defaults(transcribe, "speech-stt-defaults", SPEECH_DEFAULTS, PROBE_STT)
+
+
+def test_only_speech_groups_override_the_router_policy():
+    """Chat and every other generated deployment keep the router-wide cooldown
+    and retry policy; only heartcode-stt/-tts opt out."""
+    generated = yaml.safe_load((Path(__file__).resolve().parents[3] / "litellm" / "config.yaml").read_text())
+    overriding = {
+        m["model_name"] for m in generated["model_list"] if set(SPEECH_KEYS) & set(m["litellm_params"])
+    }
+    assert overriding == {"heartcode-stt", "heartcode-tts"}
+
+
+def _assert_sole_deployment_fails_fast_and_stays_routable(call, model: str, backend: str, host: str, probe: str):
+    cooled_before = cooldowns_for(host)
+    failures = 5  # more than allowed_fails (3), so a count-based cooldown would trigger
+    fail_next(backend, failures)
+    try:
+        for i in range(failures):
+            before = stats(f"{backend}/stats").get(f"{probe} 500", 0)
+            started = time.monotonic()
+            response = call(model)
+            elapsed = time.monotonic() - started
+            assert response.status_code == 500, (i, response.status_code, response.text)
+            # Exactly one attempt: LiteLLM does not retry, so it cannot outlast
+            # the caller, whose own jittered retries are the only ones.
+            assert stats(f"{backend}/stats").get(f"{probe} 500", 0) == before + 1, i
+            assert elapsed < CALLER_RETRY_BUDGET_SECONDS, (i, elapsed)
+    finally:
+        fail_next(backend, 0)
+    served = call(model)
+    assert served.status_code == 200, served.text
+    assert cooldowns_for(host) == cooled_before
+
+
+def test_sole_stt_deployment_is_never_cooled_and_fails_fast():
+    _assert_sole_deployment_fails_fast_and_stays_routable(transcribe, "speech-stt", STT, "gpu-test-stt", PROBE_STT)
+
+
+def test_sole_tts_deployment_is_never_cooled_and_fails_fast():
+    _assert_sole_deployment_fails_fast_and_stays_routable(speak, "speech-tts", TTS, "gpu-test-tts", PROBE_TTS)

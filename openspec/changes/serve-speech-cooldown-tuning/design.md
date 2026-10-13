@@ -75,6 +75,28 @@ The values go in `gpu-server/models.yaml`, plus `config.base.yaml` only for opti
 
 The change is applied on elm with `docker compose restart litellm`: the bind-mounted config does not reload on `up -d`. Then it is verified with `/v1/model/info` under the master key, which shows the speech deployments' effective `litellm_params`.
 
+## Findings on LiteLLM 1.81.9 (tasks 1.1–1.3, 2026-10-13)
+
+Run against the disposable routing stack (`gpu-server/tests/integration/`), pinned digest `sha256:bb0639…743f`, with a fake speech backend that answers 500 on demand while `/health` stays 200. Each group has one `audio_transcription` deployment.
+
+**1.1 — today's settings cool the sole deployment.** With the backend failing every request:
+
+| Request | Result | Backend attempts | Time |
+|---|---|---|---|
+| 1 | 500 | 3 (two router retries) | 12.6 s |
+| 2 | 500 | 1 — the 4th failure, which cools it | 0.0 s |
+| 3, 4, … | **429 "No deployments available … Try again in 20 seconds"** | 0 | 0.0 s |
+
+After the backend recovered, requests kept getting 429 for ~20 s (`cooldown_time`) without reaching it. That is the 2026-09-09 outage, reproduced.
+
+**1.2 — mechanism (b) does not exist on our configuration; (a) works.** The router's single-deployment exemption lives only in its percentage-based "v2" path (`_should_cooldown_deployment` in `router_utils/cooldown_handlers.py`). Setting `allowed_fails_policy` — which `queue-busy-chat-backends` needs — selects the count-based path, which has no such exemption. Option (a) does work. `deployment_callback_on_failure` takes `litellm_params.cooldown_time` ahead of `Retry-After` and the router default, and `_should_run_cooldown_logic` returns early when it is 0. With `cooldown_time: 0`, ten consecutive 500s each reached the backend, and the eleventh request was served. **Ships: (a).** `config.base.yaml` is untouched.
+
+**1.3 — retries: `num_retries: 0`.** A per-deployment `num_retries` is honoured: the router copies it onto the exception, overriding the global 2. But no per-group or per-deployment *delay* exists. For a group with one deployment, `_time_to_sleep_before_retry` always sleeps `max(backoff, retry_after) + jitter`, with router-wide `retry_after: 3`. Measured with `num_retries: 1`, one retry took 6.8–10 s end to end — over three times HeartCode's 2 s budget. So "one immediate retry" is not expressible without changing the router-wide delay that chat relies on. With `num_retries: 0`, each failing request costs one backend attempt and returns in ~0 s, and HeartCode's jittered retries are the only ones.
+
+**2.3 — chat does not cool on errors on this image, before or after this change.** Task 2.3 asked to confirm that chat groups "still cool down after three failures, as before". The premise does not hold on 1.81.9. A sole `mode: chat` deployment on the router defaults, failing every request with 500 or with 503, was never cooled. Eight requests in a row each made three attempts and took ~10 s, and none got a 429. The same fake behind an `audio_transcription` deployment *is* cooled on its 4th failure (the control test above). `_is_cooldown_required` does not depend on status here, so the difference is in how the chat failure reaches the router's failure callback. A related symptom: least-busy's in-flight count for a chat replica is not decremented after a failed attempt that the router retried, so sequential requests never offer that replica again. (Its own `async_log_failure_event` holds the decrement.)
+
+This change does not touch chat: its deployments carry no per-deployment keys, and `test_only_speech_groups_override_the_router_policy` pins that. So 2.3 ships a static check that chat is unchanged, not a dynamic test that chat cools. A test asserting "chat never cools" would lock in what looks like a router defect. **Follow-up (not this change):** `gpu-inference-availability` describes chat cooldown after three 503s, which the pinned image does not do. A chat replica that keeps failing is therefore retried on every request, not routed around. That needs its own investigation.
+
 ## Risks / Trade-offs
 
 - **A dead speech backend is retried on every request instead of being skipped for 20 s.** With one deployment, "skipping" meant refusing anyway. The real cost is that each request now pays a connection attempt; at 180 s timeouts that could be long. *Mitigation:* a dead backend usually fails its connection quickly. HeartCode bounds its own wait (2 s added, plus its request timeout), and Pea's monitoring alerts on a group with no completions for an hour (`gpu-inference-availability`).
