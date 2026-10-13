@@ -25,4 +25,4 @@
 
 ## 4. Close the loop with HeartCode
 
-- [ ] 4.1 Tell HeartCode it landed. Its `add-speech-admission-control` 8.2 reruns the 7.1 load check (`backend/scripts/benchmark_concurrent_calls.py`) and records whether the retry rate changed. Its `trial-live-speech-via-litellm` 3.1 companion rebases on these entries.
+- [x] 4.1 Tell HeartCode it landed. Its `add-speech-admission-control` 8.2 reruns the 7.1 load check (`backend/scripts/benchmark_concurrent_calls.py`) and records whether the retry rate changed. Its `trial-live-speech-via-litellm` 3.1 companion rebases on these entries. *(2026-10-13: HeartCode 8.1/8.2 closed. The rerun at ×4/×8 had every turn complete, with 0 speech retries, refusals, LiteLLM failures or cooldowns, the same as before. Evidence: heartcode `openspec/changes/add-speech-admission-control/evidence/cooldown-tuning-2026-10-13/`. `trial-live-speech-via-litellm` 3.1 is not opened yet; it rebases on these entries when it is.)*
