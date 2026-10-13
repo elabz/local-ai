@@ -949,6 +949,46 @@ services:
               device_ids: ['${PEA_GPU_5_UUID:-GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b}']
               capabilities: [gpu]
 
+  # Private custom-voice control plane (serve-custom-voice-control-plane):
+  # contract v1.1 for HeartCode's admin voice builds. No GPU and no Docker
+  # socket; builds run in the host-side runner (custom_voice/runner.py, a
+  # systemd unit) that shares the job queue file. Keys and callback targets are
+  # 0600 JSON files under custom-voice-control, never environment variables.
+  custom-voice-control-plane:
+    build:
+      context: ./custom_voice
+      dockerfile: Dockerfile.control-plane
+    image: local-ai-custom-voice-control-plane:1
+    container_name: pea-custom-voice-control-plane
+    restart: unless-stopped
+    user: "${CUSTOM_VOICE_UID:-10001}:${CUSTOM_VOICE_GID:-10001}"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 384m
+    memswap_limit: 384m
+    pids_limit: 128
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+    environment:
+      CUSTOM_VOICE_PRIVATE_ROOT: /private
+      CUSTOM_VOICE_SAMPLE_ORIGINS: ${CUSTOM_VOICE_SAMPLE_ORIGINS:?set CUSTOM_VOICE_SAMPLE_ORIGINS in .env}
+      CUSTOM_VOICE_KOKORO_URL: http://speech-tts:8880
+    volumes:
+      - ../private/custom-voice-intake:/private/custom-voice-intake
+      - ../private/custom-voice-jobs:/private/custom-voice-jobs
+      - ../private/custom-voice-control:/private/custom-voice-control
+      - ../private/custom-voice-registry:/private/custom-voice-registry
+      - ../private/custom-voice-artifacts:/private/custom-voice-artifacts
+      - ../private/custom-voice-previews:/private/custom-voice-previews
+    ports:
+      - "8210:8080"
+    depends_on:
+      speech-tts:
+        condition: service_healthy
+    networks:
+      - gpu-network
+
 networks:
   gpu-network:
     driver: bridge

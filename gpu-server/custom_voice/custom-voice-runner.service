@@ -1,0 +1,32 @@
+# Host-side custom-voice build runner (serve-custom-voice-control-plane).
+# Install: copy to /etc/systemd/system/, create /etc/local-ai/custom-voice-runner.env
+# (0600) with the CUSTOM_VOICE_* image variables below, then
+#   systemctl daemon-reload && systemctl enable --now custom-voice-runner
+# The service user owns ../private/custom-voice-* and is in the docker group;
+# that group membership is the only Docker access in the custom-voice system.
+[Unit]
+Description=local-ai custom-voice build runner
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=custom-voice
+Group=custom-voice
+SupplementaryGroups=docker
+UMask=0077
+WorkingDirectory=/opt/local-ai/gpu-server
+# CUSTOM_VOICE_WORKER_IMAGE, CUSTOM_VOICE_WORKER_IMAGE_DIGEST (64 hex, from
+# `docker image inspect`), CUSTOM_VOICE_COMPAT_IMAGE, optional CUSTOM_VOICE_RUNTIME_IMAGE.
+EnvironmentFile=/etc/local-ai/custom-voice-runner.env
+Environment=PYTHONPATH=/opt/local-ai/gpu-server
+ExecStart=/usr/bin/python3 -m custom_voice.runner --private-root /opt/local-ai/private
+Restart=on-failure
+RestartSec=30
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/local-ai/private
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

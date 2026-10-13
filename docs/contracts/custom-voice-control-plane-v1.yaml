@@ -1,9 +1,14 @@
 openapi: 3.1.0
 info:
   title: HeartCode Custom Voice Control Plane
-  version: 1.0.0
-  description: Private digest-bound contract coordinated with add-admin-custom-voices.
-x-heartcode-change: add-admin-custom-voices
+  version: 1.1.0
+  description: >-
+    Private digest-bound contract coordinated with add-admin-custom-voices.
+    1.1 (adopt-custom-voice-control-plane-v1 / serve-custom-voice-control-plane)
+    adds signed intake pull, the SBOM in build results, the attestation document
+    in activation, and registry and deletion reads.
+x-heartcode-change: adopt-custom-voice-control-plane-v1
+x-local-ai-change: serve-custom-voice-control-plane
 x-routing:
   visibility: private
   litellm: forbidden
@@ -13,6 +18,37 @@ servers:
 security:
   - CustomVoiceSignature: []
 paths:
+  /custom-voice-intakes:
+    post:
+      operationId: createCustomVoiceIntake
+      x-required-scope: custom_voice.build
+      description: >-
+        Pull the samples into an immutable intake on Pea. Pea fetches each
+        fetch_url itself, only from an operator-configured origin allow-list,
+        without following redirects, within the profile's byte cap, and
+        verifies each audio_sha256 and the declared PCM format before writing
+        anything. The resulting manifest is benchmark-intake.v1 and also records
+        stable_voice_id and version for the build. Idempotency is per intake_id
+        over the content, which is every field except fetch_url (signed URLs
+        expire, so a retry carries new ones): the same content returns the
+        existing manifest_sha256 without fetching again, and different content
+        is 409 intake_conflict. A failed fetch is 502 intake_fetch_failed and is
+        worth retrying with freshly signed URLs.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/IntakeRequest'}
+      responses:
+        '201':
+          description: Intake written and digest-sealed.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Intake'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        default: {$ref: '#/components/responses/SafeError'}
   /custom-voice-builds:
     post:
       operationId: createCustomVoiceBuild
@@ -78,10 +114,26 @@ paths:
             audio/wav:
               schema: {type: string, contentEncoding: binary}
         default: {$ref: '#/components/responses/SafeError'}
+  /custom-voice-registry:
+    get:
+      operationId: readCustomVoiceRegistry
+      x-required-scope: custom_voice.read
+      responses:
+        '200':
+          description: Every registered version and which one each voice serves.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RegistryView'}
+        default: {$ref: '#/components/responses/SafeError'}
   /custom-voice-registry/stage:
     post:
       operationId: stageCustomVoice
       x-required-scope: custom_voice.activate
+      description: >-
+        Stage a sealed version for review. The artifact manifest digest and
+        language come from local-ai's own seal of that artifact, not the
+        request. A successful build is already staged, so this is idempotent
+        for the same digest.
       requestBody:
         required: true
         content:
@@ -137,7 +189,10 @@ paths:
             schema: {$ref: '#/components/schemas/ArtifactMutation'}
       responses:
         '200':
-          description: Inactive exact version retired.
+          description: >-
+            Exact version retired. Retiring the active version takes the voice
+            out of service: it leaves the serving map before the registry marks
+            it retired, and no version is active afterwards.
           content:
             application/json:
               schema: {$ref: '#/components/schemas/RegistryVersion'}
@@ -158,13 +213,36 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/DeletionRequest'}
         default: {$ref: '#/components/responses/SafeError'}
+  /custom-voice-deletions/{request_id}:
+    get:
+      operationId: getCustomVoiceDeletion
+      x-required-scope: custom_voice.read
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema: {type: string, pattern: '^[0-9a-f]{32}$'}
+      responses:
+        '200':
+          description: Deletion progress.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DeletionRequest'}
+        default: {$ref: '#/components/responses/SafeError'}
 components:
   securitySchemes:
     CustomVoiceSignature:
       type: apiKey
       in: header
       name: X-Custom-Voice-Signature
-      description: HMAC-SHA256 over timestamp, nonce, method, path, and body digest. X-Custom-Voice-Key-Id, X-Custom-Voice-Timestamp, and X-Custom-Voice-Nonce are also required.
+      description: >-
+        Lowercase hex HMAC-SHA256 under the key's secret of
+        "{timestamp}\n{nonce}\n{METHOD}\n{path}\n{sha256 hex of body}", with
+        X-Custom-Voice-Key-Id, X-Custom-Voice-Timestamp (Unix seconds, within
+        300 s) and X-Custom-Voice-Nonce ([A-Za-z0-9_-]{16,128}, single use).
+        Callbacks to HeartCode carry X-Custom-Voice-Timestamp, -Nonce and
+        -Signature over "{timestamp}\n{nonce}\n{sha256 hex of body}" under the
+        callback secret; they carry no result, so the receiver reads the job.
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
@@ -206,6 +284,64 @@ components:
     PreviewId:
       type: string
       pattern: '^[0-9a-f]{32}$'
+    IntakeRequest:
+      type: object
+      additionalProperties: false
+      required: [schema_version, intake_id, stable_voice_id, version, language, authorization_id, builder_profile, samples]
+      properties:
+        schema_version: {const: custom-voice-intake-request.v1}
+        intake_id: {type: string, pattern: '^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$'}
+        stable_voice_id: {$ref: '#/components/schemas/StableVoiceId'}
+        version: {$ref: '#/components/schemas/Version'}
+        language: {enum: [en-US]}
+        authorization_id: {type: string, pattern: '^[A-Za-z0-9._-]{8,128}$'}
+        builder_profile: {const: kvoicewalk-multireference.v1}
+        samples:
+          type: array
+          description: The profile's counts exactly (kvoicewalk-multireference.v1 is 6 adaptation, 4 heldout).
+          minItems: 10
+          maxItems: 10
+          items: {$ref: '#/components/schemas/IntakeSample'}
+    IntakeSample:
+      type: object
+      additionalProperties: false
+      required: [sample_id, role, fetch_url, audio_sha256, transcript, sample_rate_hz, channels, encoding]
+      properties:
+        sample_id: {type: string, pattern: '^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$'}
+        role: {enum: [adaptation, heldout]}
+        fetch_url: {type: string, format: uri, description: 'Short-lived signed URL on an allow-listed origin.'}
+        audio_sha256: {$ref: '#/components/schemas/Sha256'}
+        transcript: {type: string, minLength: 1, maxLength: 16384}
+        sample_rate_hz: {type: integer, minimum: 8000, maximum: 192000}
+        channels: {const: 1}
+        encoding: {const: pcm_s16le}
+    Intake:
+      type: object
+      additionalProperties: false
+      required: [schema_version, intake_id, manifest_sha256, sample_count]
+      properties:
+        schema_version: {const: custom-voice-intake.v1}
+        intake_id: {type: string}
+        manifest_sha256: {$ref: '#/components/schemas/Sha256'}
+        sample_count: {type: integer, minimum: 1}
+    RegistryView:
+      type: object
+      additionalProperties: false
+      required: [schema_version, voices]
+      properties:
+        schema_version: {const: custom-voice-registry-view.v1}
+        voices:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [stable_voice_id, active_version, versions]
+            properties:
+              stable_voice_id: {$ref: '#/components/schemas/StableVoiceId'}
+              active_version: {oneOf: [{type: 'null'}, {$ref: '#/components/schemas/Version'}]}
+              versions:
+                type: array
+                items: {$ref: '#/components/schemas/RegistryVersion'}
     CreateBuildRequest:
       type: object
       additionalProperties: false
@@ -250,12 +386,31 @@ components:
           oneOf:
             - {type: 'null'}
             - $ref: '#/components/schemas/SafeError'
+        events:
+          type: array
+          items: {$ref: '#/components/schemas/JobEvent'}
+    JobEvent:
+      type: object
+      additionalProperties: false
+      required: [event_id, state, created_at]
+      properties:
+        event_id: {type: integer, minimum: 1}
+        state: {type: string}
+        reason: {type: ['string', 'null']}
+        created_at: {type: string}
     BuildResult:
       type: object
       additionalProperties: false
-      required: [artifact, evaluation, compatibility, previews]
+      required: [artifact, sbom, evaluation, compatibility, previews]
       properties:
         artifact: {$ref: '#/components/schemas/ArtifactIdentity'}
+        sbom:
+          type: object
+          additionalProperties: false
+          required: [sha256, unresolved_license_count]
+          properties:
+            sha256: {$ref: '#/components/schemas/Sha256'}
+            unresolved_license_count: {type: integer, minimum: 0}
         evaluation:
           type: object
           additionalProperties: false
@@ -296,17 +451,33 @@ components:
         version: {$ref: '#/components/schemas/Version'}
         artifact_sha256: {$ref: '#/components/schemas/Sha256'}
     ActivationRequest:
-      allOf:
-        - $ref: '#/components/schemas/ArtifactMutation'
-        - type: object
-          additionalProperties: false
-          required: [sbom_sha256, admin_attestation_id]
-          properties:
-            stable_voice_id: {$ref: '#/components/schemas/StableVoiceId'}
-            version: {$ref: '#/components/schemas/Version'}
-            artifact_sha256: {$ref: '#/components/schemas/Sha256'}
-            sbom_sha256: {$ref: '#/components/schemas/Sha256'}
-            admin_attestation_id: {type: string, pattern: '^[A-Za-z0-9._-]{8,128}$'}
+      # Flat on purpose: allOf over two closed (additionalProperties: false)
+      # schemas accepts nothing, which 1.0 did.
+      type: object
+      additionalProperties: false
+      required: [stable_voice_id, version, artifact_sha256, sbom_sha256, admin_attestation_id, admin_attestation]
+      properties:
+        stable_voice_id: {$ref: '#/components/schemas/StableVoiceId'}
+        version: {$ref: '#/components/schemas/Version'}
+        artifact_sha256: {$ref: '#/components/schemas/Sha256'}
+        sbom_sha256: {$ref: '#/components/schemas/Sha256'}
+        admin_attestation_id: {type: string, pattern: '^[A-Za-z0-9._-]{8,128}$'}
+        admin_attestation: {$ref: '#/components/schemas/AdminAttestation'}
+    AdminAttestation:
+      type: object
+      description: The digest-bound HeartCode approval local-ai verifies; it never invents one.
+      additionalProperties: false
+      required: [attestation_id, status, scope, artifact_sha256, sbom_sha256, unresolved_license_count, speaker_authority_confirmed, no_redistribution_confirmed, license_findings_acknowledged]
+      properties:
+        attestation_id: {type: string, pattern: '^[A-Za-z0-9._-]{8,128}$'}
+        status: {const: approved}
+        scope: {const: internal_pea}
+        artifact_sha256: {$ref: '#/components/schemas/Sha256'}
+        sbom_sha256: {$ref: '#/components/schemas/Sha256'}
+        unresolved_license_count: {type: integer, minimum: 0}
+        speaker_authority_confirmed: {const: true}
+        no_redistribution_confirmed: {const: true}
+        license_findings_acknowledged: {const: true}
     RegistryVersion:
       type: object
       additionalProperties: false

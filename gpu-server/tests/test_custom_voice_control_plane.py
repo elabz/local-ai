@@ -82,7 +82,14 @@ def test_replayed_request_is_rejected(tmp_path: Path) -> None:
 
 def test_activation_requires_distinct_scope(tmp_path: Path) -> None:
     api, auth, _jobs = client(tmp_path)
-    payload = {"stable_voice_id": "custom-demo", "version": "v1", "artifact_sha256": "a" * 64}
+    payload = {
+        "stable_voice_id": "custom-demo",
+        "version": "v1",
+        "artifact_sha256": "a" * 64,
+        "sbom_sha256": "b" * 64,
+        "admin_attestation_id": "hc-attest-demo",
+        "admin_attestation": {"attestation_id": "hc-attest-demo"},
+    }
     body = json.dumps(payload, separators=(",", ":")).encode()
     path = "/internal/v1/custom-voice-registry/activate"
     speech = signed(auth, "speech-key", b"secret-speech", "POST", path, body, "nonce-activate-01") | {"Content-Type": "application/json"}
@@ -110,3 +117,15 @@ def test_validation_error_never_echoes_protected_input(tmp_path: Path) -> None:
     assert response.status_code == 422
     assert response.json() == {"type": "about:blank", "code": "request_invalid", "status": 422}
     assert "protected words" not in response.text
+
+
+def test_job_views_are_the_contract_shape_not_raw_rows(tmp_path: Path) -> None:
+    api, auth, _jobs = client(tmp_path)
+    body = json.dumps(build_payload(), separators=(",", ":")).encode()
+    path = "/internal/v1/custom-voice-builds"
+    headers = signed(auth, "admin-key", b"secret-admin", "POST", path, body, "nonce-view-000001") | {"Content-Type": "application/json", "Idempotency-Key": "request-0001"}
+    created = api.post(path, content=body, headers=headers).json()
+    for leaked in ("caller_id", "idempotency_key", "safe_result_json", "attempt", "callback_id"):
+        assert leaked not in created
+    assert created["created_at"].endswith("Z")
+

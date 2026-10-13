@@ -10,8 +10,9 @@ CONTRACT = Path(__file__).resolve().parents[2] / "docs" / "contracts" / "custom-
 def test_contract_is_versioned_private_and_complete() -> None:
     contract = yaml.safe_load(CONTRACT.read_text())
     assert contract["openapi"] == "3.1.0"
-    assert contract["info"]["version"] == "1.0.0"
-    assert contract["x-heartcode-change"] == "add-admin-custom-voices"
+    assert contract["info"]["version"] == "1.1.0"
+    assert contract["x-heartcode-change"] == "adopt-custom-voice-control-plane-v1"
+    assert contract["x-local-ai-change"] == "serve-custom-voice-control-plane"
     assert contract["x-routing"]["litellm"] == "forbidden"
     operations = {
         operation["operationId"]: operation["x-required-scope"]
@@ -24,11 +25,14 @@ def test_contract_is_versioned_private_and_complete() -> None:
     assert operations["readCustomVoicePreview"] == "custom_voice.preview.read"
     assert operations["activateCustomVoice"] == "custom_voice.activate"
     assert operations["deleteCustomVoiceVersion"] == "custom_voice.delete"
+    assert operations["createCustomVoiceIntake"] == "custom_voice.build"
+    assert operations["readCustomVoiceRegistry"] == "custom_voice.read"
+    assert operations["getCustomVoiceDeletion"] == "custom_voice.read"
 
 
 def test_contract_fails_unknown_request_fields_closed() -> None:
     schemas = yaml.safe_load(CONTRACT.read_text())["components"]["schemas"]
-    for name in ("CreateBuildRequest", "BuildJob", "ArtifactMutation", "RegistryVersion", "SafeError"):
+    for name in ("CreateBuildRequest", "BuildJob", "ArtifactMutation", "ActivationRequest", "AdminAttestation", "IntakeRequest", "IntakeSample", "RegistryVersion", "SafeError"):
         assert schemas[name]["additionalProperties"] is False
 
 

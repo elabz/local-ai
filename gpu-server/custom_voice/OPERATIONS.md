@@ -131,3 +131,41 @@ required. A restore goes into a new private root, verifies every digest and
 reference, starts with all custom voices non-active, runs compatibility and
 provider health probes, then reactivates exact approved versions one at a time.
 Unknown or incomplete state fails closed.
+
+## Control-plane service (serve-custom-voice-control-plane)
+
+The v1.1 contract (`docs/contracts/custom-voice-control-plane-v1.yaml`) is
+served by two processes that share the job queue file
+`private/custom-voice-jobs/jobs.sqlite3`:
+
+- `custom-voice-control-plane` (compose, port 8210): the signed API. It
+  pulls intakes, queues builds, serves previews, and moves the registry and the
+  speech gateway's `custom-voice-map.json` together. It has no GPU and no
+  Docker socket.
+- `custom-voice-runner` (systemd, `custom_voice/custom-voice-runner.service`):
+  claims queued jobs and runs `prepare_workspace`, then `run_worker.sh`, then
+  `run_postbuild.sh`, then `run_sbom.sh`, then `stage_for_review`. It runs as the
+  service user, and its docker group membership is the only Docker access the
+  system has. Builder containers still never see the socket.
+
+Secrets are 0600 JSON files in `private/custom-voice-control/`:
+
+- `service-keys.json`:
+  `{"<key_id>": {"secret": "<random>", "scopes": ["custom_voice.build", ...]}}`.
+  Give HeartCode a key with `build`, `read`, `preview.read`, `activate` and
+  `delete`.
+- `callback-targets.json`:
+  `{"<callback_id>": {"url": "https://.../api/v1/internal/custom-voice-build-callback", "secret": "<random>"}}`.
+  HeartCode holds the same secret as `CUSTOM_VOICE_CALLBACK_SECRET` and the ID as
+  `CUSTOM_VOICE_CALLBACK_ID`.
+
+`CUSTOM_VOICE_SAMPLE_ORIGINS` (in `.env`) is the exact `scheme://host:port`
+list the intake pull may fetch from. Redirects are refused.
+
+**Loading a new voice into Kokoro is still an operator step.** Activation
+refuses any voice that Kokoro's `/v1/audio/voices` does not list
+(`activation_discovery_failed`). A newly built version therefore needs its sealed
+`.pt` mounted into `speech-tts` and the provider recreated, the way
+`cv_custom_dima.pt` is mounted today, before HeartCode can publish it.
+`blue_green.py` holds the drained switch, but nothing binds its provider
+operations yet.

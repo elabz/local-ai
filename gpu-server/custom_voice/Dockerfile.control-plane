@@ -1,0 +1,15 @@
+# Private custom-voice control plane: the signed v1.1 API (intake pull, build
+# queue, previews, registry lifecycle). No GPU, no Docker socket, no builder
+# code paths that open model weights. Builds run in the host-side runner.
+FROM python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
+WORKDIR /app
+COPY requirements-control-plane.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
+# --chmod on COPY would also strip the directory's execute bit.
+COPY *.py /app/custom_voice/
+RUN chown -R root:root /app/custom_voice && chmod -R a=rX /app/custom_voice
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+USER 10001:10001
+EXPOSE 8080
+HEALTHCHECK CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"
+ENTRYPOINT ["python3", "-m", "uvicorn", "custom_voice.service:app", "--host", "0.0.0.0", "--port", "8080"]
