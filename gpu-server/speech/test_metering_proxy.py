@@ -53,6 +53,7 @@ class OpusEncoderTest(unittest.TestCase):
     def test_effort_setting_is_bounded(self):
         self.assertEqual(opus_compression_level("0"), 0)
         self.assertEqual(opus_compression_level("10"), 10)
+        self.assertEqual(DEFAULT_OPUS_COMPRESSION_LEVEL, 0)
         for raw in ("11", "-1", "fast", None, ""):
             self.assertEqual(opus_compression_level(raw), DEFAULT_OPUS_COMPRESSION_LEVEL)
 

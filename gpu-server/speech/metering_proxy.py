@@ -44,9 +44,11 @@ OPUS_PROFILES = {
 # re-encoded here with one ffmpeg per sentence, on a 2-core host where Kokoro
 # is already CPU-bound; at 10 that encode stretched the TTS tail enough to
 # stall playback at 8 concurrent calls (heartcode optimize-live-speech-delivery
-# 5.4, 2026-10-12). Measured on Pea: level 5 encodes in 57% of level 10's CPU
-# time at the same size.
-DEFAULT_OPUS_COMPRESSION_LEVEL = 5
+# 5.4, 2026-10-12). Measured on Pea: level 0 encodes in 28% of level 10's CPU
+# time at the same size, which brought 40k's stalls at 8 calls (p95 0.14 s per
+# turn) in line with native 128k; the owner judged level 0 at 40 kbps
+# acceptable by ear on 2026-10-12.
+DEFAULT_OPUS_COMPRESSION_LEVEL = 0
 
 
 def opus_compression_level(raw):
