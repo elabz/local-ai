@@ -19,9 +19,9 @@
 
 ## 3. Apply on elm (operator)
 
-- [ ] 3.1 Pull on elm and `docker compose restart litellm`. A restart is required: the bind-mounted config does not reload on `up -d`.
-- [ ] 3.2 Verify with `/v1/model/info` under the master key that the speech deployments carry the new `litellm_params`.
-- [ ] 3.3 Run one transcription and one synthesis through LiteLLM with a HeartCode key; both succeed.
+- [x] 3.1 Pull on elm and `docker compose restart litellm`. A restart is required: the bind-mounted config does not reload on `up -d`. *(2026-10-13: elm fast-forwarded 1f5e6e6 → 9a93dd2. The only LiteLLM input in that range was this change. Restarted at 13:22:07Z; healthy.)*
+- [x] 3.2 Verify with `/v1/model/info` under the master key that the speech deployments carry the new `litellm_params`. *(Both show `cooldown_time: 0, num_retries: 0`, and no other of the 25 deployments does.)*
+- [x] 3.3 Run one transcription and one synthesis through LiteLLM with a HeartCode key; both succeed. *(TTS 200 in 0.58 s, 42 KB MP3. STT of that audio 200 in 0.47 s: "The cool down change is live on the proxy." A `heartcode-chat-sfw` request also returned 200 after the restart.)*
 
 ## 4. Close the loop with HeartCode
 
