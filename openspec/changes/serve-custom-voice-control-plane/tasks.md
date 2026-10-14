@@ -1,5 +1,19 @@
 # Tasks: serve-custom-voice-control-plane
 
+> **Parked 2026-10-14.** HeartCode moved custom voices out of its MVP. e994bf8
+> is deployed on Pea, but `pea-custom-voice-control-plane` (:8210) is stopped.
+> It runs as boss: `CUSTOM_VOICE_UID/GID=1000` in `.env`, with the original kept
+> as `.env.bak-2026-10-14`. Its keys and callbacks (`heartcode-dev`) are written.
+>
+> Before restarting:
+> 1. `chown boss:boss` the root-owned `registry.json` and
+>    `custom-voice-map.json`.
+> 2. Give Pea a route to the HeartCode backend.
+> 3. Start the runner with worker `dima-v2-r3`.
+>
+> Bug to fix on restart: `RegistryError` surfaces as a bare 500 instead of a
+> SafeError.
+
 ## 1. Contract
 
 - [x] 1.1 Contract 1.1.0. New routes: intake, registry read, deletion read. `sbom` added to `BuildResult`, `admin_attestation` to a flat `ActivationRequest` (the 1.0 `allOf` of two closed schemas accepted nothing). Job `events` added. Callback signature, retire, stage and intake idempotency are documented, the last one excluding `fetch_url`
