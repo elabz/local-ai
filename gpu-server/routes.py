@@ -442,6 +442,22 @@ async def _stream_completion(request: Request, llama_client, body: CompletionReq
         end_inference(request)
 
 
+def _with_cached_tokens(usage: dict[str, Any], timings: Optional[dict[str, Any]]) -> dict[str, Any]:
+    """OpenAI's `prompt_tokens_details.cached_tokens`, from llama.cpp's timings if absent.
+
+    Some llama-server builds and templates report reuse only in `timings.cache_n`
+    (Lumimaid's on 2026-10-16), and LiteLLM keeps only the OpenAI usage on a
+    stream, so without this the figure would not reach the client.
+    """
+    details = usage.get("prompt_tokens_details")
+    if isinstance(details, dict) and "cached_tokens" in details:
+        return usage
+    cache_n = (timings or {}).get("cache_n")
+    if not isinstance(cache_n, int):
+        return usage
+    return {**usage, "prompt_tokens_details": {**(details or {}), "cached_tokens": cache_n}}
+
+
 async def _stream_chat_completion(request: Request, llama_client, messages: list, body: ChatCompletionRequest):
     """Stream chat completion responses via llama.cpp native chat API."""
     import orjson
@@ -493,7 +509,7 @@ async def _stream_chat_completion(request: Request, llama_client, messages: list
                 "id": f"chatcmpl-{settings.server_id}",
                 "object": "chat.completion.chunk",
                 "choices": [],
-                "usage": usage["usage"],
+                "usage": _with_cached_tokens(usage["usage"], usage.get("timings")),
             }
             if "timings" in usage:
                 usage_chunk["timings"] = usage["timings"]

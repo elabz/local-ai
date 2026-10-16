@@ -17,7 +17,7 @@ sys.path.insert(0, str(GPU_SERVER))
 
 from availability import BackendAvailability  # noqa: E402
 from llama_client import LlamaClient  # noqa: E402
-from routes import ChatCompletionRequest, _stream_chat_completion  # noqa: E402
+from routes import ChatCompletionRequest, _stream_chat_completion, _with_cached_tokens  # noqa: E402
 
 USAGE = {"completion_tokens": 3, "prompt_tokens": 19, "total_tokens": 22,
          "prompt_tokens_details": {"cached_tokens": 14}}
@@ -121,3 +121,17 @@ def test_no_usage_chunk_unless_asked():
     events = _events(body)
     assert events[-1] == "[DONE]"
     assert all("usage" not in json.loads(e) for e in events[:-1])
+
+
+def test_cached_tokens_come_from_timings_when_llama_leaves_them_out():
+    # Lumimaid's llama-server reports reuse only in timings (2026-10-16).
+    usage = {"completion_tokens": 2, "prompt_tokens": 17, "total_tokens": 19}
+    filled = _with_cached_tokens(usage, {"cache_n": 16, "prompt_n": 1})
+    assert filled["prompt_tokens_details"] == {"cached_tokens": 16}
+    assert "prompt_tokens_details" not in usage  # not mutated
+
+
+def test_reported_cached_tokens_are_left_alone():
+    usage = {"prompt_tokens": 19, "prompt_tokens_details": {"cached_tokens": 14}}
+    assert _with_cached_tokens(usage, {"cache_n": 99}) is usage
+    assert _with_cached_tokens({"prompt_tokens": 3}, None) == {"prompt_tokens": 3}
