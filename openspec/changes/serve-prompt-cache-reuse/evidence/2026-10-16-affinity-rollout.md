@@ -28,3 +28,25 @@ The back-to-back strays fit LiteLLM's in-flight bookkeeping:
 That is the "busier replica is never chosen" rule working as intended. Chat turns are seconds apart, since the user reads and types.
 
 The first back-to-back session's home was gpu3, yet it went mostly to gpu2. So gpu3 most likely had another client's request in flight then: the dev stack's memory jobs share the route.
+
+## Pea wrapper rollout (bind-mounted `routes.py` / `llama_client.py`)
+
+- **First pass (bd0f21e):** one worker at a time, gated on peer health, the worker's own health, and a streamed request carrying `cached_tokens`.
+  - `pea-gpu-3` passed.
+  - `pea-gpu-6` failed the gate. Its usage chunk was present, but Lumimaid's llama-server reports reuse only in `timings.cache_n`, never in `usage.prompt_tokens_details`.
+- **Fix (6cd056c):** the wrapper fills `cached_tokens` from `cache_n` when llama-server omits it. CI passed, including the image build.
+- **Second pass (6cd056c):** OK for pea-gpu-6, 4, 5, 2, 1 and 3, between 19:08 and 19:17 UTC, each followed by a 60 s soak.
+- **Deploy dry run afterwards:** clean for the chat workers. It lists `pea-speech-gpu-exporter` as `Recreate`, which is earlier drift unrelated to this change; audio work is parked, so it was left alone.
+
+## End to end through LiteLLM (streamed, same session id, 2 s apart)
+
+| Route | Turn 1 cached / prompt | Turn 2 cached / prompt |
+|---|---|---|
+| heartcode-chat-sfw | 1 / 36 | 31 / 36 |
+| heartcode-chat-nsfw | 2 / 37 | 36 / 37 |
+
+## Through HeartCode (dev stack, today's legacy layout, two consecutive turns)
+
+`Prompt cache: route=heartcode-chat-sfw reused=1 evaluated=1333 first_answer=4.07s`, then `reused=1 evaluated=1334 first_answer=4.78s`. The admin endpoint shows the same: reuse 0.07%, mean first answer 4.42 s.
+
+This is the baseline `stable-prompt-prefix` set out to record. Routing and reporting now work; the legacy prompt layout is what discards the cache on every turn.
