@@ -8,6 +8,7 @@
 
 - [ ] 2.1 Enable Redis for the LiteLLM router and set `priority` per key (interactive 0, batch 1); test saturation ordering
 - [ ] 2.2 Implement session affinity (custom routing strategy + Redis session map with TTL) and expose cache-hit metrics from llama.cpp slot stats
+  *(2026-10-16: chat affinity and the reuse figures are being done in `serve-prompt-cache-reuse` §1–2, by session-id rendezvous hashing among least-busy ties, with no session map. When this change takes up multi-slot serving, keep that tie-break rather than adding a second mechanism.)*
 - [ ] 2.3 Document `X-Session-Id` and shared-prefix-first prompt layout in the client contract
 
 ## 3. Capacity model
