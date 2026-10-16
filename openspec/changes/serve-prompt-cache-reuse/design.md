@@ -47,7 +47,16 @@ The strategy's `_get_available_deployments` never sees the request. Task 1.1 rea
 1. **A contextvar set by a proxy pre-call callback.** The callback reads `X-Session-Id` from the request headers, or `metadata.session_id` from the body. `least_busy.py` reads the contextvar. The router is untouched, provided the callback and the routing run in the same task context, which 1.1 confirms.
 2. **Extending the patched `async_get_available_deployments` call** to receive `request_kwargs`. This touches the router call site too, so it is a larger patch to carry across image bumps.
 
-Whichever form works is what HeartCode sends (its task 2.8). The CI guard on the patch is widened to name exactly the methods that change.
+Whichever form works is what HeartCode sends (its task 2.8).
+
+**Settled 2026-10-16 (task 1.1), from the pinned image's source:**
+- `Router.async_get_healthy_deployments` runs `async_callback_filter_deployments`, which awaits every `CustomLogger` in `litellm.callbacks`. Each gets `request_kwargs`.
+- This happens after cooldown filtering and before the strategy picks, in the same awaited call. A context variable set there is therefore visible to the tie-break.
+- The proxy keeps request headers in `metadata["headers"]` and body `metadata` keys in `metadata`. **Both forms are accepted:** the `X-Session-Id` header wins over `metadata.session_id`.
+
+So the callback, `litellm/session_affinity.py`, only reads the id and sets `session_affinity_id`; it never removes a deployment. The patch's change stays inside `_get_available_deployments`, plus a module-level context variable, so the existing CI guard holds unchanged.
+
+Option 2 was not needed. Neither was LiteLLM's built-in `prompt_caching` check: it applies only to prompts its provider table marks as cacheable, and it pins outright rather than among ties.
 
 ### D3. Reuse figures
 Task 2.1 sends one streamed and one non-streamed completion through LiteLLM on each route and records which of these arrive:

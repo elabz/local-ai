@@ -6,11 +6,24 @@
 #   - use litellm.success + failure callbacks to log when a request completed
 #   - in get_available_deployment, for a given model group name -> pick based on traffic
 
+import hashlib
 import random
+from contextvars import ContextVar
 from typing import Optional
 
 from litellm.caching.caching import DualCache
 from litellm.integrations.custom_logger import CustomLogger
+
+# LOCAL PATCH (local-ai, serve-prompt-cache-reuse): the session id of the
+# request being routed, set by litellm/session_affinity.py's deployment filter,
+# which runs earlier in the same awaited routing call. Unset means no affinity.
+session_affinity_id: ContextVar[Optional[str]] = ContextVar(
+    "heartcode_session_affinity_id", default=None
+)
+
+
+def _affinity_score(session_id: str, deployment_id) -> bytes:
+    return hashlib.sha256(f"{session_id}\x00{deployment_id}".encode()).digest()
 
 
 class LeastBusyLoggingHandler(CustomLogger):
@@ -205,6 +218,11 @@ class LeastBusyLoggingHandler(CustomLogger):
         of SFW chat and ran hot. Here: only healthy deployments are considered,
         negative counts (a missed increment) read as 0, and ties are broken
         uniformly at random.
+
+        serve-prompt-cache-reuse: a request carrying a session id breaks the tie
+        by rendezvous hashing instead, so a conversation keeps reaching the
+        replica that holds its prompt cache while that replica is no busier
+        than the others. Losing a replica moves only the sessions it held.
         """
         if not healthy_deployments:
             return random.choice(healthy_deployments)  # same IndexError as upstream
@@ -214,9 +232,11 @@ class LeastBusyLoggingHandler(CustomLogger):
             count = all_deployments.get(_id, all_deployments.get(str(_id))) or 0
             in_flight[_id] = max(count, 0)
         lowest = min(in_flight.values())
-        return random.choice(
-            [d for d in healthy_deployments if in_flight[d["model_info"]["id"]] == lowest]
-        )
+        ties = [d for d in healthy_deployments if in_flight[d["model_info"]["id"]] == lowest]
+        session_id = session_affinity_id.get()
+        if session_id:
+            return max(ties, key=lambda d: _affinity_score(session_id, d["model_info"]["id"]))
+        return random.choice(ties)
 
     def get_available_deployments(
         self,

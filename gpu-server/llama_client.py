@@ -261,10 +261,15 @@ class LlamaClient:
         seed: Optional[int] = None,
         presence_penalty: Optional[float] = None,
         frequency_penalty: Optional[float] = None,
+        usage_sink: Optional[Dict[str, Any]] = None,
     ) -> AsyncGenerator[str, None]:
         """
         Stream chat completion via llama.cpp's native /v1/chat/completions.
         Yields content deltas as strings.
+
+        llama-server's final chunk carries `usage` (with
+        `prompt_tokens_details.cached_tokens`) and `timings`. When `usage_sink`
+        is given they are stored in it, so the route can pass them on.
         """
         import orjson
 
@@ -274,6 +279,7 @@ class LlamaClient:
             "temperature": _value_or_default(temperature, settings.default_temperature),
             "top_p": _value_or_default(top_p, settings.default_top_p),
             "stream": True,
+            "stream_options": {"include_usage": True},
         }
         payload.update(
             _optional_sampling_params(
@@ -311,7 +317,11 @@ class LlamaClient:
                             break
                         try:
                             chunk = orjson.loads(data)
-                            delta = chunk.get("choices", [{}])[0].get("delta", {})
+                            if usage_sink is not None:
+                                for key in ("usage", "timings"):
+                                    if isinstance(chunk.get(key), dict):
+                                        usage_sink[key] = chunk[key]
+                            delta = (chunk.get("choices") or [{}])[0].get("delta", {})
                             content = delta.get("content", "")
                             if content:
                                 yield content

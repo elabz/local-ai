@@ -83,6 +83,9 @@ class ChatCompletionRequest(BaseModel):
     # The OpenAI-world spelling of llama.cpp's `repeat_penalty`.
     repetition_penalty: Optional[float] = None
     stream: bool = False
+    # `{"include_usage": true}` adds a final usage chunk to a stream, with
+    # llama.cpp's prompt-cache figures (serve-prompt-cache-reuse).
+    stream_options: Optional[dict[str, Any]] = None
     model: Optional[str] = None  # Ignored, for OpenAI compatibility
     response_format: Optional[dict[str, Any]] = None
     tools: Optional[List[dict[str, Any]]] = None
@@ -443,9 +446,11 @@ async def _stream_chat_completion(request: Request, llama_client, messages: list
     """Stream chat completion responses via llama.cpp native chat API."""
     import orjson
 
+    usage: dict[str, Any] = {}
     try:
         async for token in llama_client.chat_completion_stream(
             messages=messages,
+            usage_sink=usage,
             max_tokens=body.max_tokens,
             temperature=body.temperature,
             top_p=body.top_p,
@@ -480,6 +485,19 @@ async def _stream_chat_completion(request: Request, llama_client, messages: list
             "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
         }
         yield {"data": orjson.dumps(final_chunk).decode()}
+        # OpenAI's shape: a last chunk with no choices and the usage, sent
+        # only when asked for. `usage` carries llama.cpp's
+        # `prompt_tokens_details.cached_tokens`; `timings` is llama.cpp's own.
+        if (body.stream_options or {}).get("include_usage") and "usage" in usage:
+            usage_chunk = {
+                "id": f"chatcmpl-{settings.server_id}",
+                "object": "chat.completion.chunk",
+                "choices": [],
+                "usage": usage["usage"],
+            }
+            if "timings" in usage:
+                usage_chunk["timings"] = usage["timings"]
+            yield {"data": orjson.dumps(usage_chunk).decode()}
         yield {"data": "[DONE]"}
 
     except Exception as e:

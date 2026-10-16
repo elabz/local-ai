@@ -94,6 +94,10 @@ litellm_settings:
     # Bounds HeartCode's public API keys as a group (message size and count,
     # sampler clamps, per-model-group admission); see public_api_guard.py.
     - public_api_guard.public_api_guard
+    # Hands a request's session id (X-Session-Id or metadata.session_id) to the
+    # least-busy tie-break, so a conversation keeps its replica's prompt cache;
+    # see session_affinity.py and patches/README.md.
+    - session_affinity.session_affinity
     - prometheus
 
 # Environment variables needed:

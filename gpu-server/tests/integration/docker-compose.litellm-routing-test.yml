@@ -57,6 +57,21 @@ services:
     environment: {BACKEND_MODE: healthy}
     ports: ["4417:8080"]
 
+  # serve-prompt-cache-reuse: three interchangeable chat replicas that say
+  # which one served each reply.
+  gpu-test-affinity-1:
+    <<: *fake-backend
+    environment: {BACKEND_MODE: healthy, BACKEND_NAME: affinity-1}
+    ports: ["4418:8080"]
+
+  gpu-test-affinity-2:
+    <<: *fake-backend
+    environment: {BACKEND_MODE: healthy, BACKEND_NAME: affinity-2}
+
+  gpu-test-affinity-3:
+    <<: *fake-backend
+    environment: {BACKEND_MODE: healthy, BACKEND_NAME: affinity-3}
+
   litellm-routing-test:
     image: ${LITELLM_IMAGE:-ghcr.io/berriai/litellm:main-latest@sha256:bb0639701796218a3447160e55c0f1097446e4e6085df7dfd39f476d4143743f}
     command: ["--config", "/app/config.yaml", "--port", "4000"]
@@ -64,6 +79,9 @@ services:
       LITELLM_MASTER_KEY: test-gpu-routing-key
     volumes:
       - ./litellm_gpu_routing.yaml:/app/config.yaml:ro
+      # The production patch and callback, mounted exactly as litellm/docker-compose.yml does.
+      - ../../../litellm/patches/least_busy.py:/usr/lib/python3.13/site-packages/litellm/router_strategy/least_busy.py:ro
+      - ../../../litellm/session_affinity.py:/app/session_affinity.py:ro
     ports:
       - "4410:4000"
     depends_on:
@@ -75,3 +93,6 @@ services:
       - gpu-test-speech-defaults
       - gpu-test-stt
       - gpu-test-tts
+      - gpu-test-affinity-1
+      - gpu-test-affinity-2
+      - gpu-test-affinity-3

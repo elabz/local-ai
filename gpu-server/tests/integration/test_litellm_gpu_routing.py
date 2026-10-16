@@ -7,6 +7,7 @@ The stack pins the same LiteLLM digest as litellm/docker-compose.yml, so what
 passes here is what Prod's router does.
 """
 
+import json
 import os
 import re
 import time
@@ -286,3 +287,60 @@ def test_sole_stt_deployment_is_never_cooled_and_fails_fast():
 
 def test_sole_tts_deployment_is_never_cooled_and_fails_fast():
     _assert_sole_deployment_fails_fast_and_stays_routable(speak, "speech-tts", TTS, "gpu-test-tts", PROBE_TTS)
+
+
+# --- serve-prompt-cache-reuse: session affinity and streamed reuse figures ----
+
+AFFINITY_STATS = os.getenv("LITELLM_GPU_TEST_AFFINITY_STATS", "http://localhost:4418")
+
+
+def affinity_chat(session_id=None, where="header", stream=False):
+    headers = {"Authorization": f"Bearer {TEST_KEY}"}
+    body = {"model": "chat-affinity", "messages": [{"role": "user", "content": "routing-probe"}], "max_tokens": 4}
+    if session_id and where == "header":
+        headers["X-Session-Id"] = session_id
+    elif session_id:
+        body["metadata"] = {"session_id": session_id}
+    if stream:
+        body["stream"] = True
+        body["stream_options"] = {"include_usage": True}
+    return httpx.post(f"{BASE_URL}/v1/chat/completions", headers=headers, json=body, timeout=30)
+
+
+def served_by(response) -> str:
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
+
+
+@pytest.mark.parametrize("where", ["header", "metadata"])
+def test_a_session_keeps_its_replica_on_an_idle_pool(where):
+    replicas = {served_by(affinity_chat(f"conv-{where}-1", where=where)) for _ in range(12)}
+    assert len(replicas) == 1, replicas
+
+
+def test_distinct_sessions_and_anonymous_requests_still_spread():
+    sessions = {served_by(affinity_chat(f"conv-spread-{n}")) for n in range(30)}
+    anonymous = {served_by(affinity_chat()) for _ in range(30)}
+    assert len(sessions) == 3, sessions
+    assert len(anonymous) == 3, anonymous
+
+
+def test_streamed_usage_carries_cached_tokens_through_the_proxy():
+    response = affinity_chat("conv-stream", stream=True)
+    response.raise_for_status()
+    usage = None
+    for line in response.text.splitlines():
+        if line.startswith("data: ") and line != "data: [DONE]":
+            chunk = json.loads(line[6:])
+            usage = chunk.get("usage") or usage
+    assert usage is not None, response.text
+    assert (usage.get("prompt_tokens_details") or {}).get("cached_tokens") == 7, usage
+
+
+def test_the_proxy_forwards_stream_options_to_the_backend():
+    # Every session that hashes to replica 1 lands there; send a few distinct ones.
+    for n in range(12):
+        affinity_chat(f"conv-opts-{n}", stream=True).raise_for_status()
+    last = httpx.get(f"{AFFINITY_STATS}/last-chat", timeout=5).json()
+    assert last.get("stream") is True
+    assert (last.get("stream_options") or {}).get("include_usage") is True, last

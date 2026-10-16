@@ -20,6 +20,12 @@ anything else (LiteLLM's background health check also issues chat calls for
 `mode: chat` deployments) is counted separately so the assertions only see
 traffic the test itself sent. GET /stats reports per-path status counts so a
 test can prove that LiteLLM kept (or stopped) sending traffic to this backend.
+
+BACKEND_NAME (default: the mode) is what a chat reply says served it, so a
+test can tell replicas apart. A streamed chat request gets an SSE answer, with
+a final usage chunk carrying `prompt_tokens_details.cached_tokens` when the
+request asked for `stream_options.include_usage`, as llama-server sends it.
+GET /last-chat returns the last probe chat body this backend received.
 """
 
 import json
@@ -28,11 +34,14 @@ import threading
 from collections import Counter
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 app = FastAPI()
 
 MODE = os.getenv("BACKEND_MODE") or ("healthy" if os.getenv("BACKEND_AVAILABLE", "0") == "1" else "unavailable")
+NAME = os.getenv("BACKEND_NAME") or MODE
+CACHED_TOKENS = 7
+_last_chat: dict = {}
 _lock = threading.Lock()
 _stats: Counter = Counter()
 _chat_calls = 0
@@ -109,11 +118,36 @@ async def embeddings():
     }
 
 
+@app.get("/last-chat")
+async def last_chat():
+    with _lock:
+        return dict(_last_chat)
+
+
+def _sse(payload: dict, include_usage: bool):
+    def chunk(data) -> str:
+        return f"data: {json.dumps(data)}\n\n"
+
+    base = {"id": f"chatcmpl-{NAME}", "object": "chat.completion.chunk", "model": "test-chat"}
+    yield chunk({**base, "choices": [{"index": 0, "delta": {"role": "assistant", "content": f"served-by-{NAME}"}, "finish_reason": None}]})
+    yield chunk({**base, "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]})
+    if include_usage:
+        yield chunk({**base, "choices": [], "usage": {
+            "prompt_tokens": 9, "completion_tokens": 1, "total_tokens": 10,
+            "prompt_tokens_details": {"cached_tokens": CACHED_TOKENS}}})
+    yield "data: [DONE]\n\n"
+
+
 @app.post("/v1/chat/completions")
 async def chat_completions(request: Request):
     global _chat_calls
-    body = json.dumps(await request.json())
+    payload = await request.json()
+    body = json.dumps(payload)
     probe = "routing-probe" in body
+    if probe:
+        with _lock:
+            _last_chat.clear()
+            _last_chat.update(payload)
     path = "/v1/chat/completions" + (" probe" if probe else " other")
     if not available():
         raise _unavailable(path)
@@ -140,12 +174,16 @@ async def chat_completions(request: Request):
                      "detail": {"code": "BACKEND_UNAVAILABLE", "reason": "downstream_timeout"}},
         )
     _count(path, 200)
+    if payload.get("stream"):
+        include_usage = bool((payload.get("stream_options") or {}).get("include_usage"))
+        return StreamingResponse(_sse(payload, include_usage), media_type="text/event-stream")
     return {
-        "id": f"chatcmpl-{MODE}",
+        "id": f"chatcmpl-{NAME}",
         "object": "chat.completion",
         "model": "test-chat",
-        "choices": [{"index": 0, "message": {"role": "assistant", "content": f"served-by-{MODE}"}, "finish_reason": "stop"}],
-        "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+        "choices": [{"index": 0, "message": {"role": "assistant", "content": f"served-by-{NAME}"}, "finish_reason": "stop"}],
+        "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2,
+                  "prompt_tokens_details": {"cached_tokens": CACHED_TOKENS}},
     }
 
 

@@ -26,6 +26,15 @@ one request at a time, so nearly every request is a tie (all replicas idle). Ove
 
 Concurrent traffic still goes to the least-busy replica, as before.
 
+**Session affinity (2026-10-16, `serve-prompt-cache-reuse`).** A request carrying a session id breaks the tie by rendezvous hashing instead of at random. The id comes from an `X-Session-Id` header or `metadata.session_id`.
+- **Why.** Each chat worker keeps the previous turn's prompt in its llama.cpp cache, so a conversation's next turn starts several times faster on the same replica.
+- **How the id reaches the tie-break.** The strategy never sees the request. `litellm/session_affinity.py` is a callback whose `async_filter_deployments` LiteLLM runs with the request's kwargs. It runs before the strategy, in the same awaited routing call. The callback puts the id in the `session_affinity_id` context variable that this patch defines.
+- **What stays the same.**
+  - A busier replica is never chosen for affinity.
+  - Requests with no id keep the random tie-break.
+  - A replica leaving the pool moves only its own sessions.
+- **Tested** in `gpu-server/tests/test_litellm_least_busy_patch.py`, `test_litellm_session_affinity.py`, and the pinned-proxy integration rig. The rig mounts this patch and the callback exactly as production does.
+
 `least_busy.upstream.py` is the unmodified file from the pinned image, kept for
 diffing and re-applying:
 

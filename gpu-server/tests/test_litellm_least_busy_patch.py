@@ -27,7 +27,7 @@ UPSTREAM_SHA256 = "1048acdd98b98ba666987493af6f585c2adede4c0074a53e4616202f06dce
 
 
 @pytest.fixture
-def handler(monkeypatch):
+def patched(monkeypatch):
     for name in ("litellm", "litellm.caching", "litellm.integrations"):
         monkeypatch.setitem(sys.modules, name, types.ModuleType(name))
     caching = types.ModuleType("litellm.caching.caching")
@@ -39,7 +39,12 @@ def handler(monkeypatch):
     spec = importlib.util.spec_from_file_location("least_busy_patched", PATCHED)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.LeastBusyLoggingHandler(router_cache=None)
+    return module
+
+
+@pytest.fixture
+def handler(patched):
+    return patched.LeastBusyLoggingHandler(router_cache=None)
 
 
 def deployments(*ids):
@@ -77,6 +82,48 @@ def test_negative_drift_counts_as_idle_not_preferred(handler):
     assert {pick(handler, healthy, counts) for _ in range(200)} == {"heartcode-gpu1", "heartcode-gpu2"}
 
 
+def _with_session(patched, session_id, fn):
+    token = patched.session_affinity_id.set(session_id)
+    try:
+        return fn()
+    finally:
+        patched.session_affinity_id.reset(token)
+
+
+def test_a_session_keeps_its_replica_while_idle(patched, handler):
+    healthy = deployments("heartcode-gpu1", "heartcode-gpu2", "heartcode-gpu3")
+    picks = _with_session(patched, "conv-a", lambda: {pick(handler, healthy, {}) for _ in range(50)})
+    assert len(picks) == 1
+
+
+def test_sessions_spread_across_replicas(patched, handler):
+    healthy = deployments("heartcode-gpu1", "heartcode-gpu2", "heartcode-gpu3")
+    homes = Counter(
+        _with_session(patched, f"conv-{n}", lambda: pick(handler, healthy, {})) for n in range(3000)
+    )
+    assert set(homes) == {"heartcode-gpu1", "heartcode-gpu2", "heartcode-gpu3"}
+    assert min(homes.values()) > 850
+
+
+def test_a_busier_home_replica_is_not_waited_for(patched, handler):
+    healthy = deployments("heartcode-gpu1", "heartcode-gpu2", "heartcode-gpu3")
+    home = _with_session(patched, "conv-a", lambda: pick(handler, healthy, {}))
+    counts = {d["model_info"]["id"]: 0 for d in healthy}
+    counts[home] = 1
+    elsewhere = _with_session(patched, "conv-a", lambda: {pick(handler, healthy, counts) for _ in range(20)})
+    assert len(elsewhere) == 1 and home not in elsewhere
+
+
+def test_losing_a_replica_moves_only_its_sessions(patched, handler):
+    full = deployments("heartcode-gpu1", "heartcode-gpu2", "heartcode-gpu3")
+    sessions = [f"conv-{n}" for n in range(300)]
+    before = {s: _with_session(patched, s, lambda: pick(handler, full, {})) for s in sessions}
+    reduced = deployments("heartcode-gpu1", "heartcode-gpu3")
+    after = {s: _with_session(patched, s, lambda: pick(handler, reduced, {})) for s in sessions}
+    moved = {s for s in sessions if before[s] != after[s]}
+    assert moved == {s for s in sessions if before[s] == "heartcode-gpu2"}
+
+
 def test_upstream_reference_is_the_pinned_images_file():
     assert hashlib.sha256(UPSTREAM.read_bytes()).hexdigest() == UPSTREAM_SHA256
 
@@ -88,6 +135,8 @@ def test_compose_pins_the_image_the_patch_was_written_for():
         "re-apply the patch, and update IMAGE_DIGEST/UPSTREAM_SHA256"
     )
     assert "./patches/least_busy.py:/usr/lib/python3.13/site-packages/litellm/router_strategy/least_busy.py:ro" in compose
+    # The session-affinity callback reads its context variable from the patch.
+    assert "./session_affinity.py:/app/session_affinity.py:ro" in compose
 
 
 def test_patch_touches_only_the_tie_break_method():

@@ -51,6 +51,7 @@ services:
       - ./config.yaml:/app/config.yaml:ro
       - ./speech_correlation.py:/app/speech_correlation.py:ro
       - ./public_api_guard.py:/app/public_api_guard.py:ro
+      - ./session_affinity.py:/app/session_affinity.py:ro
       # least-busy with random tie-breaking (litellm/patches/README.md)
       - ./patches/least_busy.py:/usr/lib/python3.13/site-packages/litellm/router_strategy/least_busy.py:ro
     env_file:

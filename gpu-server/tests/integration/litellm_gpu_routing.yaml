@@ -124,6 +124,35 @@ model_list:
       id: speech-tts-1
       mode: audio_speech
 
+  # serve-prompt-cache-reuse: a session keeps its replica while the pool is idle.
+  - model_name: chat-affinity
+    litellm_params:
+      model: openai/test-chat
+      api_base: http://gpu-test-affinity-1:8080/v1
+      api_key: test
+      timeout: 10
+    model_info:
+      id: affinity-replica-1
+      mode: chat
+  - model_name: chat-affinity
+    litellm_params:
+      model: openai/test-chat
+      api_base: http://gpu-test-affinity-2:8080/v1
+      api_key: test
+      timeout: 10
+    model_info:
+      id: affinity-replica-2
+      mode: chat
+  - model_name: chat-affinity
+    litellm_params:
+      model: openai/test-chat
+      api_base: http://gpu-test-affinity-3:8080/v1
+      api_key: test
+      timeout: 10
+    model_info:
+      id: affinity-replica-3
+      mode: chat
+
 router_settings:
   routing_strategy: least-busy
   enable_health_check: true
@@ -142,3 +171,5 @@ general_settings:
 litellm_settings:
   callbacks:
     - prometheus
+    # serve-prompt-cache-reuse, as in litellm/config.base.yaml.
+    - session_affinity.session_affinity
