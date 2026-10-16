@@ -79,10 +79,10 @@ models:
   # --- NSFW chat (GPU 4-6) -----------------------------------------------------
   - api_name: heartcode-chat-nsfw
     kind: chat
-    # lowered 2026-09-19 from 3: GPU 5 (:8084) garbles NSFW replies (stray "? "
-    # prefix, corrupted words) at ~6.6 GiB, below the 7.6 GiB threshold assumed
-    # safe. Container left running for diagnosis; restore to 3 with the replica.
-    min_replicas: 2
+    # back to 3 on 2026-10-16: the card under GPU 5 (:8084), which garbled NSFW
+    # replies from 2026-09-19, was replaced (GPU-62676508) and matched a healthy
+    # replica reply for reply up to 8,252 prompt tokens.
+    min_replicas: 3
     mode: chat
     litellm_model: Lumimaid-v0.2-8B-Q5_K_M-imat.gguf
     model_type: nsfw
@@ -107,7 +107,7 @@ models:
       # expires, so list a replica here only when its container is actually
       # running.
       - {gpu: 4, port: 8083}
-      # - {gpu: 5, port: 8084}  # pulled 2026-09-19: corrupt output, see min_replicas
+      - {gpu: 5, port: 8084}  # card replaced 2026-10-16 (pulled 2026-09-19)
       - {gpu: 6, port: 8085}
 
   # --- Text embeddings, nomic-embed-text-v1.5 GGUF (GPU 4-5, co-located) --------

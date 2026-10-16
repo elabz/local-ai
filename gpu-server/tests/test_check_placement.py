@@ -15,15 +15,16 @@ placement = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(placement)
 
 FIXTURES = Path(__file__).parent / "fixtures" / "placement"
-GPU5 = "GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b"
+GPU5 = "GPU-62676508-8e4e-f040-6515-135a0b906ed1"  # replaced GPU-d8525241 on 2026-10-16
 GPU6 = "GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9"
 GPU6_PCI = "0000:0b:00.0"
 
 
 @pytest.fixture
 def snapshot():
-    """Live PEA state recorded 2026-09-16 with --dump-snapshot (healthy layout)."""
-    return json.loads((FIXTURES / "pea-snapshot-2026-09-16.json").read_text())
+    """Live PEA state recorded 2026-10-16 with --dump-snapshot (healthy layout,
+    after the GPU 5 card was replaced and :8084 returned to routing)."""
+    return json.loads((FIXTURES / "pea-snapshot-2026-10-16.json").read_text())
 
 
 @pytest.fixture
@@ -65,19 +66,19 @@ def test_routed_ports_cover_every_manifest_deployment(routed):
 
 
 def test_quarantined_container_is_running_but_unrouted(snapshot, topology, routed):
-    """GPU 5 keeps serving embeddings while its chat replica is pulled."""
-    quarantined = topology["slots"]["0000:0a:00.0"]["quarantined"]
-    assert quarantined["containers"] == ["pea-gpu-5"] and quarantined["reason"]
+    """A faulty card keeps serving embeddings while its chat replica is pulled
+    (GPU 5, 2026-09-19 to 2026-10-16)."""
+    topology["slots"]["0000:0a:00.0"]["quarantined"] = {
+        "containers": ["pea-gpu-5"], "since": "2026-09-19", "reason": "garbled generation"}
     assert named(snapshot, "pea-gpu-5")["ports"] == [8084]
-    assert 8084 not in routed, "the faulty chat replica must stay out of litellm/config.yaml"
+    routed = routed - {8084}
     assert 8094 in routed, "pea-embed-5 on the same card is still routed"
     assert placement.check(snapshot, topology, routed) == []
 
 
+
 def test_unquarantined_unrouted_container_still_drifts(snapshot, topology, routed):
-    topology = copy.deepcopy(topology)
-    del topology["slots"]["0000:0a:00.0"]["quarantined"]
-    assert kinds(placement.check(snapshot, topology, routed)) == ["gpu-5 unrouted"]
+    assert kinds(placement.check(snapshot, topology, routed - {8084})) == ["gpu-5 unrouted"]
 
 
 def test_routed_ports_ignore_other_hosts():

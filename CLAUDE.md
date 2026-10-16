@@ -41,7 +41,7 @@ local-ai/
 
 ## Deployment Topology
 
-- **PEA (192.168.70.144)**: All GPU servers — 3 SFW + 3 NSFW chat (GPU 4-6), each co-located with one embed server (vision on 1-2, DINOv2-visual on 3+6, text on 4-5) + image on 8, speech on 7 — `gpu-server/docker-compose.yml`. GPU 5 corrupts generation above ~7.6 GiB per process: only the fleet 8B config belongs there.
+- **PEA (192.168.70.144)**: All GPU servers — 3 SFW + 3 NSFW chat (GPU 4-6), each co-located with one embed server (vision on 1-2, DINOv2-visual on 3+6, text on 4-5) + image on 8, speech on 7 — `gpu-server/docker-compose.yml`. GPU 5's card was replaced on 2026-10-16 after corrupting generation; the new card is unqualified above the fleet 8B config.
 - **Prod (192.168.70.152)**: LiteLLM proxy + monitoring — `litellm/docker-compose.yml`
 
 ## Common Commands
@@ -116,7 +116,7 @@ Then deploy via `deploy.yml`, or **manually** (fallback if the runner is down):
 | API Name | Type | GPUs | Replicas (min) | Model | Quant | Chat Template |
 |----------|------|------|----------------|-------|-------|---------------|
 | `heartcode-chat-sfw` | Chat (SFW) | 1-3 | 3 (3) | gemma-4-E4B-it | QAT Q4_0 | GGUF-embedded (`--jinja`) |
-| `heartcode-chat-nsfw` | Chat (NSFW) | 4, 6 | 2 (2) | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M | GGUF-embedded (`--jinja`) |
+| `heartcode-chat-nsfw` | Chat (NSFW) | 4-6 | 3 (3) | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M | GGUF-embedded (`--jinja`) |
 | `heartcode-embed` | Embedding (text) | 4-5 | 2 (2) | nomic-embed-text-v1.5 | Q8_0 | — |
 | `heartcode-embed-vision` | Embedding (text + image) | 1-2 | 2 (2) | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | fp32¹ | — |
 | `heartcode-embed-visual` | Embedding (image-only) | 3, 6 | 2 (2) | DINOv2 ViT-L/14 (with registers) | fp32² | — |
@@ -143,8 +143,8 @@ Embed tier is **2 of each type**, co-located one-per-chat-GPU (`rebalance-embed-
 |-------|-------------|-------|-----|-----------------|
 | 5100 | `heartcode-image` | Segmind SSD-1B (SDXL distilled) | GPU 8 | — |
 | 8080-8082 | `heartcode-chat-sfw` | gemma-4-E4B-it | GPU 1-3 | `heartcode-embed-vision` (GPU 1-2), `heartcode-embed-visual` (GPU 3) |
-| 8083, 8085 | `heartcode-chat-nsfw` | Lumimaid-v0.2-8B (NeverSleep) | GPU 4, 6 | `heartcode-embed` (GPU 4), `heartcode-embed-visual` (GPU 6) |
-| 8093-8094 | `heartcode-embed` | nomic-embed-text-v1.5 | GPU 4-5 | `heartcode-chat-nsfw` (GPU 4) |
+| 8083-8085 | `heartcode-chat-nsfw` | Lumimaid-v0.2-8B (NeverSleep) | GPU 4-6 | `heartcode-embed` (GPU 4-5), `heartcode-embed-visual` (GPU 6) |
+| 8093-8094 | `heartcode-embed` | nomic-embed-text-v1.5 | GPU 4-5 | `heartcode-chat-nsfw` (GPU 4-5) |
 | 8101-8102 | `heartcode-embed-vision` | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | GPU 1-2 | `heartcode-chat-sfw` (GPU 1-2) |
 | 8104-8105 | `heartcode-embed-visual` | DINOv2 ViT-L/14 (with registers) | GPU 3, 6 | `heartcode-chat-sfw` (GPU 3), `heartcode-chat-nsfw` (GPU 6) |
 | 8200 | `heartcode-stt` | faster-whisper small.en (speaches) | GPU 7 | `heartcode-tts` (GPU 7) |

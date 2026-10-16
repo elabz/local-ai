@@ -7,7 +7,7 @@ services:
     mem_limit: 8g
     memswap_limit: 10g
     environment:
-      NVIDIA_VISIBLE_DEVICES: ${SFW_CANARY_GPU_UUID:-${PEA_GPU_5_UUID:-GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b}}
+      NVIDIA_VISIBLE_DEVICES: ${SFW_CANARY_GPU_UUID:-${PEA_GPU_5_UUID:-GPU-62676508-8e4e-f040-6515-135a0b906ed1}}
     volumes:
       - ./models:/models:ro
     ports:
@@ -66,7 +66,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['${SFW_CANARY_GPU_UUID:-${PEA_GPU_5_UUID:-GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b}}']
+              device_ids: ['${SFW_CANARY_GPU_UUID:-${PEA_GPU_5_UUID:-GPU-62676508-8e4e-f040-6515-135a0b906ed1}}']
               capabilities: [gpu]
 
   nsfw-model-canary:

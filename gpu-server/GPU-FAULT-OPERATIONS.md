@@ -41,6 +41,26 @@ This repetition strongly implicates the slot, riser, ASM1184e switch lane,
 connector, or power delivery serving `04:00.0`; it does not by itself prove
 which component is defective or exclude two independent board failures.
 
+## PCI 0a:00.0 replacement (2026-10-16)
+
+`GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b` (slot `gpu-5`, `nvidia-smi` index 4)
+was replaced by `GPU-62676508-8e4e-f040-6515-135a0b906ed1` at the same address.
+
+- History of the failed board: 1,821 Xid faults, all on `0a:00` (13, 43 and
+  31 MMU faults; the last on 2026-07-25). Corrupt generation above ~7.6 GiB
+  (2026-09-04), at ~6.6 GiB (2026-09-19, pulled from `heartcode-chat-nsfw`),
+  then from ~1.1k prompt tokens at greedy decoding (2026-10-16). The image,
+  model file and flags matched the healthy NSFW replicas, so only the card
+  differed. The co-located text embedder stayed correct (cosine 1.000 against
+  `pea-embed-4`).
+- Found in the chassis by heat: 4 minutes of load on `:8084` alone took the
+  card to 81 C while the others sat at 30-46 C.
+- After power-up the controller adopted the new UUID ("Adopted replacement for
+  gpu-5 at 0000:0a:00.0") and recreated `pea-gpu-5` and `pea-embed-5` on it.
+  Acceptance: no Xid this boot; greedy replies identical to `:8085` at 632 to
+  8,252 prompt tokens; embeddings identical to `pea-embed-4`. `:8084` returned
+  to `heartcode-chat-nsfw` and the quarantine record was removed.
+
 ## Safe response
 
 1. Confirm the affected service returns 503 from `/health` but 200 from
