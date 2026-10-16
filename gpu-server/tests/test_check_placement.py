@@ -104,8 +104,7 @@ def test_canary_named_for_gpu5_pinned_to_gpu6_is_a_name_pin_mismatch(snapshot, t
     add_container(snapshot, "pea-sfw-model-canary-gpu5", [GPU6], [18085])
     topology["slots"][GPU6_PCI]["canary"] = {
         "container": "pea-sfw-model-canary-gpu5", "compose_file": "docker-compose.model-canaries.yml", "uuid": GPU6}
-    for name in ("pea-gpu-6", "pea-embed-dino-2"):
-        named(snapshot, name)["state"] = "exited"
+    named(snapshot, "pea-gpu-6")["state"] = "exited"
     drift = placement.check(snapshot, topology, routed)
     assert drift == ["gpu-6 name-pin-mismatch: pea-sfw-model-canary-gpu5 is pinned to gpu-6"]
 
@@ -148,14 +147,14 @@ def test_recorded_canary_expects_canary_and_flags_displaced_tenants(snapshot, to
     topology["slots"][GPU6_PCI]["canary"] = {
         "container": "pea-sfw-model-canary-gpu6", "compose_file": "docker-compose.model-canaries.yml", "uuid": GPU6}
     drift = placement.check(snapshot, topology, routed)
-    assert kinds(drift) == ["gpu-6 displaced-running", "gpu-6 displaced-running", "gpu-6 not-running"]
+    # GPU 6 has one tenant since dino-embed-2 moved to GPU 1 (2026-10-16).
+    assert kinds(drift) == ["gpu-6 displaced-running", "gpu-6 not-running"]
 
 
 def test_recorded_canary_running_with_tenants_stopped_is_clean(snapshot, topology, routed):
     topology["slots"][GPU6_PCI]["canary"] = {
         "container": "pea-sfw-model-canary-gpu6", "compose_file": "docker-compose.model-canaries.yml", "uuid": GPU6}
-    for name in ("pea-gpu-6", "pea-embed-dino-2"):
-        named(snapshot, name)["state"] = "exited"
+    named(snapshot, "pea-gpu-6")["state"] = "exited"
     snapshot["compute_apps"] = [a for a in snapshot["compute_apps"] if a["uuid"] != GPU6]
     add_container(snapshot, "pea-sfw-model-canary-gpu6", [GPU6], [18085])
     assert placement.check(snapshot, topology, routed) == []

@@ -41,7 +41,7 @@ local-ai/
 
 ## Deployment Topology
 
-- **PEA (192.168.70.144)**: All GPU servers — 3 SFW + 3 NSFW chat (GPU 4-6), each co-located with one embed server (vision on 1-2, DINOv2-visual on 3+6, text on 4-5) + image on 8, speech on 7 — `gpu-server/docker-compose.yml`. GPU 5's card was replaced on 2026-10-16 after corrupting generation; the new card is unqualified above the fleet 8B config.
+- **PEA (192.168.70.144)**: All GPU servers — 3 SFW + 3 NSFW chat (GPU 4-6), each co-located with one embed server (vision on 1-2, DINOv2-visual on 3 and 1, text on 4-5) + image on 8, speech on 7 — `gpu-server/docker-compose.yml`. GPU 5's card was replaced on 2026-10-16 after corrupting generation; the new card is unqualified above the fleet 8B config.
 - **Prod (192.168.70.152)**: LiteLLM proxy + monitoring — `litellm/docker-compose.yml`
 
 ## Common Commands
@@ -119,7 +119,7 @@ Then deploy via `deploy.yml`, or **manually** (fallback if the runner is down):
 | `heartcode-chat-nsfw` | Chat (NSFW) | 4-6 | 3 (3) | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M | GGUF-embedded (`--jinja`) |
 | `heartcode-embed` | Embedding (text) | 4-5 | 2 (2) | nomic-embed-text-v1.5 | Q8_0 | — |
 | `heartcode-embed-vision` | Embedding (text + image) | 1-2 | 2 (2) | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | fp32¹ | — |
-| `heartcode-embed-visual` | Embedding (image-only) | 3, 6 | 2 (2) | DINOv2 ViT-L/14 (with registers) | fp32² | — |
+| `heartcode-embed-visual` | Embedding (image-only) | 1, 3 | 2 (2) | DINOv2 ViT-L/14 (with registers) | fp32² | — |
 | `heartcode-image` | Image | 8 | 1 (1) | Segmind SSD-1B (SDXL distilled) | FP16 | — |
 | `heartcode-stt` | Speech-to-text | 7 | 1 (1) | faster-whisper small.en (speaches) | int8 | — |
 | `heartcode-tts` | Text-to-speech | 7 | 1 (1) | Kokoro-82M (kokoro-fastapi) | — | — |
@@ -142,11 +142,11 @@ Embed tier is **2 of each type**, co-located one-per-chat-GPU (`rebalance-embed-
 | Ports | Model group | Model | GPU | Shares GPU with |
 |-------|-------------|-------|-----|-----------------|
 | 5100 | `heartcode-image` | Segmind SSD-1B (SDXL distilled) | GPU 8 | — |
-| 8080-8082 | `heartcode-chat-sfw` | gemma-4-E4B-it | GPU 1-3 | `heartcode-embed-vision` (GPU 1-2), `heartcode-embed-visual` (GPU 3) |
-| 8083-8085 | `heartcode-chat-nsfw` | Lumimaid-v0.2-8B (NeverSleep) | GPU 4-6 | `heartcode-embed` (GPU 4-5), `heartcode-embed-visual` (GPU 6) |
+| 8080-8082 | `heartcode-chat-sfw` | gemma-4-E4B-it | GPU 1-3 | `heartcode-embed-vision` (GPU 1-2), `heartcode-embed-visual` (GPU 1, 3) |
+| 8083-8085 | `heartcode-chat-nsfw` | Lumimaid-v0.2-8B (NeverSleep) | GPU 4-6 | `heartcode-embed` (GPU 4-5) |
 | 8093-8094 | `heartcode-embed` | nomic-embed-text-v1.5 | GPU 4-5 | `heartcode-chat-nsfw` (GPU 4-5) |
-| 8101-8102 | `heartcode-embed-vision` | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | GPU 1-2 | `heartcode-chat-sfw` (GPU 1-2) |
-| 8104-8105 | `heartcode-embed-visual` | DINOv2 ViT-L/14 (with registers) | GPU 3, 6 | `heartcode-chat-sfw` (GPU 3), `heartcode-chat-nsfw` (GPU 6) |
+| 8101-8102 | `heartcode-embed-vision` | nomic-embed-vision-v1.5 + nomic-embed-text-v1.5 | GPU 1-2 | `heartcode-chat-sfw` (GPU 1-2), `heartcode-embed-visual` (GPU 1) |
+| 8104-8105 | `heartcode-embed-visual` | DINOv2 ViT-L/14 (with registers) | GPU 1, 3 | `heartcode-chat-sfw` (GPU 1, 3), `heartcode-embed-vision` (GPU 1) |
 | 8200 | `heartcode-stt` | faster-whisper small.en (speaches) | GPU 7 | `heartcode-tts` (GPU 7) |
 | 8201 | `heartcode-tts` | Kokoro-82M (kokoro-fastapi) | GPU 7 | `heartcode-stt` (GPU 7) |
 
@@ -227,7 +227,7 @@ The GPU chat servers use a FastAPI wrapper around llama.cpp's `llama-server`:
 - **GPUs**: 8x P104-100 (8GB VRAM, Pascal, compute 6.1)
 - **GPU numbering**: 1-indexed in configs (GPU 1-8), 0-indexed physical (`NVIDIA_VISIBLE_DEVICES=0-7`)
 - **Safe limits**: 35 RPM SFW, 34 RPM NSFW, 40 RPM vision embed (2), 28 RPM text embed (2), 40 RPM visual/DINOv2 (2)
-- **GPU allocation**: 1 embed server co-located per chat GPU — GPU 1-2 SFW chat + **vision-embed**, GPU 3 SFW chat + **DINOv2-visual**, GPU 4-5 NSFW chat + **text-embed**, GPU 6 NSFW chat + **DINOv2-visual**, GPU 7 **speech** (STT + TTS), GPU 8 **image**. GPU 1-2 ~7.4GB, GPU 3/6 ~7.5GB (chat+DINOv2) — monitor under peak load.
+- **GPU allocation**: 1 embed server co-located per chat GPU — GPU 1-2 SFW chat + **vision-embed**, GPU 3 SFW chat + **DINOv2-visual**, GPU 1 also carries the second **DINOv2-visual** (moved from GPU 6 on 2026-10-16), GPU 4-5 NSFW chat + **text-embed**, GPU 6 NSFW chat alone, GPU 7 **speech** (STT + TTS), GPU 8 **image**. GPU 1-2 ~7.4GB, GPU 3/6 ~7.5GB (chat+DINOv2) — monitor under peak load.
 
 ### Prod (192.168.70.152)
 - Runs LiteLLM proxy and PostgreSQL (monitoring and alerting run on PEA)

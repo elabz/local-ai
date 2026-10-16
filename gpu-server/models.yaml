@@ -154,7 +154,7 @@ models:
       - {gpu: 1, port: 8101}
       - {gpu: 2, port: 8102}
 
-  # --- Visual embeddings, DINOv2 ViT-L/14, 1024-d image-only (GPU 3, 6) ---------
+  # --- Visual embeddings, DINOv2 ViT-L/14, 1024-d image-only (GPU 3, 1) ---------
   - api_name: heartcode-embed-visual
     kind: visual-embed
     min_replicas: 2
@@ -170,7 +170,7 @@ models:
         - facebook/dinov2-with-registers-large
     deployments:
       - {gpu: 3, port: 8104}
-      - {gpu: 6, port: 8105}
+      - {gpu: 1, port: 8105}  # moved from GPU 6 on 2026-10-16 (NSFW headroom)
 
   # --- Image generation, Segmind SSD-1B via LocalAI (GPU 8) ---------------------
   # LocalAI auto-downloads the model on first request — nothing to pre-fetch.

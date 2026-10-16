@@ -12,14 +12,14 @@
 # back on GPU 2, leaving GPU 7 dedicated to speech.
 #
 # GPU UUIDs (from nvidia-smi -L):
-#   GPU 0: GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8   (pea-gpu-1, vision-1)
+#   GPU 0: GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8   (pea-gpu-1, vision-1, dino-2)
 #   GPU 1: GPU-c90a5967-fa44-e206-d2a9-9c9f86b2343f   (pea-gpu-2, vision-2)
 #   GPU 2: GPU-1f2ba781-081b-56cf-da1a-802759aea70b   (pea-gpu-3, dino-1)
 #   GPU 3: GPU-48054f5b-0660-6e89-ec5b-9ac85db7b7b1   (pea-gpu-4, embed-4)
 #   GPU 4: GPU-62676508-8e4e-f040-6515-135a0b906ed1   (pea-gpu-5, embed-5)
 #          replaced 2026-10-16 at PCI 0000:0a:00.0; the failed card was
 #          GPU-d8525241-21cb-a127-b4d8-d72b9ac32b1b (corrupt generation, see GPU-FAULT-OPERATIONS.md)
-#   GPU 5: GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9   (pea-gpu-6, dino-2)
+#   GPU 5: GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9   (pea-gpu-6)
 #   GPU 6: GPU-f417c539-26db-94e9-4c8f-c5a775291988   (speech STT/TTS)
 #   GPU 7: GPU-c710b68a-493d-0d55-9b1a-f48d8ad71978   (pea-image-1)
 #
@@ -374,8 +374,9 @@ services:
               device_ids: ['${PEA_GPU_5_UUID:-GPU-62676508-8e4e-f040-6515-135a0b906ed1}']
               capabilities: [gpu]
 
-  # embedding-server-6 (text-embed, GPU-fe0fc635) REMOVED — GPU 6 now hosts
-  # dino-embed-2 (DINOv2 visual). Text-embed reduced 3->2 (GPU 4-5, :8093-8094).
+  # embedding-server-6 (text-embed, GPU-fe0fc635) REMOVED — GPU 6 hosted
+  # dino-embed-2 (DINOv2 visual) until 2026-10-16, when it moved to GPU 1 to free
+  # VRAM for NSFW chat. Text-embed reduced 3->2 (GPU 4-5, :8093-8094).
   # openspec: serve-dinov2-visual-embed
 
   # =============================================================================
@@ -473,10 +474,13 @@ services:
               capabilities: [gpu]
 
   # =============================================================================
-  # DINOv2 VISUAL EMBEDDING SERVERS (image-only, co-located on chat GPU 3 + 6)
+  # DINOv2 VISUAL EMBEDDING SERVERS (image-only, co-located on SFW chat GPU 3 + 1)
   # facebook/dinov2-with-registers-large (1024-d) — fine-grained visual / same-
   # object similarity behind heartcode-embed-visual. Replaces vision-embed-3
-  # (GPU 3) + embedding-server-6 (GPU 6) for the 2+2+2 embed layout.
+  # (GPU 3) + embedding-server-6 (GPU 6) for the 2+2+2 embed layout. dino-embed-2
+  # moved from GPU 6 to GPU 1 on 2026-10-16: GPU 6 (NSFW chat) was down to ~0.46
+  # GiB headroom under 8K load; GPU 1 had ~3.9 GiB. GPU 2 was passed over because
+  # its PCI address, 04:00.0, has lost two boards (GPU-FAULT-OPERATIONS.md).
   # ⚠️ ~7.5GB/8GB co-located with chat — if OOM, set MODEL_ID=...-base (768-d).
   # openspec: serve-dinov2-visual-embed
   # =============================================================================
@@ -532,8 +536,8 @@ services:
     restart: unless-stopped
     runtime: nvidia
     environment:
-      NVIDIA_VISIBLE_DEVICES: ${PEA_GPU_6_UUID:-GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9}
-      EXPECTED_GPU_UUID: ${PEA_GPU_6_UUID:-GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9}
+      NVIDIA_VISIBLE_DEVICES: ${PEA_GPU_1_UUID:-GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8}
+      EXPECTED_GPU_UUID: ${PEA_GPU_1_UUID:-GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8}
       GPU_HEALTH_ENABLED: ${GPU_HEALTH_ENABLED:-0}
       SERVER_ID: embed-dino-2
       PORT: 8080
@@ -562,7 +566,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['${PEA_GPU_6_UUID:-GPU-fe0fc635-7c25-49b8-866e-3e4f9ce7efc9}']
+              device_ids: ['${PEA_GPU_1_UUID:-GPU-76bfe17d-b576-ee20-f8b7-c70b767a20b8}']
               capabilities: [gpu]
 
   # =============================================================================

@@ -50,7 +50,7 @@ Shared GPU inference infrastructure for local network projects. Provides OpenAI-
 | `heartcode-chat-nsfw` | Chat | 4-6 (3x P104-100) | Lumimaid-v0.2-8B (NeverSleep) | Q5_K_M |
 | `heartcode-embed` | Text embedding | 4-5 (co-located) | nomic-embed-text-v1.5 | Q8_0 |
 | `heartcode-embed-vision` | Vision embedding | 1-2 (co-located) | nomic-embed-vision-v1.5 | FP32 |
-| `heartcode-embed-visual` | Visual embedding | 3, 6 (co-located) | DINOv2 with registers, large | FP32 |
+| `heartcode-embed-visual` | Visual embedding | 3, 1 (co-located) | DINOv2 with registers, large | FP32 |
 | `heartcode-stt` | Speech-to-text | 7 | faster-whisper small.en | INT8 |
 | `heartcode-tts` | Text-to-speech | 7 | Kokoro-82M | FP32 |
 | `heartcode-image` | Image | 8 (1x P104-100) | Segmind SSD-1B (SDXL distilled) | FP16 |
