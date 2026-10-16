@@ -43,7 +43,12 @@
 
 - [x] 3.1 Build or adapt the driver for multi-turn conversations whose prompts grow to ~7.4k tokens with periodic rebuilds, plus exact-token 8K requests, through LiteLLM with affinity on. Sample VRAM, RSS and kernel OOM events. HeartCode's `backend/scripts/measure_context_window.py` is the starting point.
   *Done 2026-10-16: `load-tests/prompt_cache_conversations.py` (append-only conversations to a budget with rebuilds, through LiteLLM with affinity; it samples VRAM, container memory, restarts and kernel OOM kills). `load-tests/prompt_cache_alternation.py` serves §4.*
-- [ ] 3.2 Run it on one SFW and one NSFW worker. Record VRAM headroom, peak RSS against `mem_limit`, and first-token time for cached and rebuild turns.
+- [x] 3.2 Run it on one SFW and one NSFW worker. Record VRAM headroom, peak RSS against `mem_limit`, and first-token time for cached and rebuild turns.
+  *Done 2026-10-16 (`evidence/2026-10-16-8k-conversations.md`):*
+  - *0 errors, exits or OOM kills on both routes; lowest headroom 457 MiB;*
+  - *ordinary-turn first token: SFW p95 2.83–3.18 s, NSFW 3.68 s;*
+  - *rebuild: SFW 10.7 s (Gemma cannot shift its cache), NSFW 6.8 s;*
+  - *same replica 188/190.*
 - [ ] 3.3 Run a 24-hour soak at a representative mix on both groups. Pass: zero failures, zero `llama-server` exits, zero OOM kills, headroom held (D4).
 - [ ] 3.4 Record the evidence and the decision. Tell HeartCode (`stable-prompt-prefix` 5.3).
 
