@@ -131,6 +131,13 @@ def test_server_overrides_render_per_gpu_and_default_to_the_fleet():
     assert "GPU_5_N_GPU_LAYERS=99" in env and "GPU_5_EXTRA_ARGS=--jinja --reasoning off" in env
 
 
+def test_slot_overrides_render_per_gpu_and_default_to_one_16k_slot():
+    plain = render.render_env(manifest(env_model_name="m"))
+    assert "GPU_4_PARALLEL=1" in plain and "GPU_4_N_CTX=16384" in plain
+    two = render.render_env(manifest(env_model_name="m", server={"parallel": 2, "n_ctx": 18432}))
+    assert "GPU_4_PARALLEL=2" in two and "GPU_4_N_CTX=18432" in two
+
+
 @pytest.mark.parametrize("server", [{"ngl": 99}, {"n_gpu_layers": "99"}, {"image": ""}, "v0.2.0"])
 def test_invalid_server_block_fails(server):
     with pytest.raises(render.ManifestError, match="server"):

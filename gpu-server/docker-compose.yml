@@ -24,6 +24,7 @@
 #   GPU 7: GPU-c710b68a-493d-0d55-9b1a-f48d8ad71978   (pea-image-1)
 #
 # Context: 16K tokens (N_CTX=16384) — uses ~1GB KV cache at q8_0
+# NSFW chat (GPU 4-6): two 9K slots (N_CTX=18432, MAX_CONCURRENT_REQUESTS=2), per models.yaml
 # VRAM budget: ~5.7GB model + ~1GB KV + ~0.35GB embed + ~0.55GB overhead = ~7.6GB / 8GB
 #
 # Memory Budget (Pea: 32,023 MiB RAM + 16 GiB swap; see x-host-memory below):
@@ -79,8 +80,9 @@ x-gpu-server-common: &gpu-server-common
   memswap_limit: 2304m
 
 x-gpu-env-common: &gpu-env-common
-  # N_GPU_LAYERS, EXTRA_ARGS and the image are per worker (GPU_N_* in
-  # models.generated.env, from models.yaml `server:`); these are the fleet defaults.
+  # N_GPU_LAYERS, EXTRA_ARGS, N_CTX, MAX_CONCURRENT_REQUESTS (slots) and the
+  # image are per worker (GPU_N_* in models.generated.env, from models.yaml
+  # `server:`); these are the fleet defaults.
   N_GPU_LAYERS: 33
   N_CTX: 16384
   N_BATCH: 128
@@ -162,6 +164,8 @@ services:
       SERVER_ID: gpu-1
       N_GPU_LAYERS: ${GPU_1_N_GPU_LAYERS:-33}
       EXTRA_ARGS: ${GPU_1_EXTRA_ARGS:---jinja}
+      MAX_CONCURRENT_REQUESTS: ${GPU_1_PARALLEL:-1}
+      N_CTX: ${GPU_1_N_CTX:-16384}
       MODEL_PATH: ${GPU_1_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_1_MODEL_TYPE:-sfw}
       MODEL_NAME: ${GPU_1_MODEL_NAME:-unknown}
@@ -190,6 +194,8 @@ services:
       SERVER_ID: gpu-2
       N_GPU_LAYERS: ${GPU_2_N_GPU_LAYERS:-33}
       EXTRA_ARGS: ${GPU_2_EXTRA_ARGS:---jinja}
+      MAX_CONCURRENT_REQUESTS: ${GPU_2_PARALLEL:-1}
+      N_CTX: ${GPU_2_N_CTX:-16384}
       MODEL_PATH: ${GPU_2_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_2_MODEL_TYPE:-sfw}
       MODEL_NAME: ${GPU_2_MODEL_NAME:-unknown}
@@ -216,6 +222,8 @@ services:
       SERVER_ID: gpu-3
       N_GPU_LAYERS: ${GPU_3_N_GPU_LAYERS:-33}
       EXTRA_ARGS: ${GPU_3_EXTRA_ARGS:---jinja}
+      MAX_CONCURRENT_REQUESTS: ${GPU_3_PARALLEL:-1}
+      N_CTX: ${GPU_3_N_CTX:-16384}
       MODEL_PATH: ${GPU_3_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_3_MODEL_TYPE:-sfw}
       MODEL_NAME: ${GPU_3_MODEL_NAME:-unknown}
@@ -246,6 +254,8 @@ services:
       SERVER_ID: gpu-4
       N_GPU_LAYERS: ${GPU_4_N_GPU_LAYERS:-33}
       EXTRA_ARGS: ${GPU_4_EXTRA_ARGS:---jinja}
+      MAX_CONCURRENT_REQUESTS: ${GPU_4_PARALLEL:-1}
+      N_CTX: ${GPU_4_N_CTX:-16384}
       MODEL_PATH: ${GPU_4_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_4_MODEL_TYPE:-nsfw}
       MODEL_NAME: ${GPU_4_MODEL_NAME:-unknown}
@@ -283,6 +293,8 @@ services:
       SERVER_ID: gpu-5
       N_GPU_LAYERS: ${GPU_5_N_GPU_LAYERS:-33}
       EXTRA_ARGS: ${GPU_5_EXTRA_ARGS:---jinja}
+      MAX_CONCURRENT_REQUESTS: ${GPU_5_PARALLEL:-1}
+      N_CTX: ${GPU_5_N_CTX:-16384}
       MODEL_PATH: ${GPU_5_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_5_MODEL_TYPE:-nsfw}
       MODEL_NAME: ${GPU_5_MODEL_NAME:-unknown}
@@ -311,6 +323,8 @@ services:
       SERVER_ID: gpu-6
       N_GPU_LAYERS: ${GPU_6_N_GPU_LAYERS:-33}
       EXTRA_ARGS: ${GPU_6_EXTRA_ARGS:---jinja}
+      MAX_CONCURRENT_REQUESTS: ${GPU_6_PARALLEL:-1}
+      N_CTX: ${GPU_6_N_CTX:-16384}
       MODEL_PATH: ${GPU_6_MODEL_PATH:-/models/model.gguf}
       MODEL_TYPE: ${GPU_6_MODEL_TYPE:-nsfw}
       MODEL_NAME: ${GPU_6_MODEL_NAME:-unknown}

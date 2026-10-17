@@ -92,6 +92,14 @@ models:
     rate_limit: {rpm: 34, tpm: 38000}
     # timeout = ADMISSION_WAIT_SECONDS (60) + wrapper REQUEST_TIMEOUT (180).
     params: {max_tokens: 512, temperature: 0.8, timeout: 240}
+    # Two resident slots of 9216 tokens (serve-prompt-cache-reuse 4.2, 2026-10-16):
+    # with 8K prompts one slot plus the 1 GiB host cache restored 2 alternating
+    # conversations in ~7 s and lost a 3rd (~30 s re-read); two slots kept 2 at
+    # 0.4 s and brought a 3rd back in 6.5 s, for +130 MiB VRAM. Admission is
+    # still one request at a time (MAX_IN_FLIGHT_REQUESTS).
+    server:
+      parallel: 2
+      n_ctx: 18432
     source:
       type: gguf
       repo: Lewdiculous/Lumimaid-v0.2-8B-GGUF-IQ-Imatrix

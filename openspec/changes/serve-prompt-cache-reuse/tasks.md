@@ -61,7 +61,7 @@
 
   *Larger values were not tried, since that changes fleet memory settings and is the owner's call (4.2).*
 - [ ] 4.2 Choose `CACHE_RAM` per route (D5). If a `mem_limit` must grow, rebalance the budget so `check-memory-budget.py` passes. Settle whether per-route values need a `models.yaml` / `render-config.py` change.
-  - _2026-10-16 progress:_ a second slot on `pea-gpu-4` (`--parallel 2`, `N_CTX=18432`, +130 MiB VRAM, `CACHE_RAM` unchanged) kept 2 conversations at 0.4 s and brought a 3rd back in 6.5 s, against 7.1 s and 30 s with one slot ([evidence](evidence/2026-10-16-nsfw-two-slots.md)). That removes the need for a larger NSFW `CACHE_RAM`. The NSFW rollout of two slots awaits the owner.
+  - _2026-10-16 progress:_ a second slot on `pea-gpu-4` (`--parallel 2`, `N_CTX=18432`, +130 MiB VRAM, `CACHE_RAM` unchanged) kept 2 conversations at 0.4 s and brought a 3rd back in 6.5 s, against 7.1 s and 30 s with one slot ([evidence](evidence/2026-10-16-nsfw-two-slots.md)). That removes the need for a larger NSFW `CACHE_RAM`. Owner approved two slots on all NSFW workers 2026-10-16: `models.yaml` `server: {parallel: 2, n_ctx: 18432}` on `heartcode-chat-nsfw`, rendered as `GPU_N_PARALLEL` / `GPU_N_N_CTX`; SFW keeps one 16K slot and `CACHE_RAM=1024`.
 - [ ] 4.3 Roll out through the rolling-rollout procedure. Verify the command lines and the plateau.
 
 ## 5. Optional: checkpoint flags on Gemma
