@@ -20,7 +20,12 @@
   - *sessions 2 s apart stayed on one replica, 18/18;*
   - *HeartCode sends `X-Session-Id` on its routes (HeartCode ad67bc27);*
   - *requests sent back to back can stray while the previous request's in-flight count is still being decremented.*
-- [ ] 1.6 Compare the 24-hour per-replica split before and after on both chat groups (2026-09-18 baseline: 1008/318/6).
+- [x] 1.6 Compare the 24-hour per-replica split before and after on both chat groups (2026-09-18 baseline: 1008/318/6).
+  *Done 2026-10-20, from the Pea wrappers' access logs (requests from LiteLLM's `.152`):*
+  - *SFW since the 2026-10-16 23:01 restarts (no SFW traffic in the last 24 h): 2751 / 2708 / 2608 on GPU 1/2/3, i.e. 34/33/32%, against 76/24/0.5% before the tie fix;*
+  - *NSFW over the 24 h to 2026-10-20 18:00 UTC: 136 / 155 / 147 on GPU 4/5/6.*
+
+  *Affinity did not reconcentrate load: distinct sessions hash to different replicas.*
 - [x] 1.7 Update `litellm/patches/README.md` and CLAUDE.md's routing notes. Note in `scale-chat-concurrency` that its §2 chat affinity is implemented here.
   *Done 2026-10-16.*
 
@@ -50,6 +55,7 @@
   - *rebuild: SFW 10.7 s (Gemma cannot shift its cache), NSFW 6.8 s;*
   - *same replica 188/190.*
 - [ ] 3.3 Run a 24-hour soak at a representative mix on both groups. Pass: zero failures, zero `llama-server` exits, zero OOM kills, headroom held (D4).
+  - _Orchestrator: `evidence/soak.sh` (SFW 2 conversations at a time with 30 s think time, NSFW 3 with 45 s, about 3 turns a minute per route, under the groups' tpm limits). Smoke-tested 2026-10-20: 2 turns per route, 0 errors._
 - [ ] 3.4 Record the evidence and the decision. Tell HeartCode (`stable-prompt-prefix` 5.3).
 
 ## 4. Host prompt cache for 8K prompts
@@ -60,9 +66,11 @@
   - *NSFW at ~7.8k: 2 restored in ~7 s, 3 not at all (~30 s full re-evaluation).*
 
   *Larger values were not tried, since that changes fleet memory settings and is the owner's call (4.2).*
-- [ ] 4.2 Choose `CACHE_RAM` per route (D5). If a `mem_limit` must grow, rebalance the budget so `check-memory-budget.py` passes. Settle whether per-route values need a `models.yaml` / `render-config.py` change.
+- [x] 4.2 Choose `CACHE_RAM` per route (D5). If a `mem_limit` must grow, rebalance the budget so `check-memory-budget.py` passes. Settle whether per-route values need a `models.yaml` / `render-config.py` change.
   - _2026-10-16 progress:_ a second slot on `pea-gpu-4` (`--parallel 2`, `N_CTX=18432`, +130 MiB VRAM, `CACHE_RAM` unchanged) kept 2 conversations at 0.4 s and brought a 3rd back in 6.5 s, against 7.1 s and 30 s with one slot ([evidence](evidence/2026-10-16-nsfw-two-slots.md)). That removes the need for a larger NSFW `CACHE_RAM`. Owner approved two slots on all NSFW workers 2026-10-16: `models.yaml` `server: {parallel: 2, n_ctx: 18432}` on `heartcode-chat-nsfw`, rendered as `GPU_N_PARALLEL` / `GPU_N_N_CTX`; SFW keeps one 16K slot and `CACHE_RAM=1024`.
-- [ ] 4.3 Roll out through the rolling-rollout procedure. Verify the command lines and the plateau.
+- [x] 4.3 Roll out through the rolling-rollout procedure. Verify the command lines and the plateau.
+  *Done: local-ai `45cf673`. On 2026-10-16 `pea-gpu-4` already matched the trial values; `pea-gpu-5` and then `pea-gpu-6` were recreated one at a time, each healthy before the next. All three run `--ctx-size 18432 --parallel 2 --cache-ram 1024`. Check-placement passed, and replies came back through LiteLLM from 8083/8084/8085.*
+  *Plateau on 2026-10-20, after 3.7 days: NSFW container memory 1.07–1.25 GiB of 1.75 GiB, the same band `CACHE_RAM=1024` qualified at; VRAM 6.5–6.8 GiB used (≥1.3 GiB free); no host OOM kills since the rollout. HeartCode raised `CONTEXT_BUDGET_NSFW` to 8192 (75cc7fd9).*
 
 ## 5. Optional: checkpoint flags on Gemma
 
