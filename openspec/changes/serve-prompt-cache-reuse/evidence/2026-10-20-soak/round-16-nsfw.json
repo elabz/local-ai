@@ -1,0 +1,9076 @@
+{
+ "change": "serve-prompt-cache-reuse \u00a73",
+ "started": "2026-10-21T13:51:59.231234+00:00",
+ "finished": "2026-10-21T15:05:00.059587+00:00",
+ "settings": {
+  "base_url": "http://192.168.70.152:4000",
+  "model": "heartcode-chat-nsfw",
+  "conversations": 6,
+  "parallel": 3,
+  "turns": 40,
+  "budget": 8192,
+  "response_buffer": 819,
+  "keep_share": 0.5,
+  "min_messages": 5,
+  "frame_words": 1100,
+  "memory_lines": 10,
+  "max_tokens": 250,
+  "think_seconds": 45.0,
+  "seed": "soak-202610211351-r16",
+  "pea_ssh": "192.168.70.144",
+  "sample_seconds": 30.0
+ },
+ "summary": {
+  "turns": 240,
+  "errors": 0,
+  "max_prompt_tokens": 7162,
+  "ordinary_turns": 229,
+  "rebuild_turns": 5,
+  "ordinary_first_token_p50": 2.63,
+  "ordinary_first_token_p95": 7.68,
+  "rebuild_first_token_p50": 7.13,
+  "rebuild_first_token_p95": 16.06,
+  "ordinary_reuse_rate": 0.8166,
+  "ordinary_evaluated_tokens_median": 662,
+  "same_replica_consecutive": "209/234",
+  "min_vram_headroom_mib": {
+   "0": 2573,
+   "1": 3929,
+   "2": 3693,
+   "3": 1371,
+   "4": 1373,
+   "5": 1621,
+   "6": 6501,
+   "7": 2107
+  },
+  "container_memory_last": {
+   "pea-gpu-6": "1.102GiB / 1.75GiB",
+   "pea-gpu-5": "1015MiB / 1.75GiB",
+   "pea-gpu-4": "1.219GiB / 1.75GiB",
+   "pea-gpu-2": "1.395GiB / 1.75GiB",
+   "pea-gpu-1": "1.296GiB / 1.75GiB",
+   "pea-gpu-3": "1.717GiB / 1.75GiB"
+  },
+  "container_restarts_or_llama_exits": {},
+  "kernel_oom_kills": 0
+ },
+ "turns": [
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 1814,
+   "cached_tokens": 7,
+   "evaluated_tokens": 1807,
+   "completion_tokens": 45,
+   "first_token_seconds": 6.595244884490967,
+   "seconds": 8.707841157913208,
+   "conversation": 2,
+   "turn": 0,
+   "rebuild": false,
+   "history_messages": 0
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 1836,
+   "cached_tokens": 20,
+   "evaluated_tokens": 1816,
+   "completion_tokens": 167,
+   "first_token_seconds": 9.59340786933899,
+   "seconds": 16.65558695793152,
+   "conversation": 0,
+   "turn": 0,
+   "rebuild": false,
+   "history_messages": 0
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 1829,
+   "cached_tokens": 7,
+   "evaluated_tokens": 1822,
+   "completion_tokens": 250,
+   "first_token_seconds": 6.950223922729492,
+   "seconds": 17.624714851379395,
+   "conversation": 1,
+   "turn": 0,
+   "rebuild": false,
+   "history_messages": 0
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 1927,
+   "cached_tokens": 1271,
+   "evaluated_tokens": 656,
+   "completion_tokens": 45,
+   "first_token_seconds": 1.9837241172790527,
+   "seconds": 3.800400972366333,
+   "conversation": 2,
+   "turn": 1,
+   "rebuild": false,
+   "history_messages": 2
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2049,
+   "cached_tokens": 1269,
+   "evaluated_tokens": 780,
+   "completion_tokens": 164,
+   "first_token_seconds": 2.78695011138916,
+   "seconds": 9.344235181808472,
+   "conversation": 0,
+   "turn": 1,
+   "rebuild": false,
+   "history_messages": 2
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2143,
+   "cached_tokens": 1582,
+   "evaluated_tokens": 561,
+   "completion_tokens": 250,
+   "first_token_seconds": 5.640819787979126,
+   "seconds": 15.588346719741821,
+   "conversation": 1,
+   "turn": 1,
+   "rebuild": false,
+   "history_messages": 2
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2020,
+   "cached_tokens": 1373,
+   "evaluated_tokens": 647,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.033785104751587,
+   "seconds": 4.038499116897583,
+   "conversation": 2,
+   "turn": 2,
+   "rebuild": false,
+   "history_messages": 4
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2245,
+   "cached_tokens": 1516,
+   "evaluated_tokens": 729,
+   "completion_tokens": 139,
+   "first_token_seconds": 2.2360777854919434,
+   "seconds": 8.037460088729858,
+   "conversation": 0,
+   "turn": 2,
+   "rebuild": false,
+   "history_messages": 4
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2431,
+   "cached_tokens": 1899,
+   "evaluated_tokens": 532,
+   "completion_tokens": 34,
+   "first_token_seconds": 2.9391517639160156,
+   "seconds": 4.31924295425415,
+   "conversation": 1,
+   "turn": 2,
+   "rebuild": false,
+   "history_messages": 4
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2091,
+   "cached_tokens": 1482,
+   "evaluated_tokens": 609,
+   "completion_tokens": 45,
+   "first_token_seconds": 1.8934879302978516,
+   "seconds": 3.7109880447387695,
+   "conversation": 2,
+   "turn": 3,
+   "rebuild": false,
+   "history_messages": 6
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2433,
+   "cached_tokens": 1729,
+   "evaluated_tokens": 704,
+   "completion_tokens": 98,
+   "first_token_seconds": 2.1947879791259766,
+   "seconds": 6.493908882141113,
+   "conversation": 0,
+   "turn": 3,
+   "rebuild": false,
+   "history_messages": 6
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2534,
+   "cached_tokens": 1905,
+   "evaluated_tokens": 629,
+   "completion_tokens": 53,
+   "first_token_seconds": 2.695543050765991,
+   "seconds": 4.941005229949951,
+   "conversation": 1,
+   "turn": 3,
+   "rebuild": false,
+   "history_messages": 6
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2219,
+   "cached_tokens": 1574,
+   "evaluated_tokens": 645,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.0432119369506836,
+   "seconds": 4.023882865905762,
+   "conversation": 2,
+   "turn": 4,
+   "rebuild": false,
+   "history_messages": 8
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2588,
+   "cached_tokens": 1904,
+   "evaluated_tokens": 684,
+   "completion_tokens": 74,
+   "first_token_seconds": 2.1649270057678223,
+   "seconds": 5.301722049713135,
+   "conversation": 0,
+   "turn": 4,
+   "rebuild": false,
+   "history_messages": 8
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2641,
+   "cached_tokens": 1985,
+   "evaluated_tokens": 656,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.167088031768799,
+   "seconds": 4.053033113479614,
+   "conversation": 1,
+   "turn": 4,
+   "rebuild": false,
+   "history_messages": 8
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2305,
+   "cached_tokens": 1657,
+   "evaluated_tokens": 648,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.1755599975585938,
+   "seconds": 4.004810094833374,
+   "conversation": 2,
+   "turn": 5,
+   "rebuild": false,
+   "history_messages": 10
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2730,
+   "cached_tokens": 2103,
+   "evaluated_tokens": 627,
+   "completion_tokens": 28,
+   "first_token_seconds": 2.062678813934326,
+   "seconds": 3.3728621006011963,
+   "conversation": 1,
+   "turn": 5,
+   "rebuild": false,
+   "history_messages": 10
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2704,
+   "cached_tokens": 2044,
+   "evaluated_tokens": 660,
+   "completion_tokens": 165,
+   "first_token_seconds": 2.224757671356201,
+   "seconds": 9.360420942306519,
+   "conversation": 0,
+   "turn": 5,
+   "rebuild": false,
+   "history_messages": 10
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2396,
+   "cached_tokens": 1781,
+   "evaluated_tokens": 615,
+   "completion_tokens": 45,
+   "first_token_seconds": 1.9074909687042236,
+   "seconds": 3.868587017059326,
+   "conversation": 2,
+   "turn": 6,
+   "rebuild": false,
+   "history_messages": 12
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2815,
+   "cached_tokens": 7,
+   "evaluated_tokens": 2808,
+   "completion_tokens": 42,
+   "first_token_seconds": 7.882546901702881,
+   "seconds": 9.717031955718994,
+   "conversation": 1,
+   "turn": 6,
+   "rebuild": false,
+   "history_messages": 12
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2910,
+   "cached_tokens": 7,
+   "evaluated_tokens": 2903,
+   "completion_tokens": 158,
+   "first_token_seconds": 8.37865400314331,
+   "seconds": 15.117246866226196,
+   "conversation": 0,
+   "turn": 6,
+   "rebuild": false,
+   "history_messages": 12
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2497,
+   "cached_tokens": 1861,
+   "evaluated_tokens": 636,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.1136960983276367,
+   "seconds": 3.943563938140869,
+   "conversation": 2,
+   "turn": 7,
+   "rebuild": false,
+   "history_messages": 14
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2899,
+   "cached_tokens": 2273,
+   "evaluated_tokens": 626,
+   "completion_tokens": 35,
+   "first_token_seconds": 2.1689260005950928,
+   "seconds": 3.6169278621673584,
+   "conversation": 1,
+   "turn": 7,
+   "rebuild": false,
+   "history_messages": 14
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3133,
+   "cached_tokens": 2172,
+   "evaluated_tokens": 961,
+   "completion_tokens": 150,
+   "first_token_seconds": 3.021618127822876,
+   "seconds": 9.344722032546997,
+   "conversation": 0,
+   "turn": 7,
+   "rebuild": false,
+   "history_messages": 14
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2582,
+   "cached_tokens": 1961,
+   "evaluated_tokens": 621,
+   "completion_tokens": 45,
+   "first_token_seconds": 1.9617259502410889,
+   "seconds": 3.8978400230407715,
+   "conversation": 2,
+   "turn": 8,
+   "rebuild": false,
+   "history_messages": 16
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2978,
+   "cached_tokens": 2368,
+   "evaluated_tokens": 610,
+   "completion_tokens": 250,
+   "first_token_seconds": 2.0555670261383057,
+   "seconds": 12.731750965118408,
+   "conversation": 1,
+   "turn": 8,
+   "rebuild": false,
+   "history_messages": 16
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3343,
+   "cached_tokens": 2583,
+   "evaluated_tokens": 760,
+   "completion_tokens": 139,
+   "first_token_seconds": 2.4721240997314453,
+   "seconds": 8.719425916671753,
+   "conversation": 0,
+   "turn": 8,
+   "rebuild": false,
+   "history_messages": 16
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2707,
+   "cached_tokens": 2052,
+   "evaluated_tokens": 655,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.4570682048797607,
+   "seconds": 4.517657279968262,
+   "conversation": 2,
+   "turn": 9,
+   "rebuild": false,
+   "history_messages": 18
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3275,
+   "cached_tokens": 2738,
+   "evaluated_tokens": 537,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.013590097427368,
+   "seconds": 13.792643785476685,
+   "conversation": 1,
+   "turn": 9,
+   "rebuild": false,
+   "history_messages": 18
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2790,
+   "cached_tokens": 2141,
+   "evaluated_tokens": 649,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.3564682006835938,
+   "seconds": 4.271526098251343,
+   "conversation": 2,
+   "turn": 10,
+   "rebuild": false,
+   "history_messages": 20
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3526,
+   "cached_tokens": 2380,
+   "evaluated_tokens": 1146,
+   "completion_tokens": 150,
+   "first_token_seconds": 3.9155068397521973,
+   "seconds": 10.431357860565186,
+   "conversation": 0,
+   "turn": 9,
+   "rebuild": false,
+   "history_messages": 18
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3578,
+   "cached_tokens": 3046,
+   "evaluated_tokens": 532,
+   "completion_tokens": 37,
+   "first_token_seconds": 3.0501787662506104,
+   "seconds": 4.617164850234985,
+   "conversation": 1,
+   "turn": 10,
+   "rebuild": false,
+   "history_messages": 20
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2921,
+   "cached_tokens": 2266,
+   "evaluated_tokens": 655,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.2008960247039795,
+   "seconds": 4.05602502822876,
+   "conversation": 2,
+   "turn": 11,
+   "rebuild": false,
+   "history_messages": 22
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3756,
+   "cached_tokens": 2799,
+   "evaluated_tokens": 957,
+   "completion_tokens": 74,
+   "first_token_seconds": 3.1432559490203857,
+   "seconds": 6.383728742599487,
+   "conversation": 0,
+   "turn": 10,
+   "rebuild": false,
+   "history_messages": 20
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 3036,
+   "cached_tokens": 2354,
+   "evaluated_tokens": 682,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.2547409534454346,
+   "seconds": 4.173177003860474,
+   "conversation": 2,
+   "turn": 12,
+   "rebuild": false,
+   "history_messages": 24
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3675,
+   "cached_tokens": 3052,
+   "evaluated_tokens": 623,
+   "completion_tokens": 183,
+   "first_token_seconds": 2.24965500831604,
+   "seconds": 10.29797101020813,
+   "conversation": 1,
+   "turn": 11,
+   "rebuild": false,
+   "history_messages": 22
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3892,
+   "cached_tokens": 3192,
+   "evaluated_tokens": 700,
+   "completion_tokens": 165,
+   "first_token_seconds": 2.3849129676818848,
+   "seconds": 9.501429796218872,
+   "conversation": 0,
+   "turn": 11,
+   "rebuild": false,
+   "history_messages": 22
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 3140,
+   "cached_tokens": 2478,
+   "evaluated_tokens": 662,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.2131741046905518,
+   "seconds": 4.180500030517578,
+   "conversation": 2,
+   "turn": 13,
+   "rebuild": false,
+   "history_messages": 26
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3933,
+   "cached_tokens": 3137,
+   "evaluated_tokens": 796,
+   "completion_tokens": 225,
+   "first_token_seconds": 2.8374509811401367,
+   "seconds": 12.971845149993896,
+   "conversation": 1,
+   "turn": 12,
+   "rebuild": false,
+   "history_messages": 24
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4135,
+   "cached_tokens": 2994,
+   "evaluated_tokens": 1141,
+   "completion_tokens": 140,
+   "first_token_seconds": 3.9162049293518066,
+   "seconds": 10.044677972793579,
+   "conversation": 0,
+   "turn": 12,
+   "rebuild": false,
+   "history_messages": 24
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 3258,
+   "cached_tokens": 2595,
+   "evaluated_tokens": 663,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.322518825531006,
+   "seconds": 4.308841943740845,
+   "conversation": 2,
+   "turn": 14,
+   "rebuild": false,
+   "history_messages": 28
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4204,
+   "cached_tokens": 3665,
+   "evaluated_tokens": 539,
+   "completion_tokens": 174,
+   "first_token_seconds": 3.135072946548462,
+   "seconds": 10.841737985610962,
+   "conversation": 1,
+   "turn": 13,
+   "rebuild": false,
+   "history_messages": 26
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4333,
+   "cached_tokens": 3577,
+   "evaluated_tokens": 756,
+   "completion_tokens": 150,
+   "first_token_seconds": 2.735934019088745,
+   "seconds": 9.51747989654541,
+   "conversation": 0,
+   "turn": 13,
+   "rebuild": false,
+   "history_messages": 26
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 3363,
+   "cached_tokens": 2701,
+   "evaluated_tokens": 662,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.35518479347229,
+   "seconds": 4.1117377281188965,
+   "conversation": 2,
+   "turn": 15,
+   "rebuild": false,
+   "history_messages": 30
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4458,
+   "cached_tokens": 3670,
+   "evaluated_tokens": 788,
+   "completion_tokens": 250,
+   "first_token_seconds": 2.903191089630127,
+   "seconds": 14.43479609489441,
+   "conversation": 1,
+   "turn": 14,
+   "rebuild": false,
+   "history_messages": 28
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4527,
+   "cached_tokens": 3791,
+   "evaluated_tokens": 736,
+   "completion_tokens": 165,
+   "first_token_seconds": 2.712462902069092,
+   "seconds": 10.28526496887207,
+   "conversation": 0,
+   "turn": 14,
+   "rebuild": false,
+   "history_messages": 28
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 3459,
+   "cached_tokens": 2820,
+   "evaluated_tokens": 639,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.139439821243286,
+   "seconds": 4.00542688369751,
+   "conversation": 2,
+   "turn": 16,
+   "rebuild": false,
+   "history_messages": 32
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4743,
+   "cached_tokens": 3995,
+   "evaluated_tokens": 748,
+   "completion_tokens": 192,
+   "first_token_seconds": 2.771746873855591,
+   "seconds": 11.644727945327759,
+   "conversation": 0,
+   "turn": 15,
+   "rebuild": false,
+   "history_messages": 30
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4789,
+   "cached_tokens": 4221,
+   "evaluated_tokens": 568,
+   "completion_tokens": 241,
+   "first_token_seconds": 3.2709848880767822,
+   "seconds": 14.389806032180786,
+   "conversation": 1,
+   "turn": 15,
+   "rebuild": false,
+   "history_messages": 30
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 3549,
+   "cached_tokens": 2925,
+   "evaluated_tokens": 624,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.126357078552246,
+   "seconds": 4.034555912017822,
+   "conversation": 2,
+   "turn": 17,
+   "rebuild": false,
+   "history_messages": 34
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5014,
+   "cached_tokens": 3343,
+   "evaluated_tokens": 1671,
+   "completion_tokens": 192,
+   "first_token_seconds": 5.858373165130615,
+   "seconds": 14.990134000778198,
+   "conversation": 0,
+   "turn": 16,
+   "rebuild": false,
+   "history_messages": 32
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 3651,
+   "cached_tokens": 3020,
+   "evaluated_tokens": 631,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.4755330085754395,
+   "seconds": 4.413113832473755,
+   "conversation": 2,
+   "turn": 18,
+   "rebuild": false,
+   "history_messages": 36
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5097,
+   "cached_tokens": 2205,
+   "evaluated_tokens": 2892,
+   "completion_tokens": 182,
+   "first_token_seconds": 9.64572811126709,
+   "seconds": 18.308838844299316,
+   "conversation": 1,
+   "turn": 16,
+   "rebuild": false,
+   "history_messages": 32
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 3743,
+   "cached_tokens": 3109,
+   "evaluated_tokens": 634,
+   "completion_tokens": 45,
+   "first_token_seconds": 3.0360469818115234,
+   "seconds": 4.906126022338867,
+   "conversation": 2,
+   "turn": 19,
+   "rebuild": false,
+   "history_messages": 38
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5266,
+   "cached_tokens": 4715,
+   "evaluated_tokens": 551,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.477705955505371,
+   "seconds": 12.623943090438843,
+   "conversation": 0,
+   "turn": 17,
+   "rebuild": false,
+   "history_messages": 34
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5320,
+   "cached_tokens": 4548,
+   "evaluated_tokens": 772,
+   "completion_tokens": 158,
+   "first_token_seconds": 3.2379190921783447,
+   "seconds": 10.610485076904297,
+   "conversation": 1,
+   "turn": 17,
+   "rebuild": false,
+   "history_messages": 34
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 3845,
+   "cached_tokens": 3207,
+   "evaluated_tokens": 638,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.1899030208587646,
+   "seconds": 4.093542814254761,
+   "conversation": 2,
+   "turn": 20,
+   "rebuild": false,
+   "history_messages": 40
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5507,
+   "cached_tokens": 4720,
+   "evaluated_tokens": 787,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.2017619609832764,
+   "seconds": 12.294641017913818,
+   "conversation": 0,
+   "turn": 18,
+   "rebuild": false,
+   "history_messages": 36
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5539,
+   "cached_tokens": 4794,
+   "evaluated_tokens": 745,
+   "completion_tokens": 193,
+   "first_token_seconds": 2.9051809310913086,
+   "seconds": 11.924977779388428,
+   "conversation": 1,
+   "turn": 18,
+   "rebuild": false,
+   "history_messages": 36
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 3975,
+   "cached_tokens": 3312,
+   "evaluated_tokens": 663,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.391162157058716,
+   "seconds": 4.384145259857178,
+   "conversation": 2,
+   "turn": 21,
+   "rebuild": false,
+   "history_messages": 42
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5767,
+   "cached_tokens": 4978,
+   "evaluated_tokens": 789,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.3658549785614014,
+   "seconds": 12.378975868225098,
+   "conversation": 0,
+   "turn": 19,
+   "rebuild": false,
+   "history_messages": 38
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5770,
+   "cached_tokens": 4994,
+   "evaluated_tokens": 776,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.1877400875091553,
+   "seconds": 14.73308515548706,
+   "conversation": 1,
+   "turn": 19,
+   "rebuild": false,
+   "history_messages": 38
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 4096,
+   "cached_tokens": 3408,
+   "evaluated_tokens": 688,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.6466779708862305,
+   "seconds": 4.548933744430542,
+   "conversation": 2,
+   "turn": 22,
+   "rebuild": false,
+   "history_messages": 44
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6029,
+   "cached_tokens": 5217,
+   "evaluated_tokens": 812,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.225719928741455,
+   "seconds": 12.65965485572815,
+   "conversation": 0,
+   "turn": 20,
+   "rebuild": false,
+   "history_messages": 40
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 6106,
+   "cached_tokens": 5529,
+   "evaluated_tokens": 577,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.5723209381103516,
+   "seconds": 15.686909198760986,
+   "conversation": 1,
+   "turn": 20,
+   "rebuild": false,
+   "history_messages": 40
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 4203,
+   "cached_tokens": 3528,
+   "evaluated_tokens": 675,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.459177017211914,
+   "seconds": 4.548568964004517,
+   "conversation": 2,
+   "turn": 23,
+   "rebuild": false,
+   "history_messages": 46
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6296,
+   "cached_tokens": 5468,
+   "evaluated_tokens": 828,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.24514102935791,
+   "seconds": 12.688915967941284,
+   "conversation": 0,
+   "turn": 21,
+   "rebuild": false,
+   "history_messages": 42
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 6390,
+   "cached_tokens": 5856,
+   "evaluated_tokens": 534,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.6122188568115234,
+   "seconds": 15.373271942138672,
+   "conversation": 1,
+   "turn": 21,
+   "rebuild": false,
+   "history_messages": 42
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 4316,
+   "cached_tokens": 3658,
+   "evaluated_tokens": 658,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.638468027114868,
+   "seconds": 4.610870122909546,
+   "conversation": 2,
+   "turn": 24,
+   "rebuild": false,
+   "history_messages": 48
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6566,
+   "cached_tokens": 5998,
+   "evaluated_tokens": 568,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.5830652713775635,
+   "seconds": 12.550997018814087,
+   "conversation": 0,
+   "turn": 22,
+   "rebuild": false,
+   "history_messages": 44
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 4435,
+   "cached_tokens": 3767,
+   "evaluated_tokens": 668,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.633625030517578,
+   "seconds": 4.6732470989227295,
+   "conversation": 2,
+   "turn": 25,
+   "rebuild": false,
+   "history_messages": 50
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 6674,
+   "cached_tokens": 6150,
+   "evaluated_tokens": 524,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.4430720806121826,
+   "seconds": 15.30023717880249,
+   "conversation": 1,
+   "turn": 22,
+   "rebuild": false,
+   "history_messages": 44
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 4542,
+   "cached_tokens": 3878,
+   "evaluated_tokens": 664,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.4616010189056396,
+   "seconds": 4.468057870864868,
+   "conversation": 2,
+   "turn": 26,
+   "rebuild": false,
+   "history_messages": 52
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6814,
+   "cached_tokens": 6270,
+   "evaluated_tokens": 544,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.4651761054992676,
+   "seconds": 12.49541711807251,
+   "conversation": 0,
+   "turn": 23,
+   "rebuild": false,
+   "history_messages": 46
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6996,
+   "cached_tokens": 4543,
+   "evaluated_tokens": 2453,
+   "completion_tokens": 250,
+   "first_token_seconds": 10.502385139465332,
+   "seconds": 22.19845724105835,
+   "conversation": 1,
+   "turn": 23,
+   "rebuild": false,
+   "history_messages": 46
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 4673,
+   "cached_tokens": 3983,
+   "evaluated_tokens": 690,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.5968806743621826,
+   "seconds": 4.526662826538086,
+   "conversation": 2,
+   "turn": 27,
+   "rebuild": false,
+   "history_messages": 54
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 7077,
+   "cached_tokens": 6275,
+   "evaluated_tokens": 802,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.439718008041382,
+   "seconds": 12.40150785446167,
+   "conversation": 0,
+   "turn": 24,
+   "rebuild": false,
+   "history_messages": 48
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4371,
+   "cached_tokens": 3799,
+   "evaluated_tokens": 572,
+   "completion_tokens": 64,
+   "first_token_seconds": 6.543367147445679,
+   "seconds": 9.611761331558228,
+   "conversation": 1,
+   "turn": 24,
+   "rebuild": true,
+   "history_messages": 18
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 4780,
+   "cached_tokens": 4108,
+   "evaluated_tokens": 672,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.4771790504455566,
+   "seconds": 4.407453775405884,
+   "conversation": 2,
+   "turn": 28,
+   "rebuild": false,
+   "history_messages": 56
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4620,
+   "cached_tokens": 4051,
+   "evaluated_tokens": 569,
+   "completion_tokens": 192,
+   "first_token_seconds": 6.609112024307251,
+   "seconds": 15.756375074386597,
+   "conversation": 0,
+   "turn": 25,
+   "rebuild": true,
+   "history_messages": 22
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4504,
+   "cached_tokens": 3805,
+   "evaluated_tokens": 699,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.0027427673339844,
+   "seconds": 14.893808841705322,
+   "conversation": 1,
+   "turn": 25,
+   "rebuild": false,
+   "history_messages": 20
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 4906,
+   "cached_tokens": 4231,
+   "evaluated_tokens": 675,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.5287108421325684,
+   "seconds": 4.5215489864349365,
+   "conversation": 2,
+   "turn": 29,
+   "rebuild": false,
+   "history_messages": 58
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4848,
+   "cached_tokens": 4320,
+   "evaluated_tokens": 528,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.5275280475616455,
+   "seconds": 12.511284112930298,
+   "conversation": 0,
+   "turn": 26,
+   "rebuild": false,
+   "history_messages": 24
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 4994,
+   "cached_tokens": 4341,
+   "evaluated_tokens": 653,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.479254961013794,
+   "seconds": 4.558286905288696,
+   "conversation": 2,
+   "turn": 30,
+   "rebuild": false,
+   "history_messages": 60
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4807,
+   "cached_tokens": 4264,
+   "evaluated_tokens": 543,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.5205490589141846,
+   "seconds": 15.419848918914795,
+   "conversation": 1,
+   "turn": 26,
+   "rebuild": false,
+   "history_messages": 22
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5091,
+   "cached_tokens": 4325,
+   "evaluated_tokens": 766,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.2881710529327393,
+   "seconds": 12.268298149108887,
+   "conversation": 0,
+   "turn": 27,
+   "rebuild": false,
+   "history_messages": 26
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 5068,
+   "cached_tokens": 4463,
+   "evaluated_tokens": 605,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.3197250366210938,
+   "seconds": 4.435483694076538,
+   "conversation": 2,
+   "turn": 31,
+   "rebuild": false,
+   "history_messages": 62
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5105,
+   "cached_tokens": 4565,
+   "evaluated_tokens": 540,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.570502281188965,
+   "seconds": 15.230544328689575,
+   "conversation": 1,
+   "turn": 27,
+   "rebuild": false,
+   "history_messages": 24
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5358,
+   "cached_tokens": 4560,
+   "evaluated_tokens": 798,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.504362106323242,
+   "seconds": 12.497708082199097,
+   "conversation": 0,
+   "turn": 28,
+   "rebuild": false,
+   "history_messages": 28
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 5192,
+   "cached_tokens": 4549,
+   "evaluated_tokens": 643,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.5049140453338623,
+   "seconds": 4.5031750202178955,
+   "conversation": 2,
+   "turn": 32,
+   "rebuild": false,
+   "history_messages": 64
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5417,
+   "cached_tokens": 4867,
+   "evaluated_tokens": 550,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.6452088356018066,
+   "seconds": 15.420165777206421,
+   "conversation": 1,
+   "turn": 28,
+   "rebuild": false,
+   "history_messages": 26
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 5313,
+   "cached_tokens": 4632,
+   "evaluated_tokens": 681,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.8280272483825684,
+   "seconds": 5.125755310058594,
+   "conversation": 2,
+   "turn": 33,
+   "rebuild": false,
+   "history_messages": 66
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5618,
+   "cached_tokens": 5060,
+   "evaluated_tokens": 558,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.714595079421997,
+   "seconds": 12.907588005065918,
+   "conversation": 0,
+   "turn": 29,
+   "rebuild": false,
+   "history_messages": 30
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5709,
+   "cached_tokens": 5179,
+   "evaluated_tokens": 530,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.573472023010254,
+   "seconds": 15.448450088500977,
+   "conversation": 1,
+   "turn": 29,
+   "rebuild": false,
+   "history_messages": 28
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 5418,
+   "cached_tokens": 4747,
+   "evaluated_tokens": 671,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.5664336681365967,
+   "seconds": 4.544620752334595,
+   "conversation": 2,
+   "turn": 34,
+   "rebuild": false,
+   "history_messages": 68
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5872,
+   "cached_tokens": 5065,
+   "evaluated_tokens": 807,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.5355560779571533,
+   "seconds": 12.62602686882019,
+   "conversation": 0,
+   "turn": 30,
+   "rebuild": false,
+   "history_messages": 32
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6010,
+   "cached_tokens": 5473,
+   "evaluated_tokens": 537,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.6493051052093506,
+   "seconds": 15.720109224319458,
+   "conversation": 1,
+   "turn": 30,
+   "rebuild": false,
+   "history_messages": 30
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 5533,
+   "cached_tokens": 4869,
+   "evaluated_tokens": 664,
+   "completion_tokens": 45,
+   "first_token_seconds": 3.0484111309051514,
+   "seconds": 5.1724159717559814,
+   "conversation": 2,
+   "turn": 35,
+   "rebuild": false,
+   "history_messages": 70
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6112,
+   "cached_tokens": 5324,
+   "evaluated_tokens": 788,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.4429590702056885,
+   "seconds": 12.415703058242798,
+   "conversation": 0,
+   "turn": 31,
+   "rebuild": false,
+   "history_messages": 34
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 5642,
+   "cached_tokens": 4983,
+   "evaluated_tokens": 659,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.6335041522979736,
+   "seconds": 4.715216159820557,
+   "conversation": 2,
+   "turn": 36,
+   "rebuild": false,
+   "history_messages": 72
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6344,
+   "cached_tokens": 5775,
+   "evaluated_tokens": 569,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.656888008117676,
+   "seconds": 15.48409104347229,
+   "conversation": 1,
+   "turn": 31,
+   "rebuild": false,
+   "history_messages": 32
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6375,
+   "cached_tokens": 5573,
+   "evaluated_tokens": 802,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.553882122039795,
+   "seconds": 12.562465190887451,
+   "conversation": 0,
+   "turn": 32,
+   "rebuild": false,
+   "history_messages": 36
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 5737,
+   "cached_tokens": 5090,
+   "evaluated_tokens": 647,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.80965518951416,
+   "seconds": 4.785765886306763,
+   "conversation": 2,
+   "turn": 37,
+   "rebuild": false,
+   "history_messages": 74
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6667,
+   "cached_tokens": 6099,
+   "evaluated_tokens": 568,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.639219045639038,
+   "seconds": 15.303473949432373,
+   "conversation": 1,
+   "turn": 32,
+   "rebuild": false,
+   "history_messages": 34
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6633,
+   "cached_tokens": 6076,
+   "evaluated_tokens": 557,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.6857049465179443,
+   "seconds": 12.704901695251465,
+   "conversation": 0,
+   "turn": 33,
+   "rebuild": false,
+   "history_messages": 38
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 5838,
+   "cached_tokens": 5202,
+   "evaluated_tokens": 636,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.4837398529052734,
+   "seconds": 4.455219984054565,
+   "conversation": 2,
+   "turn": 38,
+   "rebuild": false,
+   "history_messages": 76
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6987,
+   "cached_tokens": 6431,
+   "evaluated_tokens": 556,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.637773036956787,
+   "seconds": 15.323375225067139,
+   "conversation": 1,
+   "turn": 33,
+   "rebuild": false,
+   "history_messages": 36
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6860,
+   "cached_tokens": 6081,
+   "evaluated_tokens": 779,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.4883010387420654,
+   "seconds": 12.868159055709839,
+   "conversation": 0,
+   "turn": 34,
+   "rebuild": false,
+   "history_messages": 40
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 5953,
+   "cached_tokens": 5294,
+   "evaluated_tokens": 659,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.811556816101074,
+   "seconds": 4.793763160705566,
+   "conversation": 2,
+   "turn": 39,
+   "rebuild": false,
+   "history_messages": 78
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4282,
+   "cached_tokens": 3750,
+   "evaluated_tokens": 532,
+   "completion_tokens": 250,
+   "first_token_seconds": 7.7969958782196045,
+   "seconds": 19.541422843933105,
+   "conversation": 1,
+   "turn": 34,
+   "rebuild": true,
+   "history_messages": 16
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 1808,
+   "cached_tokens": 20,
+   "evaluated_tokens": 1788,
+   "completion_tokens": 82,
+   "first_token_seconds": 7.894131898880005,
+   "seconds": 11.415166854858398,
+   "conversation": 3,
+   "turn": 0,
+   "rebuild": false,
+   "history_messages": 0
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 7111,
+   "cached_tokens": 1271,
+   "evaluated_tokens": 5840,
+   "completion_tokens": 192,
+   "first_token_seconds": 22.04476284980774,
+   "seconds": 30.89348793029785,
+   "conversation": 0,
+   "turn": 35,
+   "rebuild": false,
+   "history_messages": 42
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4602,
+   "cached_tokens": 4040,
+   "evaluated_tokens": 562,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.683764934539795,
+   "seconds": 18.988059759140015,
+   "conversation": 1,
+   "turn": 35,
+   "rebuild": false,
+   "history_messages": 18
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 1971,
+   "cached_tokens": 1282,
+   "evaluated_tokens": 689,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.8467159271240234,
+   "seconds": 7.995291709899902,
+   "conversation": 3,
+   "turn": 1,
+   "rebuild": false,
+   "history_messages": 2
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4592,
+   "cached_tokens": 20,
+   "evaluated_tokens": 4572,
+   "completion_tokens": 192,
+   "first_token_seconds": 16.059086084365845,
+   "seconds": 24.88014793395996,
+   "conversation": 0,
+   "turn": 36,
+   "rebuild": true,
+   "history_messages": 22
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2102,
+   "cached_tokens": 1411,
+   "evaluated_tokens": 691,
+   "completion_tokens": 82,
+   "first_token_seconds": 6.341738939285278,
+   "seconds": 11.63530969619751,
+   "conversation": 3,
+   "turn": 2,
+   "rebuild": false,
+   "history_messages": 4
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4921,
+   "cached_tokens": 20,
+   "evaluated_tokens": 4901,
+   "completion_tokens": 250,
+   "first_token_seconds": 18.695351123809814,
+   "seconds": 30.28600001335144,
+   "conversation": 1,
+   "turn": 36,
+   "rebuild": false,
+   "history_messages": 20
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4823,
+   "cached_tokens": 4292,
+   "evaluated_tokens": 531,
+   "completion_tokens": 192,
+   "first_token_seconds": 6.085992097854614,
+   "seconds": 15.406481981277466,
+   "conversation": 0,
+   "turn": 37,
+   "rebuild": false,
+   "history_messages": 24
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2258,
+   "cached_tokens": 1564,
+   "evaluated_tokens": 694,
+   "completion_tokens": 82,
+   "first_token_seconds": 4.494982957839966,
+   "seconds": 8.013134002685547,
+   "conversation": 3,
+   "turn": 3,
+   "rebuild": false,
+   "history_messages": 6
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5225,
+   "cached_tokens": 4361,
+   "evaluated_tokens": 864,
+   "completion_tokens": 250,
+   "first_token_seconds": 8.562842845916748,
+   "seconds": 20.172966957092285,
+   "conversation": 1,
+   "turn": 37,
+   "rebuild": false,
+   "history_messages": 22
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2404,
+   "cached_tokens": 1692,
+   "evaluated_tokens": 712,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.3260810375213623,
+   "seconds": 6.05866813659668,
+   "conversation": 3,
+   "turn": 4,
+   "rebuild": false,
+   "history_messages": 8
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5061,
+   "cached_tokens": 20,
+   "evaluated_tokens": 5041,
+   "completion_tokens": 192,
+   "first_token_seconds": 17.61386799812317,
+   "seconds": 26.337114095687866,
+   "conversation": 0,
+   "turn": 38,
+   "rebuild": false,
+   "history_messages": 26
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5536,
+   "cached_tokens": 4980,
+   "evaluated_tokens": 556,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.3844411373138428,
+   "seconds": 14.721163034439087,
+   "conversation": 1,
+   "turn": 38,
+   "rebuild": false,
+   "history_messages": 24
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2522,
+   "cached_tokens": 1852,
+   "evaluated_tokens": 670,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.133084297180176,
+   "seconds": 5.6173601150512695,
+   "conversation": 3,
+   "turn": 5,
+   "rebuild": false,
+   "history_messages": 10
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5322,
+   "cached_tokens": 4530,
+   "evaluated_tokens": 792,
+   "completion_tokens": 192,
+   "first_token_seconds": 3.0925118923187256,
+   "seconds": 11.877830982208252,
+   "conversation": 0,
+   "turn": 39,
+   "rebuild": false,
+   "history_messages": 28
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5852,
+   "cached_tokens": 5290,
+   "evaluated_tokens": 562,
+   "completion_tokens": 250,
+   "first_token_seconds": 3.473478078842163,
+   "seconds": 15.132594108581543,
+   "conversation": 1,
+   "turn": 39,
+   "rebuild": false,
+   "history_messages": 26
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2692,
+   "cached_tokens": 7,
+   "evaluated_tokens": 2685,
+   "completion_tokens": 82,
+   "first_token_seconds": 8.207914113998413,
+   "seconds": 11.656738042831421,
+   "conversation": 3,
+   "turn": 6,
+   "rebuild": false,
+   "history_messages": 12
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 1800,
+   "cached_tokens": 7,
+   "evaluated_tokens": 1793,
+   "completion_tokens": 29,
+   "first_token_seconds": 6.691382884979248,
+   "seconds": 7.858773946762085,
+   "conversation": 4,
+   "turn": 0,
+   "rebuild": false,
+   "history_messages": 0
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2837,
+   "cached_tokens": 1995,
+   "evaluated_tokens": 842,
+   "completion_tokens": 82,
+   "first_token_seconds": 3.27514910697937,
+   "seconds": 6.869871139526367,
+   "conversation": 3,
+   "turn": 7,
+   "rebuild": false,
+   "history_messages": 14
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 1850,
+   "cached_tokens": 20,
+   "evaluated_tokens": 1830,
+   "completion_tokens": 208,
+   "first_token_seconds": 7.257619857788086,
+   "seconds": 16.425061225891113,
+   "conversation": 5,
+   "turn": 0,
+   "rebuild": false,
+   "history_messages": 0
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 1886,
+   "cached_tokens": 7,
+   "evaluated_tokens": 1879,
+   "completion_tokens": 43,
+   "first_token_seconds": 7.683587074279785,
+   "seconds": 9.43370509147644,
+   "conversation": 4,
+   "turn": 1,
+   "rebuild": false,
+   "history_messages": 2
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2981,
+   "cached_tokens": 2288,
+   "evaluated_tokens": 693,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.273087978363037,
+   "seconds": 5.811539173126221,
+   "conversation": 3,
+   "turn": 8,
+   "rebuild": false,
+   "history_messages": 16
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 1981,
+   "cached_tokens": 1346,
+   "evaluated_tokens": 635,
+   "completion_tokens": 40,
+   "first_token_seconds": 1.9179542064666748,
+   "seconds": 3.589207172393799,
+   "conversation": 4,
+   "turn": 2,
+   "rebuild": false,
+   "history_messages": 4
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2105,
+   "cached_tokens": 1567,
+   "evaluated_tokens": 538,
+   "completion_tokens": 250,
+   "first_token_seconds": 2.989407777786255,
+   "seconds": 13.576446771621704,
+   "conversation": 5,
+   "turn": 1,
+   "rebuild": false,
+   "history_messages": 2
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3134,
+   "cached_tokens": 2436,
+   "evaluated_tokens": 698,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.296804189682007,
+   "seconds": 5.761128187179565,
+   "conversation": 3,
+   "turn": 9,
+   "rebuild": false,
+   "history_messages": 18
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2059,
+   "cached_tokens": 1278,
+   "evaluated_tokens": 781,
+   "completion_tokens": 27,
+   "first_token_seconds": 2.3685202598571777,
+   "seconds": 3.556852340698242,
+   "conversation": 4,
+   "turn": 3,
+   "rebuild": false,
+   "history_messages": 6
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2400,
+   "cached_tokens": 20,
+   "evaluated_tokens": 2380,
+   "completion_tokens": 221,
+   "first_token_seconds": 7.7317821979522705,
+   "seconds": 16.921662092208862,
+   "conversation": 5,
+   "turn": 2,
+   "rebuild": false,
+   "history_messages": 4
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3273,
+   "cached_tokens": 2580,
+   "evaluated_tokens": 693,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.3504059314727783,
+   "seconds": 5.862709045410156,
+   "conversation": 3,
+   "turn": 10,
+   "rebuild": false,
+   "history_messages": 20
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2123,
+   "cached_tokens": 1536,
+   "evaluated_tokens": 587,
+   "completion_tokens": 27,
+   "first_token_seconds": 2.0440521240234375,
+   "seconds": 3.1313869953155518,
+   "conversation": 4,
+   "turn": 4,
+   "rebuild": false,
+   "history_messages": 8
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2694,
+   "cached_tokens": 1862,
+   "evaluated_tokens": 832,
+   "completion_tokens": 59,
+   "first_token_seconds": 3.7679190635681152,
+   "seconds": 6.2237842082977295,
+   "conversation": 5,
+   "turn": 3,
+   "rebuild": false,
+   "history_messages": 6
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3427,
+   "cached_tokens": 2734,
+   "evaluated_tokens": 693,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.3266806602478027,
+   "seconds": 5.925826787948608,
+   "conversation": 3,
+   "turn": 11,
+   "rebuild": false,
+   "history_messages": 22
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2218,
+   "cached_tokens": 1601,
+   "evaluated_tokens": 617,
+   "completion_tokens": 63,
+   "first_token_seconds": 2.1609089374542236,
+   "seconds": 4.800657033920288,
+   "conversation": 4,
+   "turn": 5,
+   "rebuild": false,
+   "history_messages": 10
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 2798,
+   "cached_tokens": 20,
+   "evaluated_tokens": 2778,
+   "completion_tokens": 38,
+   "first_token_seconds": 11.409182071685791,
+   "seconds": 13.041175127029419,
+   "conversation": 5,
+   "turn": 4,
+   "rebuild": false,
+   "history_messages": 8
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3548,
+   "cached_tokens": 2869,
+   "evaluated_tokens": 679,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.4366729259490967,
+   "seconds": 6.7430408000946045,
+   "conversation": 3,
+   "turn": 12,
+   "rebuild": false,
+   "history_messages": 24
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2360,
+   "cached_tokens": 1667,
+   "evaluated_tokens": 693,
+   "completion_tokens": 63,
+   "first_token_seconds": 5.07993483543396,
+   "seconds": 8.741750955581665,
+   "conversation": 4,
+   "turn": 6,
+   "rebuild": false,
+   "history_messages": 12
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2913,
+   "cached_tokens": 2132,
+   "evaluated_tokens": 781,
+   "completion_tokens": 45,
+   "first_token_seconds": 6.43950891494751,
+   "seconds": 8.321030855178833,
+   "conversation": 5,
+   "turn": 5,
+   "rebuild": false,
+   "history_messages": 10
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3689,
+   "cached_tokens": 3031,
+   "evaluated_tokens": 658,
+   "completion_tokens": 82,
+   "first_token_seconds": 4.621178865432739,
+   "seconds": 8.389852046966553,
+   "conversation": 3,
+   "turn": 13,
+   "rebuild": false,
+   "history_messages": 26
+  },
+  {
+   "deployment": "heartcode-gpu4",
+   "prompt_tokens": 2468,
+   "cached_tokens": 1444,
+   "evaluated_tokens": 1024,
+   "completion_tokens": 34,
+   "first_token_seconds": 5.55257511138916,
+   "seconds": 7.006807804107666,
+   "conversation": 4,
+   "turn": 7,
+   "rebuild": false,
+   "history_messages": 14
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3017,
+   "cached_tokens": 2137,
+   "evaluated_tokens": 880,
+   "completion_tokens": 45,
+   "first_token_seconds": 4.86101508140564,
+   "seconds": 6.7362611293792725,
+   "conversation": 5,
+   "turn": 6,
+   "rebuild": false,
+   "history_messages": 12
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3816,
+   "cached_tokens": 3152,
+   "evaluated_tokens": 664,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.4127020835876465,
+   "seconds": 6.420346975326538,
+   "conversation": 3,
+   "turn": 14,
+   "rebuild": false,
+   "history_messages": 28
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2584,
+   "cached_tokens": 1804,
+   "evaluated_tokens": 780,
+   "completion_tokens": 69,
+   "first_token_seconds": 4.672666072845459,
+   "seconds": 7.622196912765503,
+   "conversation": 4,
+   "turn": 8,
+   "rebuild": false,
+   "history_messages": 16
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3107,
+   "cached_tokens": 2471,
+   "evaluated_tokens": 636,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.1298093795776367,
+   "seconds": 4.017233371734619,
+   "conversation": 5,
+   "turn": 7,
+   "rebuild": false,
+   "history_messages": 14
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2702,
+   "cached_tokens": 2021,
+   "evaluated_tokens": 681,
+   "completion_tokens": 32,
+   "first_token_seconds": 2.328392267227173,
+   "seconds": 3.643554210662842,
+   "conversation": 4,
+   "turn": 9,
+   "rebuild": false,
+   "history_messages": 18
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 3966,
+   "cached_tokens": 3283,
+   "evaluated_tokens": 683,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.4725430011749268,
+   "seconds": 6.130211114883423,
+   "conversation": 3,
+   "turn": 15,
+   "rebuild": false,
+   "history_messages": 30
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3210,
+   "cached_tokens": 2577,
+   "evaluated_tokens": 633,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.175968885421753,
+   "seconds": 4.084151029586792,
+   "conversation": 5,
+   "turn": 8,
+   "rebuild": false,
+   "history_messages": 16
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2776,
+   "cached_tokens": 2171,
+   "evaluated_tokens": 605,
+   "completion_tokens": 31,
+   "first_token_seconds": 2.100198984146118,
+   "seconds": 3.3998329639434814,
+   "conversation": 4,
+   "turn": 10,
+   "rebuild": false,
+   "history_messages": 20
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4077,
+   "cached_tokens": 3419,
+   "evaluated_tokens": 658,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.383211135864258,
+   "seconds": 5.984731197357178,
+   "conversation": 3,
+   "turn": 16,
+   "rebuild": false,
+   "history_messages": 32
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3306,
+   "cached_tokens": 2661,
+   "evaluated_tokens": 645,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.2693049907684326,
+   "seconds": 4.135128974914551,
+   "conversation": 5,
+   "turn": 9,
+   "rebuild": false,
+   "history_messages": 18
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 2876,
+   "cached_tokens": 2246,
+   "evaluated_tokens": 630,
+   "completion_tokens": 60,
+   "first_token_seconds": 2.106914758682251,
+   "seconds": 4.731964826583862,
+   "conversation": 4,
+   "turn": 11,
+   "rebuild": false,
+   "history_messages": 22
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4209,
+   "cached_tokens": 3561,
+   "evaluated_tokens": 648,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.468484878540039,
+   "seconds": 6.008056163787842,
+   "conversation": 3,
+   "turn": 17,
+   "rebuild": false,
+   "history_messages": 34
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3419,
+   "cached_tokens": 2773,
+   "evaluated_tokens": 646,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.380378007888794,
+   "seconds": 4.283656120300293,
+   "conversation": 5,
+   "turn": 10,
+   "rebuild": false,
+   "history_messages": 20
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3000,
+   "cached_tokens": 2320,
+   "evaluated_tokens": 680,
+   "completion_tokens": 49,
+   "first_token_seconds": 2.2916321754455566,
+   "seconds": 4.346971273422241,
+   "conversation": 4,
+   "turn": 12,
+   "rebuild": false,
+   "history_messages": 24
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4360,
+   "cached_tokens": 3682,
+   "evaluated_tokens": 678,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.4951910972595215,
+   "seconds": 6.042054176330566,
+   "conversation": 3,
+   "turn": 18,
+   "rebuild": false,
+   "history_messages": 36
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3519,
+   "cached_tokens": 2873,
+   "evaluated_tokens": 646,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.2729008197784424,
+   "seconds": 4.174738883972168,
+   "conversation": 5,
+   "turn": 11,
+   "rebuild": false,
+   "history_messages": 22
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3131,
+   "cached_tokens": 2452,
+   "evaluated_tokens": 679,
+   "completion_tokens": 61,
+   "first_token_seconds": 2.295003890991211,
+   "seconds": 4.868876934051514,
+   "conversation": 4,
+   "turn": 13,
+   "rebuild": false,
+   "history_messages": 26
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4501,
+   "cached_tokens": 3813,
+   "evaluated_tokens": 688,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.496537923812866,
+   "seconds": 6.068411111831665,
+   "conversation": 3,
+   "turn": 19,
+   "rebuild": false,
+   "history_messages": 38
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3604,
+   "cached_tokens": 2981,
+   "evaluated_tokens": 623,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.2577297687530518,
+   "seconds": 4.218124151229858,
+   "conversation": 5,
+   "turn": 12,
+   "rebuild": false,
+   "history_messages": 24
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3228,
+   "cached_tokens": 2562,
+   "evaluated_tokens": 666,
+   "completion_tokens": 30,
+   "first_token_seconds": 2.2772231101989746,
+   "seconds": 3.518015146255493,
+   "conversation": 4,
+   "turn": 14,
+   "rebuild": false,
+   "history_messages": 28
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4623,
+   "cached_tokens": 3960,
+   "evaluated_tokens": 663,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.479987859725952,
+   "seconds": 6.00322413444519,
+   "conversation": 3,
+   "turn": 20,
+   "rebuild": false,
+   "history_messages": 40
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3720,
+   "cached_tokens": 3070,
+   "evaluated_tokens": 650,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.406010866165161,
+   "seconds": 4.315104961395264,
+   "conversation": 5,
+   "turn": 13,
+   "rebuild": false,
+   "history_messages": 26
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3310,
+   "cached_tokens": 2696,
+   "evaluated_tokens": 614,
+   "completion_tokens": 41,
+   "first_token_seconds": 2.1362860202789307,
+   "seconds": 3.850429058074951,
+   "conversation": 4,
+   "turn": 15,
+   "rebuild": false,
+   "history_messages": 30
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4768,
+   "cached_tokens": 4101,
+   "evaluated_tokens": 667,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.6589269638061523,
+   "seconds": 6.2186360359191895,
+   "conversation": 3,
+   "turn": 21,
+   "rebuild": false,
+   "history_messages": 42
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3820,
+   "cached_tokens": 3162,
+   "evaluated_tokens": 658,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.400848865509033,
+   "seconds": 4.319515943527222,
+   "conversation": 5,
+   "turn": 14,
+   "rebuild": false,
+   "history_messages": 28
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3412,
+   "cached_tokens": 2768,
+   "evaluated_tokens": 644,
+   "completion_tokens": 58,
+   "first_token_seconds": 2.2503960132598877,
+   "seconds": 4.707709074020386,
+   "conversation": 4,
+   "turn": 16,
+   "rebuild": false,
+   "history_messages": 32
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4896,
+   "cached_tokens": 4219,
+   "evaluated_tokens": 677,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.7078449726104736,
+   "seconds": 6.295037031173706,
+   "conversation": 3,
+   "turn": 22,
+   "rebuild": false,
+   "history_messages": 44
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3913,
+   "cached_tokens": 3281,
+   "evaluated_tokens": 632,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.2772269248962402,
+   "seconds": 4.194427967071533,
+   "conversation": 5,
+   "turn": 15,
+   "rebuild": false,
+   "history_messages": 30
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3539,
+   "cached_tokens": 2861,
+   "evaluated_tokens": 678,
+   "completion_tokens": 59,
+   "first_token_seconds": 2.459014892578125,
+   "seconds": 4.8589160442352295,
+   "conversation": 4,
+   "turn": 17,
+   "rebuild": false,
+   "history_messages": 34
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5034,
+   "cached_tokens": 4365,
+   "evaluated_tokens": 669,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.5132148265838623,
+   "seconds": 6.100611925125122,
+   "conversation": 3,
+   "turn": 23,
+   "rebuild": false,
+   "history_messages": 46
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4017,
+   "cached_tokens": 3377,
+   "evaluated_tokens": 640,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.272853136062622,
+   "seconds": 4.195597171783447,
+   "conversation": 5,
+   "turn": 16,
+   "rebuild": false,
+   "history_messages": 32
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3657,
+   "cached_tokens": 2987,
+   "evaluated_tokens": 670,
+   "completion_tokens": 42,
+   "first_token_seconds": 2.3565120697021484,
+   "seconds": 4.144973993301392,
+   "conversation": 4,
+   "turn": 18,
+   "rebuild": false,
+   "history_messages": 36
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5182,
+   "cached_tokens": 4495,
+   "evaluated_tokens": 687,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.6257078647613525,
+   "seconds": 6.216364860534668,
+   "conversation": 3,
+   "turn": 24,
+   "rebuild": false,
+   "history_messages": 48
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4127,
+   "cached_tokens": 3478,
+   "evaluated_tokens": 649,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.4017739295959473,
+   "seconds": 4.346981048583984,
+   "conversation": 5,
+   "turn": 17,
+   "rebuild": false,
+   "history_messages": 34
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3760,
+   "cached_tokens": 3117,
+   "evaluated_tokens": 643,
+   "completion_tokens": 55,
+   "first_token_seconds": 2.2862460613250732,
+   "seconds": 4.615952730178833,
+   "conversation": 4,
+   "turn": 19,
+   "rebuild": false,
+   "history_messages": 38
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5295,
+   "cached_tokens": 4628,
+   "evaluated_tokens": 667,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.6110360622406006,
+   "seconds": 6.195786952972412,
+   "conversation": 3,
+   "turn": 25,
+   "rebuild": false,
+   "history_messages": 50
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4245,
+   "cached_tokens": 3581,
+   "evaluated_tokens": 664,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.5304880142211914,
+   "seconds": 4.462798118591309,
+   "conversation": 5,
+   "turn": 18,
+   "rebuild": false,
+   "history_messages": 36
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3850,
+   "cached_tokens": 3213,
+   "evaluated_tokens": 637,
+   "completion_tokens": 23,
+   "first_token_seconds": 2.2774758338928223,
+   "seconds": 3.258058786392212,
+   "conversation": 4,
+   "turn": 20,
+   "rebuild": false,
+   "history_messages": 40
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5435,
+   "cached_tokens": 4780,
+   "evaluated_tokens": 655,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.6087188720703125,
+   "seconds": 6.3152430057525635,
+   "conversation": 3,
+   "turn": 26,
+   "rebuild": false,
+   "history_messages": 52
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4338,
+   "cached_tokens": 3676,
+   "evaluated_tokens": 662,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.514600992202759,
+   "seconds": 4.476531028747559,
+   "conversation": 5,
+   "turn": 19,
+   "rebuild": false,
+   "history_messages": 38
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 3918,
+   "cached_tokens": 3334,
+   "evaluated_tokens": 584,
+   "completion_tokens": 30,
+   "first_token_seconds": 2.1924936771392822,
+   "seconds": 3.471457004547119,
+   "conversation": 4,
+   "turn": 21,
+   "rebuild": false,
+   "history_messages": 42
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5569,
+   "cached_tokens": 4901,
+   "evaluated_tokens": 668,
+   "completion_tokens": 79,
+   "first_token_seconds": 2.62427020072937,
+   "seconds": 6.289420127868652,
+   "conversation": 3,
+   "turn": 27,
+   "rebuild": false,
+   "history_messages": 54
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4414,
+   "cached_tokens": 3799,
+   "evaluated_tokens": 615,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.405869722366333,
+   "seconds": 4.363286972045898,
+   "conversation": 5,
+   "turn": 20,
+   "rebuild": false,
+   "history_messages": 40
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4002,
+   "cached_tokens": 3392,
+   "evaluated_tokens": 610,
+   "completion_tokens": 38,
+   "first_token_seconds": 2.247673988342285,
+   "seconds": 3.9512858390808105,
+   "conversation": 4,
+   "turn": 22,
+   "rebuild": false,
+   "history_messages": 44
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4522,
+   "cached_tokens": 3892,
+   "evaluated_tokens": 630,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.4448888301849365,
+   "seconds": 4.443209886550903,
+   "conversation": 5,
+   "turn": 21,
+   "rebuild": false,
+   "history_messages": 42
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5713,
+   "cached_tokens": 5023,
+   "evaluated_tokens": 690,
+   "completion_tokens": 79,
+   "first_token_seconds": 2.7637441158294678,
+   "seconds": 6.462661266326904,
+   "conversation": 3,
+   "turn": 28,
+   "rebuild": false,
+   "history_messages": 56
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4107,
+   "cached_tokens": 3464,
+   "evaluated_tokens": 643,
+   "completion_tokens": 61,
+   "first_token_seconds": 2.350399971008301,
+   "seconds": 4.9779767990112305,
+   "conversation": 4,
+   "turn": 23,
+   "rebuild": false,
+   "history_messages": 46
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4636,
+   "cached_tokens": 3979,
+   "evaluated_tokens": 657,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.559164047241211,
+   "seconds": 4.584287166595459,
+   "conversation": 5,
+   "turn": 22,
+   "rebuild": false,
+   "history_messages": 44
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5835,
+   "cached_tokens": 5160,
+   "evaluated_tokens": 675,
+   "completion_tokens": 79,
+   "first_token_seconds": 2.8274030685424805,
+   "seconds": 6.366597890853882,
+   "conversation": 3,
+   "turn": 29,
+   "rebuild": false,
+   "history_messages": 58
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4207,
+   "cached_tokens": 3551,
+   "evaluated_tokens": 656,
+   "completion_tokens": 28,
+   "first_token_seconds": 2.3925399780273438,
+   "seconds": 3.5823581218719482,
+   "conversation": 4,
+   "turn": 24,
+   "rebuild": false,
+   "history_messages": 48
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4743,
+   "cached_tokens": 4083,
+   "evaluated_tokens": 660,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.516594886779785,
+   "seconds": 4.655037879943848,
+   "conversation": 5,
+   "turn": 23,
+   "rebuild": false,
+   "history_messages": 46
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 5975,
+   "cached_tokens": 5306,
+   "evaluated_tokens": 669,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.8633909225463867,
+   "seconds": 6.545805931091309,
+   "conversation": 3,
+   "turn": 30,
+   "rebuild": false,
+   "history_messages": 60
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4282,
+   "cached_tokens": 3684,
+   "evaluated_tokens": 598,
+   "completion_tokens": 33,
+   "first_token_seconds": 2.2343170642852783,
+   "seconds": 3.656571865081787,
+   "conversation": 4,
+   "turn": 25,
+   "rebuild": false,
+   "history_messages": 50
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4832,
+   "cached_tokens": 4203,
+   "evaluated_tokens": 629,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.41243577003479,
+   "seconds": 4.373958110809326,
+   "conversation": 5,
+   "turn": 24,
+   "rebuild": false,
+   "history_messages": 48
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6104,
+   "cached_tokens": 5437,
+   "evaluated_tokens": 667,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.675748109817505,
+   "seconds": 6.349850177764893,
+   "conversation": 3,
+   "turn": 31,
+   "rebuild": false,
+   "history_messages": 62
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4380,
+   "cached_tokens": 3751,
+   "evaluated_tokens": 629,
+   "completion_tokens": 59,
+   "first_token_seconds": 2.3031790256500244,
+   "seconds": 4.850841045379639,
+   "conversation": 4,
+   "turn": 26,
+   "rebuild": false,
+   "history_messages": 52
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4938,
+   "cached_tokens": 4302,
+   "evaluated_tokens": 636,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.4208598136901855,
+   "seconds": 4.404577016830444,
+   "conversation": 5,
+   "turn": 25,
+   "rebuild": false,
+   "history_messages": 50
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6248,
+   "cached_tokens": 5571,
+   "evaluated_tokens": 677,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.783655881881714,
+   "seconds": 6.521655082702637,
+   "conversation": 3,
+   "turn": 32,
+   "rebuild": false,
+   "history_messages": 64
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4486,
+   "cached_tokens": 3829,
+   "evaluated_tokens": 657,
+   "completion_tokens": 34,
+   "first_token_seconds": 2.4512460231781006,
+   "seconds": 3.9067142009735107,
+   "conversation": 4,
+   "turn": 27,
+   "rebuild": false,
+   "history_messages": 54
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5030,
+   "cached_tokens": 4386,
+   "evaluated_tokens": 644,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.5074679851531982,
+   "seconds": 4.611809968948364,
+   "conversation": 5,
+   "turn": 26,
+   "rebuild": false,
+   "history_messages": 52
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6403,
+   "cached_tokens": 5695,
+   "evaluated_tokens": 708,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.879476308822632,
+   "seconds": 6.597950220108032,
+   "conversation": 3,
+   "turn": 33,
+   "rebuild": false,
+   "history_messages": 66
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4596,
+   "cached_tokens": 3959,
+   "evaluated_tokens": 637,
+   "completion_tokens": 55,
+   "first_token_seconds": 2.390462875366211,
+   "seconds": 4.777005910873413,
+   "conversation": 4,
+   "turn": 28,
+   "rebuild": false,
+   "history_messages": 56
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5134,
+   "cached_tokens": 4495,
+   "evaluated_tokens": 639,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.4534966945648193,
+   "seconds": 4.421198844909668,
+   "conversation": 5,
+   "turn": 27,
+   "rebuild": false,
+   "history_messages": 54
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6568,
+   "cached_tokens": 5848,
+   "evaluated_tokens": 720,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.9908530712127686,
+   "seconds": 6.717777252197266,
+   "conversation": 3,
+   "turn": 34,
+   "rebuild": false,
+   "history_messages": 68
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4725,
+   "cached_tokens": 4039,
+   "evaluated_tokens": 686,
+   "completion_tokens": 70,
+   "first_token_seconds": 2.5794081687927246,
+   "seconds": 5.651138067245483,
+   "conversation": 4,
+   "turn": 29,
+   "rebuild": false,
+   "history_messages": 58
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5230,
+   "cached_tokens": 4588,
+   "evaluated_tokens": 642,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.513339042663574,
+   "seconds": 4.474675178527832,
+   "conversation": 5,
+   "turn": 28,
+   "rebuild": false,
+   "history_messages": 56
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6720,
+   "cached_tokens": 6001,
+   "evaluated_tokens": 719,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.9810800552368164,
+   "seconds": 6.716511249542236,
+   "conversation": 3,
+   "turn": 35,
+   "rebuild": false,
+   "history_messages": 70
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4874,
+   "cached_tokens": 4160,
+   "evaluated_tokens": 714,
+   "completion_tokens": 64,
+   "first_token_seconds": 2.710669994354248,
+   "seconds": 5.503485202789307,
+   "conversation": 4,
+   "turn": 30,
+   "rebuild": false,
+   "history_messages": 60
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5345,
+   "cached_tokens": 4693,
+   "evaluated_tokens": 652,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.6052980422973633,
+   "seconds": 4.567536115646362,
+   "conversation": 5,
+   "turn": 29,
+   "rebuild": false,
+   "history_messages": 58
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 6859,
+   "cached_tokens": 6164,
+   "evaluated_tokens": 695,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.9219958782196045,
+   "seconds": 6.666264772415161,
+   "conversation": 3,
+   "turn": 36,
+   "rebuild": false,
+   "history_messages": 72
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 4995,
+   "cached_tokens": 4312,
+   "evaluated_tokens": 683,
+   "completion_tokens": 53,
+   "first_token_seconds": 2.6092240810394287,
+   "seconds": 4.921962022781372,
+   "conversation": 4,
+   "turn": 31,
+   "rebuild": false,
+   "history_messages": 62
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5450,
+   "cached_tokens": 4787,
+   "evaluated_tokens": 663,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.6506009101867676,
+   "seconds": 4.639240026473999,
+   "conversation": 5,
+   "turn": 30,
+   "rebuild": false,
+   "history_messages": 60
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 7012,
+   "cached_tokens": 6315,
+   "evaluated_tokens": 697,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.922370672225952,
+   "seconds": 6.704669952392578,
+   "conversation": 3,
+   "turn": 37,
+   "rebuild": false,
+   "history_messages": 74
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5123,
+   "cached_tokens": 4451,
+   "evaluated_tokens": 672,
+   "completion_tokens": 63,
+   "first_token_seconds": 2.6570932865142822,
+   "seconds": 5.431254148483276,
+   "conversation": 4,
+   "turn": 32,
+   "rebuild": false,
+   "history_messages": 64
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5571,
+   "cached_tokens": 4910,
+   "evaluated_tokens": 661,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.657712697982788,
+   "seconds": 4.645685911178589,
+   "conversation": 5,
+   "turn": 31,
+   "rebuild": false,
+   "history_messages": 62
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 7162,
+   "cached_tokens": 6459,
+   "evaluated_tokens": 703,
+   "completion_tokens": 82,
+   "first_token_seconds": 2.9613423347473145,
+   "seconds": 6.718667030334473,
+   "conversation": 3,
+   "turn": 38,
+   "rebuild": false,
+   "history_messages": 76
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5241,
+   "cached_tokens": 4569,
+   "evaluated_tokens": 672,
+   "completion_tokens": 37,
+   "first_token_seconds": 3.1385178565979004,
+   "seconds": 4.74465799331665,
+   "conversation": 4,
+   "turn": 33,
+   "rebuild": false,
+   "history_messages": 66
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5652,
+   "cached_tokens": 5007,
+   "evaluated_tokens": 645,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.6174638271331787,
+   "seconds": 4.609941005706787,
+   "conversation": 5,
+   "turn": 32,
+   "rebuild": false,
+   "history_messages": 64
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5360,
+   "cached_tokens": 4705,
+   "evaluated_tokens": 655,
+   "completion_tokens": 67,
+   "first_token_seconds": 2.6403119564056396,
+   "seconds": 5.706097841262817,
+   "conversation": 4,
+   "turn": 34,
+   "rebuild": false,
+   "history_messages": 68
+  },
+  {
+   "deployment": "heartcode-gpu5",
+   "prompt_tokens": 4641,
+   "cached_tokens": 3934,
+   "evaluated_tokens": 707,
+   "completion_tokens": 82,
+   "first_token_seconds": 7.134832859039307,
+   "seconds": 10.846755743026733,
+   "conversation": 3,
+   "turn": 39,
+   "rebuild": true,
+   "history_messages": 40
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5767,
+   "cached_tokens": 5125,
+   "evaluated_tokens": 642,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.602591037750244,
+   "seconds": 4.593722105026245,
+   "conversation": 5,
+   "turn": 33,
+   "rebuild": false,
+   "history_messages": 66
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5498,
+   "cached_tokens": 4791,
+   "evaluated_tokens": 707,
+   "completion_tokens": 63,
+   "first_token_seconds": 2.801561117172241,
+   "seconds": 5.6118950843811035,
+   "conversation": 4,
+   "turn": 35,
+   "rebuild": false,
+   "history_messages": 70
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5854,
+   "cached_tokens": 5207,
+   "evaluated_tokens": 647,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.776792049407959,
+   "seconds": 4.752284049987793,
+   "conversation": 5,
+   "turn": 34,
+   "rebuild": false,
+   "history_messages": 68
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5641,
+   "cached_tokens": 4937,
+   "evaluated_tokens": 704,
+   "completion_tokens": 68,
+   "first_token_seconds": 2.7638096809387207,
+   "seconds": 5.8441877365112305,
+   "conversation": 4,
+   "turn": 36,
+   "rebuild": false,
+   "history_messages": 72
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5971,
+   "cached_tokens": 5326,
+   "evaluated_tokens": 645,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.9207210540771484,
+   "seconds": 4.916577100753784,
+   "conversation": 5,
+   "turn": 35,
+   "rebuild": false,
+   "history_messages": 70
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5743,
+   "cached_tokens": 5075,
+   "evaluated_tokens": 668,
+   "completion_tokens": 33,
+   "first_token_seconds": 2.7105791568756104,
+   "seconds": 4.164606094360352,
+   "conversation": 4,
+   "turn": 37,
+   "rebuild": false,
+   "history_messages": 74
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 6069,
+   "cached_tokens": 5417,
+   "evaluated_tokens": 652,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.6991350650787354,
+   "seconds": 4.70249080657959,
+   "conversation": 5,
+   "turn": 36,
+   "rebuild": false,
+   "history_messages": 72
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5839,
+   "cached_tokens": 5223,
+   "evaluated_tokens": 616,
+   "completion_tokens": 33,
+   "first_token_seconds": 2.5408599376678467,
+   "seconds": 4.000329971313477,
+   "conversation": 4,
+   "turn": 38,
+   "rebuild": false,
+   "history_messages": 76
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 6190,
+   "cached_tokens": 5527,
+   "evaluated_tokens": 663,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.760514974594116,
+   "seconds": 4.786496162414551,
+   "conversation": 5,
+   "turn": 37,
+   "rebuild": false,
+   "history_messages": 74
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 5911,
+   "cached_tokens": 5301,
+   "evaluated_tokens": 610,
+   "completion_tokens": 35,
+   "first_token_seconds": 2.542371988296509,
+   "seconds": 4.088593006134033,
+   "conversation": 4,
+   "turn": 39,
+   "rebuild": false,
+   "history_messages": 78
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 6264,
+   "cached_tokens": 5624,
+   "evaluated_tokens": 640,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.6334409713745117,
+   "seconds": 4.65283465385437,
+   "conversation": 5,
+   "turn": 38,
+   "rebuild": false,
+   "history_messages": 76
+  },
+  {
+   "deployment": "heartcode-gpu6",
+   "prompt_tokens": 6360,
+   "cached_tokens": 5745,
+   "evaluated_tokens": 615,
+   "completion_tokens": 45,
+   "first_token_seconds": 2.594818115234375,
+   "seconds": 4.625010967254639,
+   "conversation": 5,
+   "turn": 39,
+   "rebuild": false,
+   "history_messages": 78
+  }
+ ],
+ "samples": [
+  {
+   "t": 1792590727.8484852,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.067GiB / 1.75GiB",
+    "pea-gpu-5": "1.086GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.367GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792590761.194925,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.067GiB / 1.75GiB",
+    "pea-gpu-5": "1.086GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.367GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792590795.741004,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.067GiB / 1.75GiB",
+    "pea-gpu-5": "1.086GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.367GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792590829.976614,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.067GiB / 1.75GiB",
+    "pea-gpu-5": "1.086GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.333GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792590863.776602,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.067GiB / 1.75GiB",
+    "pea-gpu-5": "1.086GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.297GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792590898.769592,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.067GiB / 1.75GiB",
+    "pea-gpu-5": "1.086GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.324GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792590932.609587,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.067GiB / 1.75GiB",
+    "pea-gpu-5": "1.086GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.331GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792590965.76793,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.067GiB / 1.75GiB",
+    "pea-gpu-5": "1.088GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.331GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792590999.906903,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.067GiB / 1.75GiB",
+    "pea-gpu-5": "1.086GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.333GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591032.8873558,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.067GiB / 1.75GiB",
+    "pea-gpu-5": "1.086GiB / 1.75GiB",
+    "pea-gpu-4": "1.161GiB / 1.75GiB",
+    "pea-gpu-2": "1.333GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591065.988539,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.333GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591100.751868,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.333GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591133.87994,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.112GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.254GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591169.821999,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.308GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591202.849113,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.285GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591236.689928,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.321GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591270.066684,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.322GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591303.7213912,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.323GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591336.7424588,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.125GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.329GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591371.931895,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.33GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591405.055763,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.33GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591439.889088,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.331GiB / 1.75GiB",
+    "pea-gpu-1": "1.295GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591473.380016,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.29GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591506.456522,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.333GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591540.4625401,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.334GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591573.7012632,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.335GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591607.805811,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.129GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.29GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591640.8568058,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.29GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591674.37737,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.337GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591707.417877,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.29GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591740.8034382,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.333GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591775.738223,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.29GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591809.769557,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.29GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591844.6164029,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.29GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591877.760601,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.335GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591911.936333,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.342GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591945.693753,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.343GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792591978.725419,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.344GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592012.7475631,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.345GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592046.701459,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.345GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592079.758036,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.127GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.394GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592113.4908988,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.193GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592147.038041,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592180.74008,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592214.3245142,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592247.832651,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592280.9062378,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592313.942791,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592347.5817869,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592380.7463071,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592415.796042,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592449.4883041,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.721GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592482.5768902,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592515.993691,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592550.2295182,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592583.554541,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592616.982823,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592651.6550012,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.218GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592686.872642,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.11GiB / 1.75GiB",
+    "pea-gpu-5": "1.176GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592720.331428,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "843.9MiB / 1.75GiB",
+    "pea-gpu-5": "1.162GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592754.2483451,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "843.9MiB / 1.75GiB",
+    "pea-gpu-5": "1.162GiB / 1.75GiB",
+    "pea-gpu-4": "1.16GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592788.194929,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.112GiB / 1.75GiB",
+    "pea-gpu-5": "1.007GiB / 1.75GiB",
+    "pea-gpu-4": "1.293GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592823.189163,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.145GiB / 1.75GiB",
+    "pea-gpu-5": "880.6MiB / 1.75GiB",
+    "pea-gpu-4": "1.232GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.718GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592858.223231,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.021GiB / 1.75GiB",
+    "pea-gpu-5": "707.6MiB / 1.75GiB",
+    "pea-gpu-4": "1.05GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592892.510836,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.021GiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.05GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592926.98835,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "903.2MiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.05GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592960.6516109,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "903.2MiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.05GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792592993.653167,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "903.2MiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.05GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593027.81928,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "903.2MiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.153GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593060.964759,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.129GiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.153GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593094.427378,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.162GiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.124GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593128.202788,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.162GiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.124GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593161.1193311,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.162GiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.124GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593196.139029,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.162GiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.161GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593229.1117198,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.162GiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.161GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593262.80057,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.162GiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.161GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593295.7561102,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.162GiB / 1.75GiB",
+    "pea-gpu-5": "714.4MiB / 1.75GiB",
+    "pea-gpu-4": "1.161GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593329.411629,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.048GiB / 1.75GiB",
+    "pea-gpu-5": "1.094GiB / 1.75GiB",
+    "pea-gpu-4": "1.171GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593363.705146,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.185GiB / 1.75GiB",
+    "pea-gpu-5": "1.14GiB / 1.75GiB",
+    "pea-gpu-4": "1.341GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593397.376638,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.116GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593430.3859231,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.09GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593463.1965241,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593496.7689118,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593529.650656,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593563.025262,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593596.370065,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593629.788121,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593662.630191,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593696.219027,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593729.023107,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593762.444185,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593795.579059,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593829.068841,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593861.9715378,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593895.341385,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593928.2009249,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593961.939123,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792593994.799248,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594027.5906692,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594061.445337,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594094.291733,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594127.640552,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594161.0387058,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594194.795786,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594227.5964959,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594261.772894,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594294.5037582,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594328.004531,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594360.864542,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594394.290446,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594427.203564,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594460.649597,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594493.521964,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594527.025301,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594560.036997,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594592.81982,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594626.855654,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594659.756375,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594693.210227,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "939.3MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594726.2595851,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "1015MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594759.671221,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "1015MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594792.591079,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "1015MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.718GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594826.0393758,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "1015MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594858.909989,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "1015MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594892.6360278,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "1015MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594925.483432,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "1015MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594959.271658,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "1015MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792594992.122418,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.104GiB / 1.75GiB",
+    "pea-gpu-5": "1015MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792595025.588116,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "1015MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792595058.398381,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "1015MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  },
+  {
+   "t": 1792595091.852266,
+   "gpus": {
+    "0": {
+     "used": 5619,
+     "total": 8192
+    },
+    "1": {
+     "used": 4263,
+     "total": 8192
+    },
+    "2": {
+     "used": 4499,
+     "total": 8192
+    },
+    "3": {
+     "used": 6821,
+     "total": 8192
+    },
+    "4": {
+     "used": 6819,
+     "total": 8192
+    },
+    "5": {
+     "used": 6571,
+     "total": 8192
+    },
+    "6": {
+     "used": 1691,
+     "total": 8192
+    },
+    "7": {
+     "used": 6085,
+     "total": 8192
+    }
+   },
+   "mem": {
+    "pea-gpu-6": "1.102GiB / 1.75GiB",
+    "pea-gpu-5": "1015MiB / 1.75GiB",
+    "pea-gpu-4": "1.219GiB / 1.75GiB",
+    "pea-gpu-2": "1.395GiB / 1.75GiB",
+    "pea-gpu-1": "1.296GiB / 1.75GiB",
+    "pea-gpu-3": "1.717GiB / 1.75GiB"
+   }
+  }
+ ]
+}
